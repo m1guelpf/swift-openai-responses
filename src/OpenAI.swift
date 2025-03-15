@@ -5,10 +5,7 @@ import FoundationNetworking
 
 /// A Swift client for the OpenAI Responses API.
 public final class ResponsesAPI: Sendable {
-	enum Error: Swift.Error {
-		/// Make sure to use the `stream` function when you want to stream back the response.
-		case willNotStreamResponse
-
+	public enum Error: Swift.Error {
 		/// The response was not a 200 or 400 status
 		case invalidResponse(URLResponse)
 	}
@@ -38,15 +35,15 @@ public final class ResponsesAPI: Sendable {
 	///
 	/// Provide [text](https://platform.openai.com/docs/guides/text) or [image](https://platform.openai.com/docs/guides/images) inputs to generate [text](https://platform.openai.com/docs/guides/text) or [JSON](https://platform.openai.com/docs/guides/structured-outputs) outputs.
 	/// Have the model call your own [custom code](https://platform.openai.com/docs/guides/function-calling) or use built-in [tools](https://platform.openai.com/docs/guides/tools) like [web search](https://platform.openai.com/docs/guides/tools-web-search) or [file search](https://platform.openai.com/docs/guides/tools-file-search) to use your own data as input for the model's response.
+	///
 	/// To receive a stream of tokens as they are generated, use the `stream` function instead.
 	///
 	/// ## Errors
 	///
 	/// Errors if the request fails to send or has a non-200 status code (except for 400, which will return an OpenAI error instead).
 	public func create(_ request: Request) async throws -> Result<Response, Response.Error> {
-		if request.stream == true {
-			throw Error.willNotStreamResponse
-		}
+		var request = request
+		request.stream = false
 
 		var req = self.request
 		req.httpMethod = "POST"
@@ -59,6 +56,50 @@ public final class ResponsesAPI: Sendable {
 		}
 
 		return try decoder.decode(Response.ResultResponse.self, from: data).into()
+	}
+
+	/// Creates a model response and streams the tokens as they are generated.
+	///
+	/// Provide [text](https://platform.openai.com/docs/guides/text) or [image](https://platform.openai.com/docs/guides/images) inputs to generate [text](https://platform.openai.com/docs/guides/text) or [JSON](https://platform.openai.com/docs/guides/structured-outputs) outputs.
+	/// Have the model call your own [custom code](https://platform.openai.com/docs/guides/function-calling) or use built-in [tools](https://platform.openai.com/docs/guides/tools) like [web search](https://platform.openai.com/docs/guides/tools-web-search) or [file search](https://platform.openai.com/docs/guides/tools-file-search) to use your own data as input for the model's response.
+	///
+	/// To receive a single response, use the `create` function instead.
+	///
+	/// ## Errors
+	///
+	/// Errors if the request fails to send or has a non-200 status code.
+	public func stream(_ request: Request) async throws -> AsyncThrowingStream<Event, any Swift.Error> {
+		var request = request
+		request.stream = true
+
+		var req = self.request
+		req.httpMethod = "POST"
+		req.httpBody = try encoder.encode(request)
+		req.addValue("application/json", forHTTPHeaderField: "Content-Type")
+
+		let (bytes, res) = try await URLSession.shared.bytes(for: req)
+		guard let res = res as? HTTPURLResponse, res.statusCode == 200 else {
+			throw Error.invalidResponse(res)
+		}
+
+		let (stream, continuation) = AsyncThrowingStream.makeStream(of: Event.self)
+
+		let task = Task {
+			defer { continuation.finish() }
+
+			for try await line in bytes.lines {
+				guard let event = try parseSSELine(line, as: Event.self) else { continue }
+
+				continuation.yield(event)
+				try Task.checkCancellation()
+			}
+		}
+
+		continuation.onTermination = { _ in
+			task.cancel()
+		}
+
+		return stream
 	}
 
 	/// Retrieves a model response with the given ID.
@@ -111,5 +152,17 @@ public final class ResponsesAPI: Sendable {
 		}
 
 		return try decoder.decode(Input.ItemList.self, from: data)
+	}
+
+	/// A hacky parser for Server-Sent Events lines.
+	///
+	/// It looks for a line that starts with `data:`, then tries to decode the message as the given type.
+	private func parseSSELine<T: Decodable>(_ line: String, as _: T.Type = T.self) throws -> T? {
+		let components = line.split(separator: ":", maxSplits: 1, omittingEmptySubsequences: true)
+		guard components.count == 2, components[0] == "data" else { return nil }
+
+		let message = components[1].trimmingCharacters(in: .whitespacesAndNewlines)
+
+		return try decoder.decode(T.self, from: Data(message.utf8))
 	}
 }

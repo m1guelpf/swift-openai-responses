@@ -2,7 +2,7 @@ import Foundation
 import MetaCodable
 import HelperCoders
 
-@Codable @CodingKeys(.snake_case) public struct Response: Identifiable, Sendable {
+@Codable @CodingKeys(.snake_case) public struct Response: Identifiable, Equatable, Sendable {
 	public struct Error: Codable, Equatable {
 		/// The type of error.
 		public let type: String

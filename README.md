@@ -63,6 +63,23 @@ let response = try await client.create(Request(
 ))
 ```
 
+To stream back the response as it is generated, use the `stream` method:
+
+```swift
+let stream = try await client.stream(Request(
+    model: "gpt-4o",
+    input: .text("Are semicolons optional in JavaScript?"),
+    instructions: "You are a coding assistant that talks like a pirate",
+    stream: true
+))
+
+for try await event in stream {
+    switch event {
+        // ...
+    }
+}
+```
+
 You can retrieve a previously-created response by calling the `get` method with the response ID:
 
 ```swift

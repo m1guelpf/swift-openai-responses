@@ -1,6 +1,7 @@
 import Foundation
 import MetaCodable
 
+/// A request to the OpenAI Response API.
 @Codable @CodingKeys(.snake_case) public struct Request: Sendable {
 	/// Additional output data to include in the model response.
 	public enum Include: String, Equatable, Codable, Sendable {

@@ -25,11 +25,16 @@ import MetaCodable
 	///
 	/// Reducing reasoning effort can result in faster responses and fewer tokens used on reasoning in a response.
 	public var effort: Effort?
+
 	/// A summary of the reasoning performed by the model. `computer_use_preview` only.
 	///
 	/// This can be useful for debugging and understanding the model's reasoning process.
 	public var generateSummary: SummaryConfig?
 
+	/// Creates a new `ReasoningConfig` instance.
+	///
+	/// - Parameter effort: Constrains effort on reasoning for reasoning models.
+	/// - Parameter generateSummary: A summary of the reasoning performed by the model.
 	public init(effort: Effort? = nil, generateSummary: SummaryConfig? = nil) {
 		self.effort = effort
 		self.generateSummary = generateSummary
@@ -68,6 +73,9 @@ public struct TextConfig: Equatable, Codable, Sendable {
 	/// An object specifying the format that the model must output.
 	public var format: Format
 
+	/// Creates a new `TextConfig` instance.
+	///
+	/// - Parameter format: An object specifying the format that the model must output.
 	public init(format: Format = .text) {
 		self.format = format
 	}
@@ -77,6 +85,7 @@ public struct TextConfig: Equatable, Codable, Sendable {
 public enum Truncation: String, CaseIterable, Equatable, Hashable, Codable, Sendable {
 	/// If the context of this response and previous ones exceeds the model's context window size, the model will truncate the response to fit the context window by dropping input items in the middle of the conversation.
 	case auto
+
 	/// If a model response will exceed the context window size for a model, the request will fail with a 400 error.
 	case disabled
 }

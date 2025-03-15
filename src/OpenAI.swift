@@ -15,12 +15,21 @@ public final class ResponsesAPI: Sendable {
 	private let decoder = JSONDecoder()
 
 	/// Creates a new `ResponsesAPI` instance using the provided `URLRequest`.
+	///
+	/// You can use this initializer to use a custom base URL or custom headers.
+	///
+	/// - Parameter request: The `URLRequest` to use for the API.
 	public init(connectingTo request: URLRequest) {
 		self.request = request
 	}
 
 	/// Creates a new `ResponsesAPI` instance using the provided `authToken`.
+	///
 	/// You can optionally provide an `organizationId` and/or `projectId` to use with the API.
+	///
+	/// - Parameter authToken: The OpenAI API key to use for authentication.
+	/// - Parameter organizationId: The [organization](https://platform.openai.com/docs/guides/production-best-practices#setting-up-your-organization) associated with the request.
+	/// - Parameter projectId: The project associated with the request.
 	public convenience init(authToken: String, organizationId: String? = nil, projectId: String? = nil) {
 		var request = URLRequest(url: URL(string: "https://api.openai.com/v1/responses")!)
 
@@ -33,14 +42,12 @@ public final class ResponsesAPI: Sendable {
 
 	/// Creates a model response.
 	///
+	/// > Note: To receive a stream of tokens as they are generated, use the `stream` function instead.
+	///
 	/// Provide [text](https://platform.openai.com/docs/guides/text) or [image](https://platform.openai.com/docs/guides/images) inputs to generate [text](https://platform.openai.com/docs/guides/text) or [JSON](https://platform.openai.com/docs/guides/structured-outputs) outputs.
 	/// Have the model call your own [custom code](https://platform.openai.com/docs/guides/function-calling) or use built-in [tools](https://platform.openai.com/docs/guides/tools) like [web search](https://platform.openai.com/docs/guides/tools-web-search) or [file search](https://platform.openai.com/docs/guides/tools-file-search) to use your own data as input for the model's response.
 	///
-	/// To receive a stream of tokens as they are generated, use the `stream` function instead.
-	///
-	/// ## Errors
-	///
-	/// Errors if the request fails to send or has a non-200 status code (except for 400, which will return an OpenAI error instead).
+	/// - Throws: If the request fails to send or has a non-200 status code (except for 400, which will return an OpenAI error instead).
 	public func create(_ request: Request) async throws -> Result<Response, Response.Error> {
 		var request = request
 		request.stream = false
@@ -60,14 +67,12 @@ public final class ResponsesAPI: Sendable {
 
 	/// Creates a model response and streams the tokens as they are generated.
 	///
+	/// > Note: To receive a single response, use the `create` function instead.
+	///
 	/// Provide [text](https://platform.openai.com/docs/guides/text) or [image](https://platform.openai.com/docs/guides/images) inputs to generate [text](https://platform.openai.com/docs/guides/text) or [JSON](https://platform.openai.com/docs/guides/structured-outputs) outputs.
 	/// Have the model call your own [custom code](https://platform.openai.com/docs/guides/function-calling) or use built-in [tools](https://platform.openai.com/docs/guides/tools) like [web search](https://platform.openai.com/docs/guides/tools-web-search) or [file search](https://platform.openai.com/docs/guides/tools-file-search) to use your own data as input for the model's response.
 	///
-	/// To receive a single response, use the `create` function instead.
-	///
-	/// ## Errors
-	///
-	/// Errors if the request fails to send or has a non-200 status code.
+	/// - Throws: If the request fails to send or has a non-200 status code.
 	public func stream(_ request: Request) async throws -> AsyncThrowingStream<Event, any Swift.Error> {
 		var request = request
 		request.stream = true
@@ -104,9 +109,7 @@ public final class ResponsesAPI: Sendable {
 
 	/// Retrieves a model response with the given ID.
 	///
-	/// ## Errors
-	///
-	/// Errors if the request fails to send or has a non-200 status code (except for 400, which will return an OpenAI error instead).
+	/// - Throws: If the request fails to send or has a non-200 status code (except for 400, which will return an OpenAI error instead).
 	public func get(_ id: String) async throws -> Result<Response, Response.Error> {
 		var req = request
 		req.httpMethod = "GET"
@@ -122,9 +125,7 @@ public final class ResponsesAPI: Sendable {
 
 	/// Deletes a model response with the given ID.
 	///
-	/// ## Errors
-	///
-	/// Errors if the request fails to send or has a non-200 status code.
+	/// - Throws: `Error.invalidResponse` if the request fails to send or has a non-200 status code.
 	public func delete(_ id: String) async throws {
 		var req = request
 		req.httpMethod = "DELETE"
@@ -138,9 +139,7 @@ public final class ResponsesAPI: Sendable {
 
 	/// Returns a list of input items for a given response.
 	///
-	/// ## Errors
-	///
-	/// Errors if the request fails to send or has a non-200 status code.
+	/// - Throws: If the request fails to send or has a non-200 status code.
 	public func listInputs(_ id: String) async throws -> Input.ItemList {
 		var req = request
 		req.httpMethod = "GET"

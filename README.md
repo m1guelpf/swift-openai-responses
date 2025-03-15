@@ -7,19 +7,17 @@ An unofficial Swift SDK for the [OpenAI Responses API](https://platform.openai.c
 
 ## Installation
 
-### Swift Package Manager
+<details>
 
-The Swift Package Manager allows for developers to easily integrate packages into their Xcode projects and packages; and is also fully integrated into the swift compiler.
+<summary>
+Swift Package Manager
+</summary>
 
-### SPM Through XCode Project
+This library is available with Swift Package Manager.
 
--   File > Swift Packages > Add Package Dependency
--   Add https://github.com/m1guelpf/swift-openai-responses.git
--   Select "Branch" with "main"
+The Swift Package Manager is a tool for automating the distribution of Swift code and is integrated into the swift compiler.
 
-### SPM Through Xcode Package
-
-Once you have your Swift package set up, add the Git link within the dependencies value of your Package.swift file.
+Once you have your Swift package set up, adding the library as a dependency is as easy as adding it to the dependencies value of your `Package.swift`:
 
 ```swift
 dependencies: [
@@ -27,10 +25,16 @@ dependencies: [
 ]
 ```
 
-## Features
+</details>
+<details>
 
--   [x] A simple interface for directly interacting with the API
--   [ ] Wrap the API in an interface that manages the conversation for you
+<summary>Installing through XCode</summary>
+
+-   File > Swift Packages > Add Package Dependency
+-   Add https://github.com/m1guelpf/swift-openai-responses.git
+-   Select "Branch" with "main"
+    
+</details>
 
 ## Usage
 
@@ -85,6 +89,12 @@ You can retrieve a previously-created response by calling the `get` method with 
 ```swift
 let response = try await client.get("resp_...")
 ```
+
+## Features
+
+-   [x] A simple interface for directly interacting with the API
+-   [x] Support for streaming responses
+-   [ ] Wrap the API in an interface that manages the conversation for you
 
 ## License
 

@@ -13,11 +13,7 @@ An unofficial Swift SDK for the [OpenAI Responses API](https://platform.openai.c
 Swift Package Manager
 </summary>
 
-This library is available with Swift Package Manager.
-
-The Swift Package Manager is a tool for automating the distribution of Swift code and is integrated into the swift compiler.
-
-Once you have your Swift package set up, adding the library as a dependency is as easy as adding it to the dependencies value of your `Package.swift`:
+Add the following to your `Package.swift`:
 
 ```swift
 dependencies: [
@@ -36,19 +32,37 @@ dependencies: [
     
 </details>
 
-## Usage
+<details>
 
-To interact with the Responses API, create a new instance of `ResponsesAPI`, providing your API key and, optionally, an organization ID and/or project ID:
+<summary>CocoaPods</summary>
+
+Ask ChatGPT to help you migrate away from CocoaPods.
+    
+</details>
+
+## Architecture
+
+### `ResponsesAPI`
+
+#### Creating a new instance
+
+To interact with the Responses API, create a new instance of `ResponsesAPI` with your API key:
+
+```swift
+let client = ResponsesAPI(authToken: YOUR_OPENAI_API_TOKEN)
+```
+
+Optionally, you can provide an Organization ID and/or project ID:
 
 ```swift
 let client = ResponsesAPI(
     authToken: YOUR_OPENAI_API_KEY,
-    organizationId: YOUR_ORGANIZATION_ID, // optional
-    projectId: YOUR_PROJECT_ID // optional
+    organizationId: YOUR_ORGANIZATION_ID,
+    projectId: YOUR_PROJECT_ID
 )
 ```
 
-For advanced use cases, you can customize the `URLRequest` used to connect to the API:
+For more advanced use cases, you can customize the `URLRequest` used to connect to the API:
 
 ``` swift
 let urlRequest = URLRequest(url: MY_CUSTOM_ENDPOINT)
@@ -56,6 +70,8 @@ urlRequest.addValue("Bearer \(YOUR_API_KEY)", forHTTPHeaderField: "Authorization
 
 let client = ResponsesAPI(connectingTo: urlRequest)
 ```
+
+#### Creating Responses
 
 To create a new response, call the `create` method with a `Request` instance:
 
@@ -67,14 +83,17 @@ let response = try await client.create(Request(
 ))
 ```
 
+There are plenty of helper methods to make creating your `Request` easier. Look around the [package docs](https://swiftpackageindex.com/m1guelpf/swift-openai-responses/documentation/openai) for more.
+
+#### Streaming
+
 To stream back the response as it is generated, use the `stream` method:
 
 ```swift
 let stream = try await client.stream(Request(
     model: "gpt-4o",
     input: .text("Are semicolons optional in JavaScript?"),
-    instructions: "You are a coding assistant that talks like a pirate",
-    stream: true
+    instructions: "You are a coding assistant that talks like a pirate"
 ))
 
 for try await event in stream {
@@ -84,13 +103,21 @@ for try await event in stream {
 }
 ```
 
+#### Other Stuff
+
 You can retrieve a previously-created response by calling the `get` method with the response ID:
 
 ```swift
 let response = try await client.get("resp_...")
 ```
 
-## Features
+You can delete a previously-created response from OpenAI's servers by calling the `delete` method with the response ID:
+
+```swift
+try await client.delete("resp_...")
+```
+
+## Roadmap
 
 -   [x] A simple interface for directly interacting with the API
 -   [x] Support for streaming responses

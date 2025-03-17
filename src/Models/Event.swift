@@ -1,6 +1,7 @@
 import Foundation
 import MetaCodable
 
+/// A streaming event emitted by the Responses API
 @Codable @CodedAt("type") @CodingKeys(.snake_case) public enum Event: Equatable, Sendable {
 	/// An event that is emitted when a response is created.
 	///

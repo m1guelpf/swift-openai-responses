@@ -203,7 +203,7 @@ import HelperCoders
 
 	/// Aggregated text output from all `outputText` items in the output array, if any are present.
 	public var outputText: String {
-		output.compactMap { output -> Item.Output.Message? in
+		output.compactMap { output -> Message.Output? in
 			guard case let .message(message) = output else { return nil }
 			return message
 		}

@@ -3,7 +3,7 @@ import MetaCodable
 
 /// Configuration options for [reasoning models](https://platform.openai.com/docs/guides/reasoning).
 /// Only available for o-series models.
-@Codable @CodingKeys(.snake_case) public struct ReasoningConfig: Equatable, Sendable {
+@Codable @CodingKeys(.snake_case) public struct ReasoningConfig: Equatable, Hashable, Sendable {
 	/// Constrains effort on reasoning for [reasoning models](https://platform.openai.com/docs/guides/reasoning).
 	///
 	/// Reducing reasoning effort can result in faster responses and fewer tokens used on reasoning in a response.
@@ -46,9 +46,9 @@ import MetaCodable
 /// Learn more:
 /// - [Text inputs and outputs](https://platform.openai.com/docs/guides/text)
 /// - [Structured Outputs](https://platform.openai.com/docs/guides/structured-outputs)
-public struct TextConfig: Equatable, Codable, Sendable {
+public struct TextConfig: Equatable, Hashable, Codable, Sendable {
 	/// An object specifying the format that the model must output.
-	@Codable @CodedAt("type") @CodingKeys(.snake_case) public enum Format: Equatable, Sendable {
+	@Codable @CodedAt("type") @CodingKeys(.snake_case) public enum Format: Equatable, Hashable, Sendable {
 		/// Used to generate text responses.
 		case text
 		/// JSON Schema response format. Used to generate structured JSON responses. Learn more about [Structured Outputs](https://platform.openai.com/docs/guides/structured-outputs).

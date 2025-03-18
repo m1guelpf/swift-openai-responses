@@ -3,17 +3,20 @@ import MetaCodable
 import HelperCoders
 
 /// A response from the OpenAI Responses API
-@Codable @CodingKeys(.snake_case) public struct Response: Identifiable, Equatable, Sendable {
+@Codable @CodingKeys(.snake_case) public struct Response: Identifiable, Equatable, Hashable, Sendable {
 	/// An error object returned when the model fails to generate a Response.
-	public struct Error: Codable, Equatable {
+	public struct Error: Equatable, Hashable, Codable {
 		/// The type of error.
-		public let type: String
+		public var type: String
+
 		/// A human-readable description of the error.
-		public let message: String
+		public var message: String
+
 		/// The error code for the response.
-		public let code: String?
+		public var code: String?
+
 		/// The parameter that caused the error.
-		public let param: String?
+		public var param: String?
 
 		/// Create a new `Error` instance.
 		///
@@ -30,9 +33,9 @@ import HelperCoders
 	}
 
 	/// Details about why a response is incomplete.
-	public struct IncompleteDetails: Equatable, Codable, Sendable {
+	public struct IncompleteDetails: Equatable, Codable, Hashable, Sendable {
 		/// The reason why the response is incomplete.
-		public let reason: String
+		public var reason: String
 
 		/// Create a new `IncompleteDetails` instance.
 		///
@@ -43,7 +46,7 @@ import HelperCoders
 	}
 
 	/// The status of the response generation.
-	public enum Status: String, CaseIterable, Equatable, Codable, Sendable {
+	public enum Status: String, CaseIterable, Equatable, Hashable, Codable, Sendable {
 		case failed
 		case completed
 		case incomplete
@@ -51,11 +54,11 @@ import HelperCoders
 	}
 
 	/// Represents token usage details including input tokens, output tokens, a breakdown of output tokens, and the total tokens used.
-	@Codable @CodingKeys(.snake_case) public struct Usage: Equatable, Sendable {
+	@Codable @CodingKeys(.snake_case) public struct Usage: Equatable, Hashable, Sendable {
 		/// A detailed breakdown of the input tokens.
-		@Codable @CodingKeys(.snake_case) public struct InputTokensDetails: Equatable, Sendable {
+		@Codable @CodingKeys(.snake_case) public struct InputTokensDetails: Equatable, Hashable, Sendable {
 			/// The number of cached tokens.
-			public let cachedTokens: UInt
+			public var cachedTokens: UInt
 
 			/// Create a new `InputTokensDetails` instance.
 			///
@@ -66,9 +69,9 @@ import HelperCoders
 		}
 
 		/// A detailed breakdown of the output tokens.
-		@Codable @CodingKeys(.snake_case) public struct OutputTokensDetails: Equatable, Sendable {
+		@Codable @CodingKeys(.snake_case) public struct OutputTokensDetails: Equatable, Hashable, Sendable {
 			/// The number of reasoning tokens.
-			public let reasoningTokens: UInt
+			public var reasoningTokens: UInt
 
 			/// Create a new `OutputTokensDetails` instance.
 			///
@@ -79,19 +82,19 @@ import HelperCoders
 		}
 
 		/// The number of input tokens.
-		public let inputTokens: UInt
+		public var inputTokens: UInt
 
 		/// A detailed breakdown of the input tokens.
-		public let inputTokensDetails: InputTokensDetails
+		public var inputTokensDetails: InputTokensDetails
 
 		/// The number of output tokens.
-		public let outputTokens: UInt
+		public var outputTokens: UInt
 
 		/// A detailed breakdown of the output tokens.
-		public let outputTokensDetails: OutputTokensDetails
+		public var outputTokensDetails: OutputTokensDetails
 
 		/// The total number of tokens used.
-		public let totalTokens: UInt
+		public var totalTokens: UInt
 
 		/// Create a new `Usage` instance.
 		///
@@ -111,95 +114,95 @@ import HelperCoders
 
 	/// When this Response was created.
 	@CodedBy(Since1970DateCoder())
-	public let createdAt: Date
+	public var createdAt: Date
 
 	/// Unique identifier for this Response.
-	public let id: String
+	public var id: String
 
 	/// Details about why the response is incomplete.
-	public let incompleteDetails: IncompleteDetails?
+	public var incompleteDetails: IncompleteDetails?
 
 	/// Inserts a system (or developer) message as the first item in the model's context.
 	///
 	/// When using along with `previousResponseId`, the instructions from a previous response will be not be carried over to the next response. This makes it simple to swap out system (or developer) messages in new responses.
-	public let instructions: String?
+	public var instructions: String?
 
 	/// An upper bound for the number of tokens that can be generated for a response, including visible output tokens and [reasoning tokens](https://platform.openai.com/docs/guides/reasoning).
-	public let maxOutputTokens: UInt?
+	public var maxOutputTokens: UInt?
 
 	/// Set of 16 key-value pairs that can be attached to an object.
 	///
 	/// This can be useful for storing additional information about the object in a structured format, and querying for objects via API or the dashboard.
 	///
 	/// Keys are strings with a maximum length of 64 characters. Values are strings with a maximum length of 512 characters.
-	public let metadata: [String: String]
+	public var metadata: [String: String]
 
 	/// Model ID used to generate the response, like gpt-4o or o1. OpenAI offers a wide range of models with different capabilities, performance characteristics, and price points.
 	///
 	/// Refer to the [model guide](https://platform.openai.com/docs/models) to browse and compare available models.
-	public let model: String
+	public var model: String
 
 	/// An array of content items generated by the model.
 	/// - The length and order of items in the `output` array is dependent on the model's response.
 	/// - Rather than accessing the first item in the `output` array and assuming it's an assistant message with the content generated by the model, you might consider using the `output_text` function.
-	public let output: [Item.Output]
+	public var output: [Item.Output]
 
 	/// Whether to allow the model to run tool calls in parallel.
-	public let parallelToolCalls: Bool
+	public var parallelToolCalls: Bool
 
 	/// The unique ID of the previous response to the model. Use this to create multi-turn conversations.
 	/// - Learn more about [conversation state](https://platform.openai.com/docs/guides/conversation-state).
-	public let previousResponseId: String?
+	public var previousResponseId: String?
 
 	/// Configuration options for [reasoning models](https://platform.openai.com/docs/guides/reasoning).
 	/// Only available for o-series models.
-	public let reasoning: ReasoningConfig
+	public var reasoning: ReasoningConfig
 
 	/// The status of the response generation.
-	public let status: Status
+	public var status: Status
 
 	/// What sampling temperature to use, between 0 and 2.
 	///
 	/// Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic.
 	///
 	/// We generally recommend altering this or `topP` but not both.
-	public let temperature: Int
+	public var temperature: Int
 
 	/// Configuration options for a text response from the model. Can be plain text or structured JSON data.
 	/// - [Text inputs and outputs](https://platform.openai.com/docs/guides/text)
 	/// - [Structured Outputs](https://platform.openai.com/docs/guides/structured-outputs)
-	public let text: TextConfig
+	public var text: TextConfig
 
 	/// How the model should select which tool (or tools) to use when generating a response.
 	///
 	/// See the `tools` parameter to see how to specify which tools the model can call.
-	public let toolChoice: Tool.Choice
+	public var toolChoice: Tool.Choice
 
 	/// An array of tools the model may call while generating a response. You can specify which tool to use by setting the `toolChoice` parameter.
 	///
 	/// The two categories of tools you can provide the model are:
 	/// - **Built-in tools**: Tools that are provided by OpenAI that extend the model's capabilities, like [web search](https://platform.openai.com/docs/guides/tools-web-search) or [file search](https://platform.openai.com/docs/guides/tools-file-search). Learn more about [built-in tools](https://platform.openai.com/docs/guides/tools).
 	/// - **Function calls (custom tools)**: Functions that are defined by you, enabling the model to call your own code. Learn more about [function calling](https://platform.openai.com/docs/guides/function-calling).
-	public let tools: [Tool]
+	public var tools: [Tool]
 
 	/// An alternative to sampling with temperature, called nucleus sampling, where the model considers the results of the tokens with `topP` probability mass.
 	///
 	/// So 0.1 means only the tokens comprising the top 10% probability mass are considered.
 	///
 	/// We generally recommend altering this or `temperature` but not both.
-	public let topP: Int
+	public var topP: Int
 
 	/// The truncation strategy to use for the model response.
-	public let truncation: Truncation
+	public var truncation: Truncation
 
 	/// Represents token usage details including input tokens, output tokens, a breakdown of output tokens, and the total tokens used.
-	public let usage: Usage?
+	public var usage: Usage?
 
 	/// Whether the response was stored on OpenAI's server for later retrieval.
-	public let store: Bool
+	public var store: Bool
 
 	/// A unique identifier representing your end-user, which can help OpenAI to monitor and detect abuse. [Learn more](https://platform.openai.com/docs/guides/safety-best-practices#end-user-ids).
-	public let user: String?
+	public var user: String?
 
 	/// Aggregated text output from all `outputText` items in the output array, if any are present.
 	public var outputText: String {

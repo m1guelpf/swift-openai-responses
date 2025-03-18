@@ -2,23 +2,23 @@ import Foundation
 import MetaCodable
 
 /// Text, image, or file inputs to the model, used to generate a response.
-@Codable @UnTagged public enum Input: Equatable, Sendable {
+@Codable @UnTagged public enum Input: Equatable, Hashable, Sendable {
 	/// A list of items used to generate a model response.
-	@Codable @CodingKeys(.snake_case) public struct ItemList: Equatable, Sendable {
+	@Codable @CodingKeys(.snake_case) public struct ItemList: Equatable, Hashable, Sendable {
 		/// A list of items used to generate this response.
-		public let data: [Item.Input]
+		public var data: [Item.Input]
 
 		/// The ID of the first item in the list.
-		public let firstId: String
+		public var firstId: String
 
 		/// The ID of the last item in the list.
-		public let lastId: String
+		public var lastId: String
 
 		/// Whether there are more items available.
-		public let hasMore: Bool
+		public var hasMore: Bool
 	}
 
-	@Codable @CodedAt("type") public enum ListItem: Equatable, Sendable {
+	@Codable @CodedAt("type") public enum ListItem: Equatable, Hashable, Sendable {
 		/// A message input to the model with a role indicating instruction following hierarchy.
 		///
 		/// Instructions given with the `developer` or `system` role take precedence over instructions given with the `user` role.
@@ -211,13 +211,13 @@ public extension Input.ListItem {
 		)))
 	}
 
-	/// The results of a web search tool call.
+	/// A tool call to run a web search.
 	///
 	/// See the [web search guide](https://platform.openai.com/docs/guides/tools-web-search) for more information.
 	/// - Parameter id: The unique ID of the web search tool call.
 	/// - Parameter status: The status of the web search tool call.
-	static func webSearchResults(id: String, status: String) -> Self {
-		.item(Item.Input.webSearchResults(Item.WebSearchCall(id: id, status: status)))
+	static func webSearchCall(id: String, status: Item.WebSearchCall.Status) -> Self {
+		.item(Item.Input.webSearchCall(Item.WebSearchCall(id: id, status: status)))
 	}
 
 	/// A tool call to run a function.

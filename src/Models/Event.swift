@@ -56,7 +56,7 @@ import MetaCodable
 	@CodedAs("response.content_part.added")
 	case contentPartAdded(
 		contentIndex: UInt,
-		item_id: String,
+		itemId: String,
 		outputIndex: UInt,
 		part: Item.Output.Content
 	)

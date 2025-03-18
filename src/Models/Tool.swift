@@ -6,8 +6,8 @@ import MetaCodable
 /// The two categories of tools you can provide the model are:
 /// - **Built-in tools**: Tools that are provided by OpenAI that extend the model's capabilities, like [web search](https://platform.openai.com/docs/guides/tools-web-search) or [file search](https://platform.openai.com/docs/guides/tools-file-search). Learn more about [built-in tools](https://platform.openai.com/docs/guides/tools).
 /// - **Function calls (custom tools)**: Functions that are defined by you, enabling the model to call your own code. Learn more about [function calling](https://platform.openai.com/docs/guides/function-calling).
-@Codable @CodedAt("type") @CodingKeys(.snake_case) public enum Tool: Equatable, Sendable {
-	public enum Choice: Equatable, Sendable {
+@Codable @CodedAt("type") @CodingKeys(.snake_case) public enum Tool: Equatable, Hashable, Sendable {
+	public enum Choice: Equatable, Hashable, Sendable {
 		case none
 		case auto
 		case required
@@ -19,8 +19,8 @@ import MetaCodable
 
 	/// Defines a function in your own code the model can choose to call.
 	/// - Learn more about [function calling](https://platform.openai.com/docs/guides/function-calling).
-	public struct Function: Equatable, Codable, Sendable {
-		public struct Parameters: Codable, Equatable, Sendable {
+	public struct Function: Equatable, Hashable, Codable, Sendable {
+		public struct Parameters: Codable, Hashable, Equatable, Sendable {
 			public var type: JSONType
 			public var properties: [String: Property]?
 			public var required: [String]?
@@ -53,7 +53,7 @@ import MetaCodable
 				self.maximum = maximum
 			}
 
-			public struct Property: Codable, Equatable, Sendable {
+			public struct Property: Codable, Hashable, Equatable, Sendable {
 				public var type: JSONType
 				public var description: String?
 				public var format: String?
@@ -101,7 +101,7 @@ import MetaCodable
 					self.uniqueItems = uniqueItems
 				}
 
-				public struct Items: Codable, Equatable, Sendable {
+				public struct Items: Codable, Equatable, Hashable, Sendable {
 					public var type: JSONType
 					public var properties: [String: Property]?
 					public var pattern: String?
@@ -142,7 +142,7 @@ import MetaCodable
 				}
 			}
 
-			public enum JSONType: String, Codable, Sendable {
+			public enum JSONType: String, Equatable, Hashable, Codable, Sendable {
 				case integer
 				case string
 				case boolean
@@ -182,13 +182,13 @@ import MetaCodable
 	/// A tool that searches for relevant content from uploaded files.
 	///
 	/// Learn more about the [file search tool](https://platform.openai.com/docs/guides/tools-file-search).
-	@Codable @CodingKeys(.snake_case) public struct FileSearch: Equatable, Sendable {
+	@Codable @CodingKeys(.snake_case) public struct FileSearch: Equatable, Hashable, Sendable {
 		/// A filter to apply based on file attributes.
-		@Codable @UnTagged public enum Filters: Equatable, Sendable {
+		@Codable @UnTagged public enum Filters: Equatable, Hashable, Sendable {
 			/// A filter used to compare a specified attribute key to a given value using a defined comparison operation.
-			public struct Comparison: Equatable, Codable, Sendable {
+			public struct Comparison: Equatable, Hashable, Codable, Sendable {
 				/// The value to compare against the attribute key.
-				@Codable @UnTagged public enum Value: Equatable, Sendable {
+				@Codable @UnTagged public enum Value: Equatable, Hashable, Sendable {
 					case bool(Bool)
 					case number(Int)
 					case string(String)
@@ -224,7 +224,7 @@ import MetaCodable
 			}
 
 			/// Combine multiple filters using and or or.
-			public struct Compound: Equatable, Codable, Sendable {
+			public struct Compound: Equatable, Hashable, Codable, Sendable {
 				/// Type of operation.
 				public enum CompoundType: String, CaseIterable, Equatable, Hashable, Codable, Sendable {
 					case and
@@ -254,7 +254,7 @@ import MetaCodable
 		}
 
 		/// Ranking options for search.
-		@Codable @CodingKeys(.snake_case) public struct RankingOptions: Equatable, Sendable {
+		@Codable @CodingKeys(.snake_case) public struct RankingOptions: Equatable, Hashable, Sendable {
 			/// The ranker to use for the file search.
 			public var ranker: String
 
@@ -300,7 +300,7 @@ import MetaCodable
 	/// A tool that controls a virtual computer.
 	///
 	/// Learn more about the [computer tool](https://platform.openai.com/docs/guides/tools-computer-use).
-	@Codable @CodingKeys(.snake_case) public struct ComputerUse: Equatable, Sendable {
+	@Codable @CodingKeys(.snake_case) public struct ComputerUse: Equatable, Hashable, Sendable {
 		/// The type of computer environment to control.
 		public enum Environment: String, CaseIterable, Equatable, Hashable, Codable, Sendable {
 			case mac
@@ -333,7 +333,7 @@ import MetaCodable
 	/// This tool searches the web for relevant results to use in a response.
 	///
 	/// Learn more about the [web search tool](https://platform.openai.com/docs/guides/tools-web-search?api-mode=responses).
-	@Codable @CodingKeys(.snake_case) public struct WebSearch: Equatable, Sendable {
+	@Codable @CodingKeys(.snake_case) public struct WebSearch: Equatable, Hashable, Sendable {
 		/// High level guidance for the amount of context window space to use for the search.
 		public enum ContextSize: String, CaseIterable, Equatable, Hashable, Codable, Sendable {
 			case low
@@ -342,9 +342,9 @@ import MetaCodable
 		}
 
 		/// Approximate location parameters for the search.
-		public struct UserLocation: Equatable, Codable, Sendable {
+		public struct UserLocation: Equatable, Hashable, Codable, Sendable {
 			/// The type of location approximation
-			public enum LocationType: String, CaseIterable, Equatable, Codable, Sendable {
+			public enum LocationType: String, CaseIterable, Equatable, Hashable, Codable, Sendable {
 				case approximate
 			}
 

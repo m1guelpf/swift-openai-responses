@@ -2,9 +2,9 @@ import Foundation
 import MetaCodable
 
 /// A request to the OpenAI Response API.
-@Codable @CodingKeys(.snake_case) public struct Request: Sendable {
+@Codable @CodingKeys(.snake_case) public struct Request: Equatable, Hashable, Sendable {
 	/// Additional output data to include in the model response.
-	public enum Include: String, Equatable, Codable, Sendable {
+	public enum Include: String, Equatable, Hashable, Codable, Sendable {
 		/// Include the search results of the file search tool call.
 		case fileSearchResults = "file_search_call.results"
 		/// Include image urls from the input message.

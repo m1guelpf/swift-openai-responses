@@ -40,6 +40,11 @@ public enum Message: Equatable, Hashable, Sendable {
 		/// Text, image, or audio input to the model, used to generate a response. Can also contain previous assistant responses.
 		public var content: OpenAI.Input.Content
 
+		/// The text content of the input.
+		public var text: String? {
+			return content.text
+		}
+
 		public init(role: Role = .user, content: OpenAI.Input.Content, status: Status? = nil) {
 			self.role = role
 			self.status = status
@@ -50,16 +55,23 @@ public enum Message: Equatable, Hashable, Sendable {
 	/// An output message from the model.
 	public struct Output: Equatable, Hashable, Codable, Sendable {
 		/// The content of the output message.
-		public let content: [Item.Output.Content]
+		public var content: [Item.Output.Content]
 
 		/// The unique ID of the output message.
-		public let id: String
+		public var id: String
 
 		/// The role of the output message. Always `assistant`.
-		public let role: Role
+		public var role: Role
 
 		/// The status of the message output.
-		public let status: Status
+		public var status: Status
+
+		/// The text content of the output.
+		///
+		/// > Note: Annotations are not included when using this property.
+		public var text: String {
+			return content.map(\.text).joined()
+		}
 
 		/// Creates a new output message.
 		///
@@ -111,9 +123,9 @@ public enum Message: Equatable, Hashable, Sendable {
 	public var text: String? {
 		switch self {
 			case let .input(message):
-				return message.content.text
+				return message.text
 			case let .output(message):
-				return message.content.map(\.text).joined()
+				return message.text
 		}
 	}
 }

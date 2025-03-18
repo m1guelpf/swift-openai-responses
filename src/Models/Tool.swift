@@ -30,6 +30,7 @@ import MetaCodable
 			public var multipleOf: Int?
 			public var minimum: Int?
 			public var maximum: Int?
+			public var additionalProperties: Bool?
 
 			public init(
 				type: JSONType,
@@ -40,17 +41,19 @@ import MetaCodable
 				enum: [String]? = nil,
 				multipleOf: Int? = nil,
 				minimum: Int? = nil,
-				maximum: Int? = nil
+				maximum: Int? = nil,
+				additionalProperties: Bool? = false
 			) {
 				self.type = type
-				self.properties = properties
-				self.required = required
-				self.pattern = pattern
-				self.const = const
 				self.enum = `enum`
-				self.multipleOf = multipleOf
+				self.const = const
+				self.pattern = pattern
 				self.minimum = minimum
 				self.maximum = maximum
+				self.required = required
+				self.multipleOf = multipleOf
+				self.properties = properties
+				self.additionalProperties = additionalProperties
 			}
 
 			public struct Property: Codable, Hashable, Equatable, Sendable {

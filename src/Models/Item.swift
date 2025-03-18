@@ -146,6 +146,7 @@ public enum Item: Equatable, Hashable, Sendable {
 		case fileSearch(Item.FileSearchCall)
 
 		/// A tool call to run a function. See the [function calling guide](https://platform.openai.com/docs/guides/function-calling) for more information.
+		@CodedAs("function_call")
 		case functionCall(Item.FunctionCall)
 
 		/// The results of a web search tool call. See the [web search guide](https://platform.openai.com/docs/guides/tools-web-search) for more information.
@@ -261,10 +262,10 @@ public enum Item: Equatable, Hashable, Sendable {
 		/// The status of the function call.
 		///
 		/// See the [function calling guide](https://platform.openai.com/docs/guides/function-calling) for more information.
-		@Codable @CodingKeys(.snake_case) public enum Status: Equatable, Hashable, Sendable {
-			case inProgress
+		public enum Status: String, CaseIterable, Equatable, Hashable, Codable, Sendable {
 			case completed
 			case incomplete
+			case inProgress = "in_progress"
 		}
 
 		/// A JSON string of the arguments to pass to the function.

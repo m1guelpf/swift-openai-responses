@@ -100,9 +100,12 @@ public final class ResponsesAPI: Sendable {
 			defer { continuation.finish() }
 
 			for try await line in bytes.lines {
-				guard let event = try parseSSELine(line, as: Event.self) else { continue }
+				guard let event = parseSSELine(line, as: Event.self) else {
+					continue
+				}
 
-				continuation.yield(event)
+				continuation.yield(with: event)
+
 				try Task.checkCancellation()
 			}
 		}
@@ -163,12 +166,12 @@ public final class ResponsesAPI: Sendable {
 	/// A hacky parser for Server-Sent Events lines.
 	///
 	/// It looks for a line that starts with `data:`, then tries to decode the message as the given type.
-	private func parseSSELine<T: Decodable>(_ line: String, as _: T.Type = T.self) throws -> T? {
+	private func parseSSELine<T: Decodable>(_ line: String, as _: T.Type = T.self) -> Result<T, Swift.Error>? {
 		let components = line.split(separator: ":", maxSplits: 1, omittingEmptySubsequences: true)
 		guard components.count == 2, components[0] == "data" else { return nil }
 
 		let message = components[1].trimmingCharacters(in: .whitespacesAndNewlines)
 
-		return try decoder.decode(T.self, from: Data(message.utf8))
+		return Result { try decoder.decode(T.self, from: Data(message.utf8)) }
 	}
 }

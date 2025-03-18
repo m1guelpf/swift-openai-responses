@@ -433,6 +433,11 @@ public enum Item: Equatable, Hashable, Sendable {
 
 			/// A wait action.
 			case wait
+
+			/// No action specified.
+			///
+			/// > Note: This action is not part of the official API. An invalid action gets returned in some cases when streaming back responses, so this catches it.
+			case none
 		}
 
 		/// Indicates which mouse button was pressed during the click.
@@ -494,6 +499,7 @@ public enum Item: Equatable, Hashable, Sendable {
 		}
 
 		/// The action to execute.
+		@Default(Action.none)
 		public var action: Action
 
 		/// The unique ID of the computer call.

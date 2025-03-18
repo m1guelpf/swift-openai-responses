@@ -295,6 +295,10 @@ extension Response.Error: Swift.Error, LocalizedError {
 }
 
 extension Response {
+	struct ErrorResponse: Decodable {
+		var error: Error
+	}
+
 	enum ResultResponse: Decodable {
 		case success(Response)
 		case error(Error)

@@ -83,8 +83,15 @@ public final class ResponsesAPI: Sendable {
 		req.addValue("application/json", forHTTPHeaderField: "Content-Type")
 
 		let (bytes, res) = try await URLSession.shared.bytes(for: req)
-		guard let res = res as? HTTPURLResponse, res.statusCode == 200 else {
+		guard let res = res as? HTTPURLResponse, res.statusCode == 200 || res.statusCode == 400 else {
 			throw Error.invalidResponse(res)
+		}
+
+		if res.statusCode == 400 {
+			let bytes = try await bytes.collect()
+
+			let response = try decoder.decode(Response.ErrorResponse.self, from: bytes)
+			throw response.error
 		}
 
 		let (stream, continuation) = AsyncThrowingStream.makeStream(of: Event.self)

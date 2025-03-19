@@ -6,6 +6,9 @@ import FoundationNetworking
 /// A Swift client for the OpenAI Responses API.
 public final class ResponsesAPI: Sendable {
 	public enum Error: Swift.Error {
+		/// The provided request is invalid.
+		case invalidRequest(URLRequest)
+
 		/// The response was not a 200 or 400 status
 		case invalidResponse(URLResponse)
 	}
@@ -19,7 +22,14 @@ public final class ResponsesAPI: Sendable {
 	/// You can use this initializer to use a custom base URL or custom headers.
 	///
 	/// - Parameter request: The `URLRequest` to use for the API.
-	public init(connectingTo request: URLRequest) {
+	public init(connectingTo request: URLRequest) throws {
+		guard let url = request.url else { throw Error.invalidRequest(request) }
+
+		var request = request
+		if url.lastPathComponent != "/" {
+			request.url = url.appendingPathComponent("/")
+		}
+
 		self.request = request
 	}
 
@@ -31,13 +41,13 @@ public final class ResponsesAPI: Sendable {
 	/// - Parameter organizationId: The [organization](https://platform.openai.com/docs/guides/production-best-practices#setting-up-your-organization) associated with the request.
 	/// - Parameter projectId: The project associated with the request.
 	public convenience init(authToken: String, organizationId: String? = nil, projectId: String? = nil) {
-		var request = URLRequest(url: URL(string: "https://api.openai.com/v1/responses")!)
+		var request = URLRequest(url: URL(string: "https://api.openai.com/")!)
 
 		request.addValue("Bearer \(authToken)", forHTTPHeaderField: "Authorization")
 		if let projectId { request.addValue(projectId, forHTTPHeaderField: "OpenAI-Project") }
 		if let organizationId { request.addValue(organizationId, forHTTPHeaderField: "OpenAI-Organization") }
 
-		self.init(connectingTo: request)
+		try! self.init(connectingTo: request)
 	}
 
 	/// Creates a model response.
@@ -54,15 +64,11 @@ public final class ResponsesAPI: Sendable {
 
 		var req = self.request
 		req.httpMethod = "POST"
+		req.url!.append(path: "v1/responses")
 		req.httpBody = try encoder.encode(request)
 		req.addValue("application/json", forHTTPHeaderField: "Content-Type")
 
-		let (data, res) = try await URLSession.shared.data(for: req)
-		guard let res = res as? HTTPURLResponse, res.statusCode == 200 || res.statusCode == 400 else {
-			throw Error.invalidResponse(res)
-		}
-
-		return try decoder.decode(Response.ResultResponse.self, from: data).into()
+		return try decoder.decode(Response.ResultResponse.self, from: await send(request: req)).into()
 	}
 
 	/// Creates a model response and streams the tokens as they are generated.
@@ -79,20 +85,11 @@ public final class ResponsesAPI: Sendable {
 
 		var req = self.request
 		req.httpMethod = "POST"
+		req.url!.append(path: "v1/responses")
 		req.httpBody = try encoder.encode(request)
 		req.addValue("application/json", forHTTPHeaderField: "Content-Type")
 
-		let (bytes, res) = try await URLSession.shared.bytes(for: req)
-		guard let res = res as? HTTPURLResponse, res.statusCode == 200 || res.statusCode == 400 else {
-			throw Error.invalidResponse(res)
-		}
-
-		if res.statusCode == 400 {
-			let bytes = try await bytes.collect()
-
-			let response = try decoder.decode(Response.ErrorResponse.self, from: bytes)
-			throw response.error
-		}
+		let bytes = try await stream(request: req)
 
 		let (stream, continuation) = AsyncThrowingStream.makeStream(of: Event.self)
 
@@ -123,14 +120,9 @@ public final class ResponsesAPI: Sendable {
 	public func get(_ id: String) async throws -> Result<Response, Response.Error> {
 		var req = request
 		req.httpMethod = "GET"
-		req.url!.append(path: "/\(id)")
+		req.url!.append(path: "v1/responses/\(id)")
 
-		let (data, res) = try await URLSession.shared.data(for: req)
-		guard let res = res as? HTTPURLResponse, res.statusCode == 200 || res.statusCode == 400 else {
-			throw Error.invalidResponse(res)
-		}
-
-		return try decoder.decode(Response.ResultResponse.self, from: data).into()
+		return try decoder.decode(Response.ResultResponse.self, from: await send(request: req)).into()
 	}
 
 	/// Deletes a model response with the given ID.
@@ -139,12 +131,9 @@ public final class ResponsesAPI: Sendable {
 	public func delete(_ id: String) async throws {
 		var req = request
 		req.httpMethod = "DELETE"
-		req.url!.append(path: "/\(id)")
+		req.url!.append(path: "v1/responses/\(id)")
 
-		let (_, res) = try await URLSession.shared.data(for: req)
-		guard let res = res as? HTTPURLResponse, res.statusCode == 200 else {
-			throw Error.invalidResponse(res)
-		}
+		_ = try await send(request: req)
 	}
 
 	/// Returns a list of input items for a given response.
@@ -155,23 +144,54 @@ public final class ResponsesAPI: Sendable {
 		req.httpMethod = "GET"
 		req.url!.append(path: "/\(id)/inputs")
 
-		let (data, res) = try await URLSession.shared.data(for: req)
-		guard let res = res as? HTTPURLResponse, res.statusCode == 200 else {
-			throw Error.invalidResponse(res)
-		}
-
-		return try decoder.decode(Input.ItemList.self, from: data)
+		return try decoder.decode(Input.ItemList.self, from: await send(request: req))
 	}
+}
 
+// MARK: - Private helpers
+
+private extension ResponsesAPI {
 	/// A hacky parser for Server-Sent Events lines.
 	///
 	/// It looks for a line that starts with `data:`, then tries to decode the message as the given type.
-	private func parseSSELine<T: Decodable>(_ line: String, as _: T.Type = T.self) -> Result<T, Swift.Error>? {
+	func parseSSELine<T: Decodable>(_ line: String, as _: T.Type = T.self) -> Result<T, Swift.Error>? {
 		let components = line.split(separator: ":", maxSplits: 1, omittingEmptySubsequences: true)
 		guard components.count == 2, components[0] == "data" else { return nil }
 
 		let message = components[1].trimmingCharacters(in: .whitespacesAndNewlines)
 
 		return Result { try decoder.decode(T.self, from: Data(message.utf8)) }
+	}
+
+	/// Sends an URLRequest and returns the response data.
+	///
+	/// - Throws: If the request fails to send or has a non-200 status code.
+	func send(request: URLRequest) async throws -> Data {
+		let (data, res) = try await URLSession.shared.data(for: request)
+
+		guard let res = res as? HTTPURLResponse else { throw Error.invalidResponse(res) }
+		guard res.statusCode != 200 else { return data }
+
+		if let response = try? decoder.decode(Response.ErrorResponse.self, from: data) {
+			throw response.error
+		}
+
+		throw Error.invalidResponse(res)
+	}
+
+	/// Sends an URLRequest and returns a stream of bytes.
+	///
+	/// - Throws: If the request fails to send or has a non-200 status code.
+	func stream(request: URLRequest) async throws -> URLSession.AsyncBytes {
+		let (data, res) = try await URLSession.shared.bytes(for: request)
+
+		guard let res = res as? HTTPURLResponse else { throw Error.invalidResponse(res) }
+		guard res.statusCode != 200 else { return data }
+
+		if let response = try? decoder.decode(Response.ErrorResponse.self, from: await data.collect()) {
+			throw response.error
+		}
+
+		throw Error.invalidResponse(res)
 	}
 }

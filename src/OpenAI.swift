@@ -146,6 +146,20 @@ public final class ResponsesAPI: Sendable {
 
 		return try decoder.decode(Input.ItemList.self, from: await send(request: req))
 	}
+
+	public func upload(file: File.Upload, purpose: File.Purpose = .userData) async throws -> File {
+		let form = FormData(
+			boundary: UUID().uuidString,
+			entries: [file.toFormEntry(), .string(paramName: "purpose", value: purpose.rawValue)]
+		)
+
+		var req = request
+		req.httpMethod = "POST"
+		req.attach(formData: form)
+		req.url!.append(path: "v1/files")
+
+		return try decoder.decode(File.self, from: await send(request: req))
+	}
 }
 
 // MARK: - Private helpers

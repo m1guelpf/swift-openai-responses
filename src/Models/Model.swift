@@ -3,6 +3,7 @@ import Foundation
 /// The model to use for generating a response.
 public enum Model: Equatable, Hashable, Sendable {
 	case o1
+	case o1Pro
 	case o1Mini
 	case o3Mini
 	case gpt4_5Preview
@@ -20,6 +21,7 @@ extension Model: Codable {
 		switch self {
 			case .o1: try "o1".encode(to: encoder)
 			case .gpt4: try "gpt-4".encode(to: encoder)
+			case .o1Pro: try "o1-pro".encode(to: encoder)
 			case .gpt4o: try "gpt-4o".encode(to: encoder)
 			case .o1Mini: try "o1-mini".encode(to: encoder)
 			case .o3Mini: try "o3-mini".encode(to: encoder)
@@ -39,6 +41,7 @@ extension Model: Codable {
 			case "o1": self = .o1
 			case "gpt-4": self = .gpt4
 			case "gpt-4o": self = .gpt4o
+			case "o1-pro": self = .o1Pro
 			case "o1-mini": self = .o1Mini
 			case "o3-mini": self = .o3Mini
 			case "gpt-4o-mini": self = .gpt4oMini

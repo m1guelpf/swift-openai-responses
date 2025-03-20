@@ -117,6 +117,14 @@ public enum Message: Equatable, Hashable, Sendable {
 		}
 	}
 
+	/// The unique ID of the message, if available.
+	public var id: String? {
+		switch self {
+			case .input: return nil
+			case let .output(output): return output.id
+		}
+	}
+
 	/// The text content of the input.
 	///
 	/// > Note: This property does not include reasoning text.

@@ -59,8 +59,8 @@ import MetaCodable
 			/// - Parameter imageUrl: The URL of the image to be sent to the model. A fully qualified URL or base64 encoded image in a data URL.
 			@CodedAs("input_image") case image(
 				detail: ImageDetail = .auto,
-				fileId: String?,
-				imageUrl: String?
+				fileId: String? = nil,
+				imageUrl: String? = nil
 			)
 
 			/// A file input to the model.
@@ -68,23 +68,28 @@ import MetaCodable
 			/// - Parameter fileId: The ID of the file to be sent to the model.
 			/// - Parameter filename:  The name of the file to be sent to the model.
 			@CodedAs("input_file") case file(
-				fileData: String?,
-				fileId: String?,
-				filename: String?
+				fileData: String? = nil,
+				fileId: String? = nil,
+				filename: String? = nil
 			)
 		}
 
 		/// A text input to the model, equivalent to a text input.
 		case text(String)
+
 		/// A list of one or many content items to the model, containing different content types.
 		case list([ContentItem])
+
+		/// Creates a new text input to the model.
+		public init(_ text: String) {
+			self = .text(text)
+		}
+
+		/// Creates a new input to the model with a list of items.
+		public init(_ items: [ContentItem]) {
+			self = .list(items)
+		}
 	}
-
-	/// A text input to the model, equivalent to a text input with the user role.
-	case text(String)
-
-	/// A list of one or many input items to the model, containing different content types.
-	case list([ListItem])
 
 	/// The messages contained in the input.
 	public var messages: [Message] {
@@ -112,6 +117,22 @@ import MetaCodable
 					}
 				}.joined(separator: " ")
 		}
+	}
+
+	/// A text input to the model, equivalent to a text input with the user role.
+	case text(String)
+
+	/// A list of one or many input items to the model, containing different content types.
+	case list([ListItem])
+
+	/// Creates a new text input to the model.
+	public init(_ text: String) {
+		self = .text(text)
+	}
+
+	/// Creates a new input to the model with a list of items.
+	public init(_ items: [ListItem]) {
+		self = .list(items)
 	}
 }
 

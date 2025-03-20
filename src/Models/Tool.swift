@@ -455,10 +455,10 @@ public extension Tool {
 	/// This tool searches the web for relevant results to use in a response.
 	///
 	/// Learn more about the [web search tool](https://platform.openai.com/docs/guides/tools-web-search?api-mode=responses).
-	/// - Parameter searchContextSize: High level guidance for the amount of context window space to use for the search.
+	/// - Parameter contextSize: High level guidance for the amount of context window space to use for the search.
 	/// - Parameter userLocation: Approximate location parameters for the search.
-	static func webSearch(searchContextSize: WebSearch.ContextSize = .medium, userLocation: WebSearch.UserLocation? = nil) -> Self {
-		.webSearch(WebSearch(searchContextSize: searchContextSize, userLocation: userLocation))
+	static func webSearch(contextSize: WebSearch.ContextSize = .medium, userLocation: WebSearch.UserLocation? = nil) -> Self {
+		.webSearch(WebSearch(searchContextSize: contextSize, userLocation: userLocation))
 	}
 }
 

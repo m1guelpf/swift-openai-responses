@@ -65,7 +65,6 @@ import Foundation
 	}
 
 	private let client: ResponsesAPI
-
 	@MainActor private var config: Config
 
 	/// Creates a new conversation.

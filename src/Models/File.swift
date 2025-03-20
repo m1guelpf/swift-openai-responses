@@ -98,10 +98,11 @@ public extension File.Upload {
 	///
 	/// - Parameter url: The URL of the file to upload.
 	/// - Parameter name: The name of the file.
-	static func url(_ url: URL, name: String? = nil) async throws -> File.Upload {
+	/// - Parameter contentType: The mime type of the file.
+	static func url(_ url: URL, name: String? = nil, contentType: String = "application/octet-stream") async throws -> File.Upload {
 		let name = name ?? url.lastPathComponent == "/" ? "unknown_file" : url.lastPathComponent
 
-		return try File.Upload(name: name, contents: Data(contentsOf: url))
+		return try File.Upload(name: name, contents: Data(contentsOf: url), contentType: contentType)
 	}
 
 	/// Creates a file upload from the given data.

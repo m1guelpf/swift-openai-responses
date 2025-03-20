@@ -50,7 +50,7 @@ import SwiftUI
 
 struct ContentView: View {
 	@State private var newMessage: String = ""
-	@State private var conversation = Conversation(authToken: OPENAI_KEY)
+	@State private var conversation = Conversation(authToken: OPENAI_KEY, using: .gpt4o)
 
 	var body: some View {
 		VStack(spacing: 0) {
@@ -220,7 +220,7 @@ To create a new response, call the `create` method with a `Request` instance:
 
 ```swift
 let response = try await client.create(Request(
-	model: "gpt-4o",
+	model: .gpt4o,
 	input: .text("Are semicolons optional in JavaScript?"),
 	instructions: "You are a coding assistant that talks like a pirate"
 ))
@@ -234,7 +234,7 @@ To stream back the response as it is generated, use the `stream` method:
 
 ```swift
 let stream = try await client.stream(Request(
-	model: "gpt-4o",
+	model: .gpt4o,
 	input: .text("Are semicolons optional in JavaScript?"),
 	instructions: "You are a coding assistant that talks like a pirate"
 ))
@@ -254,12 +254,15 @@ While uploading files is not part of the Responses API, you'll need it for sendi
 let file = try await client.upload(file: .file(name: "image.png", contents: imageData, contentType: "image/png"))
 
 // then, use it on a message
-try await conversation.send(Input([
-	.message(content: Input.Content([
-		.image(fileId: file.id),
-    	.text("Take a look at this image and tell me what you see"),
-	])),
-]))
+try await client.create(Request(
+	model: .gpt4o,
+	input: Input([
+		.message(content: Input.Content([
+			.image(fileId: file.id),
+			.text("Take a look at this image and tell me what you see"),
+		])),
+	])
+))
 ```
 
 You can also load files directly from the user's filesystem or the web:
@@ -281,12 +284,6 @@ You can delete a previously-created response from OpenAI's servers by calling th
 ```swift
 try await client.delete("resp_...")
 ```
-
-## Roadmap
-
--   [x] A simple interface for directly interacting with the API
--   [x] Support for streaming responses
--   [ ] Wrap the API in an interface that manages the conversation for you
 
 ## License
 

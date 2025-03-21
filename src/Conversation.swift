@@ -30,6 +30,7 @@ import Foundation
 
 	/// The last response ID in the conversation.
 	@MainActor public var previousResponseId: String? {
+		guard !config.skipPreviousResponseId else { return nil }
 		guard let entry = entries.last(where: { entry in
 			if case .response = entry { return true }
 			return false
@@ -367,6 +368,9 @@ public extension Conversation {
 
 		/// Inserts a system (or developer) message as the first item in the model's context.
 		public var instructions: String?
+
+		/// Whether to skip the previous response ID.
+		public var skipPreviousResponseId: Bool = false
 
 		/// An upper bound for the number of tokens that can be generated for a response, including visible output tokens and [reasoning tokens](https://platform.openai.com/docs/guides/reasoning).
 		public var maxOutputTokens: UInt?

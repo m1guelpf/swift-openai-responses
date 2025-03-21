@@ -278,13 +278,13 @@ import MetaCodable
 		public var vectorStoreIds: [String]
 
 		/// A filter to apply based on file attributes.
-		public var filters: Filters
+		public var filters: Filters?
 
 		/// The maximum number of results to return. This number should be between 1 and 50 inclusive.
-		public var maxNumResults: UInt
+		public var maxNumResults: UInt?
 
 		/// Ranking options for search.
-		public var rankingOptions: RankingOptions
+		public var rankingOptions: RankingOptions?
 
 		/// Create a new `FileSearch` instance.
 		///
@@ -292,11 +292,11 @@ import MetaCodable
 		/// - Parameter filters: A filter to apply based on file attributes.
 		/// - Parameter maxNumResults: The maximum number of results to return. This number should be between 1 and 50 inclusive.
 		/// - Parameter rankingOptions: Ranking options for search.
-		public init(vectorStoreIds: [String], filters: Filters, maxNumResults: UInt, rankingOptions: RankingOptions) {
+		public init(vectorStoreIds: [String], filters: Filters?, maxNumResults: UInt?, rankingOptions: RankingOptions?) {
+			self.vectorStoreIds = vectorStoreIds
 			self.filters = filters
 			self.maxNumResults = maxNumResults
-			self.rankingOptions = rankingOptions
-			self.vectorStoreIds = vectorStoreIds
+			self.rankingOptions = rankingOptions		
 		}
 	}
 

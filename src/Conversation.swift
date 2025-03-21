@@ -87,12 +87,13 @@ import Foundation
 	///	- Parameter configuring: A closure to further configure the conversation.
 	@MainActor public convenience init(
 		authToken: String,
+		baseURL: URL? = nil,
 		organizationId: String? = nil,
 		projectId: String? = nil,
 		using model: Model,
 		configuring closure: (inout Config) -> Void = { _ in }
 	) {
-		self.init(client: ResponsesAPI(authToken: authToken, organizationId: organizationId, projectId: projectId), using: model, configuring: closure)
+		self.init(client: ResponsesAPI(authToken: authToken, baseURL: baseURL, organizationId: organizationId, projectId: projectId), using: model, configuring: closure)
 	}
 
 	/// Restarts the conversation, clearing all entries.

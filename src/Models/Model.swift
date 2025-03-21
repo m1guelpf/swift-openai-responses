@@ -15,6 +15,7 @@ public enum Model: Equatable, Hashable, Sendable {
 	case computerUsePreview
 	case other(String)
 
+	/// Creates a new `Model` instance from a string.
 	public init(_ model: String) throws {
 		switch model {
 			case "o1": self = .o1

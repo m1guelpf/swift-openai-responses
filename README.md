@@ -189,7 +189,7 @@ ScrollView {
 
 #### Creating a new instance
 
-To interact with the Responses API, create a new instance of `ResponsesAPI` with your API key:
+To interact with the Responses API directly, create a new instance of `ResponsesAPI` with your API key:
 
 ```swift
 let client = ResponsesAPI(authToken: YOUR_OPENAI_API_TOKEN)
@@ -205,7 +205,7 @@ let client = ResponsesAPI(
 )
 ```
 
-For more advanced use cases, you can customize the `URLRequest` used to connect to the API:
+For more advanced use cases like connecting to a custom server, you can customize the `URLRequest` used to connect to the API:
 
 ``` swift
 let urlRequest = URLRequest(url: MY_CUSTOM_ENDPOINT)

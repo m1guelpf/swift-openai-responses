@@ -56,6 +56,7 @@ public struct TextConfig: Equatable, Hashable, Codable, Sendable {
 		/// - Parameter description: A description of what the response format is for, used by the model to determine how to respond in the format.
 		/// - Parameter name: The name of the response format. Must be a-z, A-Z, 0-9, or contain underscores and dashes, with a maximum length of 64.
 		/// - Parameter strict: Whether to enable strict schema adherence when generating the output. If set to `true`, the model will always follow the exact schema defined in the schema field. Only a subset of JSON Schema is supported when `strict` is `true`.
+		@CodedAs("json_schema")
 		case jsonSchema(
 			schema: Tool.Function.Parameters,
 			description: String,
@@ -67,6 +68,7 @@ public struct TextConfig: Equatable, Hashable, Codable, Sendable {
 		/// Using `jsonSchema` is recommended for models that support it.
 		///
 		/// Note that the model will not generate JSON without a system or user message instructing it to do so.
+		@CodedAs("json_object")
 		case jsonObject
 	}
 

@@ -259,16 +259,16 @@ import MetaCodable
 		/// Ranking options for search.
 		@Codable @CodingKeys(.snake_case) public struct RankingOptions: Equatable, Hashable, Sendable {
 			/// The ranker to use for the file search.
-			public var ranker: String
+			public var ranker: String?
 
 			/// The score threshold for the file search, a number between 0 and 1. Numbers closer to 1 will attempt to return only the most relevant results, but may return fewer results.
-			public var scoreThreshold: Int
+			public var scoreThreshold: Int?
 
 			/// Create a new `RankingOptions` instance.
 			///
 			/// - Parameter ranker: The ranker to use for the file search.
 			/// - Parameter scoreThreshold: The score threshold for the file search, a number between 0 and 1. Numbers closer to 1 will attempt to return only the most relevant results, but may return fewer results.
-			init(ranker: String, scoreThreshold: Int) {
+			init(ranker: String? = nil, scoreThreshold: Int? = nil) {
 				self.ranker = ranker
 				self.scoreThreshold = scoreThreshold
 			}
@@ -292,11 +292,11 @@ import MetaCodable
 		/// - Parameter filters: A filter to apply based on file attributes.
 		/// - Parameter maxNumResults: The maximum number of results to return. This number should be between 1 and 50 inclusive.
 		/// - Parameter rankingOptions: Ranking options for search.
-		public init(vectorStoreIds: [String], filters: Filters?, maxNumResults: UInt?, rankingOptions: RankingOptions?) {
+		public init(vectorStoreIds: [String], filters: Filters? = nil, maxNumResults: UInt? = nil, rankingOptions: RankingOptions? = nil) {
 			self.vectorStoreIds = vectorStoreIds
 			self.filters = filters
 			self.maxNumResults = maxNumResults
-			self.rankingOptions = rankingOptions		
+			self.rankingOptions = rankingOptions
 		}
 	}
 

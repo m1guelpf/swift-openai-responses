@@ -15,7 +15,8 @@ public enum Model: Equatable, Hashable, Sendable {
 	case computerUsePreview
 	case other(String)
 
-	public func init(_ model: String) throws {
+	/// Creates a new `Model` instance from a string.
+	public init(_ model: String) throws {
 		switch model {
 			case "o1": self = .o1
 			case "gpt-4": self = .gpt4
@@ -52,6 +53,6 @@ extension Model: Codable {
 	}
 
 	public init(from decoder: any Decoder) throws {
-		try init(String(from: decoder))
+		try self.init(String(from: decoder))
 	}
 }

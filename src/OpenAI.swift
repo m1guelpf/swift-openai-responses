@@ -38,10 +38,11 @@ public final class ResponsesAPI: Sendable {
 	/// You can optionally provide an `organizationId` and/or `projectId` to use with the API.
 	///
 	/// - Parameter authToken: The OpenAI API key to use for authentication.
+	/// - Parameter baseURL: The base URL for the API. Defaults to the OpenAI API URL.
 	/// - Parameter organizationId: The [organization](https://platform.openai.com/docs/guides/production-best-practices#setting-up-your-organization) associated with the request.
 	/// - Parameter projectId: The project associated with the request.
-	public convenience init(authToken: String, organizationId: String? = nil, projectId: String? = nil) {
-		var request = URLRequest(url: URL(string: "https://api.openai.com/")!)
+	public convenience init(authToken: String, baseURL: URL? = nil, organizationId: String? = nil, projectId: String? = nil) {
+		var request = URLRequest(url: baseURL ?? URL(string: "https://api.openai.com/")!)
 
 		request.addValue("Bearer \(authToken)", forHTTPHeaderField: "Authorization")
 		if let projectId { request.addValue(projectId, forHTTPHeaderField: "OpenAI-Project") }

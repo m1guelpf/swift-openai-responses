@@ -405,6 +405,7 @@ import MetaCodable
 	/// A tool that searches for relevant content from uploaded files.
 	///
 	/// Learn more about the [file search tool](https://platform.openai.com/docs/guides/tools-file-search).
+	@CodedAs("file_search")
 	case fileSearch(FileSearch)
 
 	/// A tool that controls a virtual computer.

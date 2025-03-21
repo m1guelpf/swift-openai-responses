@@ -166,6 +166,14 @@ import Foundation
 			try await handleEvent(event)
 		}
 	}
+
+	/// Uploads a file for later use in the API.
+	///
+	/// - Parameter file: The file to upload.
+	/// - Parameter purpose: The intended purpose of the file.
+	public func upload(file: File.Upload) async throws -> File {
+		try await client.upload(file: file, purpose: .userData)
+	}
 }
 
 // MARK: - Conversation stream handling

@@ -147,6 +147,10 @@ public final class ResponsesAPI: Sendable {
 		return try decoder.decode(Input.ItemList.self, from: await send(request: req))
 	}
 
+	/// Uploads a file for later use in the API.
+	///
+	/// - Parameter file: The file to upload.
+	/// - Parameter purpose: The intended purpose of the file.
 	public func upload(file: File.Upload, purpose: File.Purpose = .userData) async throws -> File {
 		let form = FormData(
 			boundary: UUID().uuidString,

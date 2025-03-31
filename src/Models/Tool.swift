@@ -116,6 +116,7 @@ import MetaCodable
 					public var minItems: Int?
 					public var maxItems: Int?
 					public var uniqueItems: Bool?
+					public var additionalProperties: Bool?
 
 					public init(
 						type: JSONType,
@@ -128,7 +129,8 @@ import MetaCodable
 						maximum: Double? = nil,
 						minItems: Int? = nil,
 						maxItems: Int? = nil,
-						uniqueItems: Bool? = nil
+						uniqueItems: Bool? = nil,
+						additionalProperties: Bool? = false
 					) {
 						self.type = type
 						self.properties = properties
@@ -141,6 +143,7 @@ import MetaCodable
 						self.minItems = minItems
 						self.maxItems = maxItems
 						self.uniqueItems = uniqueItems
+						self.additionalProperties = additionalProperties
 					}
 				}
 			}

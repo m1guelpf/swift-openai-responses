@@ -116,6 +116,7 @@ import MetaCodable
 					public var minItems: Int?
 					public var maxItems: Int?
 					public var uniqueItems: Bool?
+					public var required: [String]?
 					public var additionalProperties: Bool?
 
 					public init(
@@ -130,6 +131,7 @@ import MetaCodable
 						minItems: Int? = nil,
 						maxItems: Int? = nil,
 						uniqueItems: Bool? = nil,
+						required: [String]? = nil,
 						additionalProperties: Bool? = false
 					) {
 						self.type = type
@@ -143,6 +145,7 @@ import MetaCodable
 						self.minItems = minItems
 						self.maxItems = maxItems
 						self.uniqueItems = uniqueItems
+						self.required = required
 						self.additionalProperties = additionalProperties
 					}
 				}

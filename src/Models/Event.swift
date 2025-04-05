@@ -233,13 +233,7 @@ import MetaCodable
 
 	/// Emitted when an error occurs.
 	///
-	/// - Parameter code: The error code.
-	/// - Parameter message: The error message.
-	/// - Parameter param: The error parameter.
+	/// - Parameter error: The error that occurred.
 	@CodedAs("error")
-	case error(
-		code: String?,
-		message: String,
-		param: String?
-	)
+	case error(error: Response.Error)
 }

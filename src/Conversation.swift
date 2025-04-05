@@ -274,8 +274,8 @@ private extension Conversation {
 					webSearch.status = .completed
 					item = .webSearchCall(webSearch)
 				}
-			case let .error(code, message, param):
-				throw Response.Error(type: "streaming_error", message: message, code: code, param: param)
+			case let .error(error):
+				throw error
 			case let .fileSearchCallInitiated(itemId: itemId, outputIndex: outputIndex):
 				updateItem(index: outputIndex, id: itemId) { item in
 					guard case var .fileSearch(fileSearch) = item else { return }

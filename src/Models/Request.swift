@@ -59,7 +59,7 @@ import MetaCodable
 	/// Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic.
 	///
 	/// We generally recommend altering this or `top_p` but not both.
-	public var temperature: Int?
+	public var temperature: Double?
 
 	/// Configuration options for a text response from the model. Can be plain text or structured JSON data.
 	/// - [Text inputs and outputs](https://platform.openai.com/docs/guides/text)

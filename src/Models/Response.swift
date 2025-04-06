@@ -166,7 +166,7 @@ import HelperCoders
 	/// Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic.
 	///
 	/// We generally recommend altering this or `topP` but not both.
-	public var temperature: Int
+	public var temperature: Double
 
 	/// Configuration options for a text response from the model. Can be plain text or structured JSON data.
 	/// - [Text inputs and outputs](https://platform.openai.com/docs/guides/text)
@@ -190,7 +190,7 @@ import HelperCoders
 	/// So 0.1 means only the tokens comprising the top 10% probability mass are considered.
 	///
 	/// We generally recommend altering this or `temperature` but not both.
-	public var topP: Int
+	public var topP: Double
 
 	/// The truncation strategy to use for the model response.
 	public var truncation: Truncation
@@ -256,11 +256,11 @@ import HelperCoders
 		previousResponseId: String? = nil,
 		reasoning: ReasoningConfig,
 		status: Status,
-		temperature: Int,
+		temperature: Double,
 		text: TextConfig,
 		toolChoice: Tool.Choice,
 		tools: [Tool] = [],
-		topP: Int,
+		topP: Double,
 		truncation: Truncation,
 		usage: Usage? = nil,
 		store: Bool,

@@ -395,7 +395,7 @@ public extension Conversation {
 		/// Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic.
 		///
 		/// We generally recommend altering this or `top_p` but not both.
-		public var temperature: Int?
+		public var temperature: Double?
 
 		/// Configuration options for a text response from the model. Can be plain text or structured JSON data.
 		///
@@ -480,7 +480,7 @@ public extension Conversation {
 	/// Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic.
 	///
 	/// We generally recommend altering this or `top_p` but not both.
-	@MainActor var temperature: Int? {
+	@MainActor var temperature: Double? {
 		get { config.temperature }
 		set { config.temperature = newValue }
 	}

@@ -122,7 +122,7 @@ import MetaCodable
 		reasoning: ReasoningConfig? = nil,
 		store: Bool? = nil,
 		stream: Bool? = nil,
-		temperature: Int? = nil,
+		temperature: Double? = nil,
 		text: TextConfig? = nil,
 		toolChoice: Tool.Choice? = nil,
 		tools: [Tool]? = nil,

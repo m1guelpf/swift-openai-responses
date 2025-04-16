@@ -16,7 +16,7 @@ let package = Package(
 		.library(name: "OpenAI", type: .static, targets: ["OpenAI"]),
 	],
 	dependencies: [
-		.package(url: "https://github.com/SwiftyLab/MetaCodable.git", from: "1.0.0"),
+		.package(url: "https://github.com/SwiftyLab/MetaCodable.git", from: "1.4.0"),
 	],
 	targets: [
 		.target(

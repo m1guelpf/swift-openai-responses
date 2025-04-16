@@ -13,7 +13,7 @@ let package = Package(
 		.macCatalyst(.v17),
 	],
 	products: [
-		.library(name: "OpenAI", type: .static, targets: ["OpenAI"]),
+		.library(name: "OpenAI", type: .dynamic, targets: ["OpenAI"]),
 	],
 	dependencies: [
 		.package(url: "https://github.com/SwiftyLab/MetaCodable.git", from: "1.4.0"),

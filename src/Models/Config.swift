@@ -91,3 +91,13 @@ public enum Truncation: String, CaseIterable, Equatable, Hashable, Codable, Send
 	/// If a model response will exceed the context window size for a model, the request will fail with a 400 error.
 	case disabled
 }
+
+/// The latency to use when processing the request
+public enum ServiceTier: String, CaseIterable, Equatable, Hashable, Codable, Sendable {
+	/// If the Project is Scale tier enabled, the system will utilize scale tier credits until they are exhausted. Otherwise, the request will be processed using the default service tier with a lower uptime SLA and no latency guarentee.
+	case auto
+	/// The request will be processed using the default service tier with a lower uptime SLA and no latency guarentee.
+	case `default`
+	/// The request will be processed with the Flex Processing service tier.
+	case flex
+}

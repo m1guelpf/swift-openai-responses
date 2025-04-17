@@ -48,6 +48,9 @@ import MetaCodable
 	/// Configuration options for [reasoning models](https://platform.openai.com/docs/guides/reasoning).
 	public var reasoning: ReasoningConfig?
 
+	/// Specifies the latency tier to use for processing the request
+	public var serviceTier: ServiceTier?
+
 	/// Whether to store the generated model response for later retrieval via API.
 	public var store: Bool?
 

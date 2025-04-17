@@ -158,6 +158,9 @@ import HelperCoders
 	/// Only available for o-series models.
 	public var reasoning: ReasoningConfig
 
+	/// The service tier used for processing the request.
+	public var serviceTier: ServiceTier?
+
 	/// The status of the response generation.
 	public var status: Status
 

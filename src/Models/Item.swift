@@ -47,6 +47,7 @@ public enum Item: Equatable, Hashable, Sendable {
 		case functionCall(Item.FunctionCall)
 
 		/// The output of a function tool call.
+		@CodedAs("function_call_output")
 		case functionCallOutput(Item.FunctionCallOutput)
 
 		/// A description of the chain of thought used by a reasoning model while generating a response.

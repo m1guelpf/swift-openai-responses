@@ -84,7 +84,7 @@ import MetaCodable
 	/// An alternative to sampling with temperature, called nucleus sampling, where the model considers the results of the tokens with `top_p` probability mass. So 0.1 means only the tokens comprising the top 10% probability mass are considered.
 	///
 	/// We generally recommend altering this or `temperature` but not both.
-	public var topP: Int?
+	public var topP: Double?
 
 	/// The truncation strategy to use for the model response.
 	public var truncation: Truncation?
@@ -129,7 +129,7 @@ import MetaCodable
 		text: TextConfig? = nil,
 		toolChoice: Tool.Choice? = nil,
 		tools: [Tool]? = nil,
-		topP: Int? = nil,
+		topP: Double? = nil,
 		truncation: Truncation? = nil,
 		user: String? = nil
 	) {

@@ -193,7 +193,7 @@ import HelperCoders
 	/// So 0.1 means only the tokens comprising the top 10% probability mass are considered.
 	///
 	/// We generally recommend altering this or `temperature` but not both.
-	public var topP: Int
+	public var topP: Double
 
 	/// The truncation strategy to use for the model response.
 	public var truncation: Truncation
@@ -263,7 +263,7 @@ import HelperCoders
 		text: TextConfig,
 		toolChoice: Tool.Choice,
 		tools: [Tool] = [],
-		topP: Int,
+		topP: Double,
 		truncation: Truncation,
 		usage: Usage? = nil,
 		store: Bool,

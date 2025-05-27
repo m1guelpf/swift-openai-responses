@@ -1,9 +1,9 @@
 import Foundation
-import MetaCodable
 import HelperCoders
+import MetaCodable
 
 /// A response from the OpenAI Responses API
-@Codable @CodingKeys(.snake_case) public struct Response: Identifiable, Equatable, Hashable, Sendable {
+@Codable @CodingKeys(.snake_case) public struct Response: Identifiable, Equatable, Hashable, Sendable, Codable {
 	/// An error object returned when the model fails to generate a Response.
 	public struct Error: Equatable, Hashable, Codable {
 		/// The type of error.
@@ -54,9 +54,9 @@ import HelperCoders
 	}
 
 	/// Represents token usage details including input tokens, output tokens, a breakdown of output tokens, and the total tokens used.
-	@Codable @CodingKeys(.snake_case) public struct Usage: Equatable, Hashable, Sendable {
+	@Codable @CodingKeys(.snake_case) public struct Usage: Equatable, Hashable, Sendable, Codable {
 		/// A detailed breakdown of the input tokens.
-		@Codable @CodingKeys(.snake_case) public struct InputTokensDetails: Equatable, Hashable, Sendable {
+		@Codable @CodingKeys(.snake_case) public struct InputTokensDetails: Equatable, Hashable, Sendable, Codable {
 			/// The number of cached tokens.
 			public var cachedTokens: UInt
 
@@ -69,7 +69,7 @@ import HelperCoders
 		}
 
 		/// A detailed breakdown of the output tokens.
-		@Codable @CodingKeys(.snake_case) public struct OutputTokensDetails: Equatable, Hashable, Sendable {
+		@Codable @CodingKeys(.snake_case) public struct OutputTokensDetails: Equatable, Hashable, Sendable, Codable {
 			/// The number of reasoning tokens.
 			public var reasoningTokens: UInt
 

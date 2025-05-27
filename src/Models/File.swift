@@ -2,7 +2,7 @@ import Foundation
 import MetaCodable
 import HelperCoders
 
-@Codable @CodingKeys(.snake_case) public struct File: Equatable, Hashable, Sendable {
+@Codable @CodingKeys(.snake_case) public struct File: Equatable, Hashable, Sendable, Codable {
 	public struct Upload: Equatable, Hashable, Sendable {
 		/// The name of the file
 		public var name: String

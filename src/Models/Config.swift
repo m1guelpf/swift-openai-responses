@@ -3,7 +3,7 @@ import MetaCodable
 
 /// Configuration options for [reasoning models](https://platform.openai.com/docs/guides/reasoning).
 /// Only available for o-series models.
-@Codable @CodingKeys(.snake_case) public struct ReasoningConfig: Equatable, Hashable, Sendable {
+@Codable @CodingKeys(.snake_case) public struct ReasoningConfig: Equatable, Hashable, Sendable, Codable {
 	/// Constrains effort on reasoning for [reasoning models](https://platform.openai.com/docs/guides/reasoning).
 	///
 	/// Reducing reasoning effort can result in faster responses and fewer tokens used on reasoning in a response.

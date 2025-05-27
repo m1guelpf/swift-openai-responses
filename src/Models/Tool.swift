@@ -6,7 +6,7 @@ import MetaCodable
 /// The two categories of tools you can provide the model are:
 /// - **Built-in tools**: Tools that are provided by OpenAI that extend the model's capabilities, like [web search](https://platform.openai.com/docs/guides/tools-web-search) or [file search](https://platform.openai.com/docs/guides/tools-file-search). Learn more about [built-in tools](https://platform.openai.com/docs/guides/tools).
 /// - **Function calls (custom tools)**: Functions that are defined by you, enabling the model to call your own code. Learn more about [function calling](https://platform.openai.com/docs/guides/function-calling).
-@Codable @CodedAt("type") @CodingKeys(.snake_case) public enum Tool: Equatable, Hashable, Sendable {
+@Codable @CodedAt("type") @CodingKeys(.snake_case) public enum Tool: Equatable, Hashable, Sendable, Codable {
 	public enum Choice: Equatable, Hashable, Sendable {
 		case none
 		case auto
@@ -191,13 +191,13 @@ import MetaCodable
 	/// A tool that searches for relevant content from uploaded files.
 	///
 	/// Learn more about the [file search tool](https://platform.openai.com/docs/guides/tools-file-search).
-	@Codable @CodingKeys(.snake_case) public struct FileSearch: Equatable, Hashable, Sendable {
+	@Codable @CodingKeys(.snake_case) public struct FileSearch: Equatable, Hashable, Sendable, Codable {
 		/// A filter to apply based on file attributes.
-		@Codable @UnTagged public enum Filters: Equatable, Hashable, Sendable {
+		@Codable @UnTagged public enum Filters: Equatable, Hashable, Sendable, Codable {
 			/// A filter used to compare a specified attribute key to a given value using a defined comparison operation.
 			public struct Comparison: Equatable, Hashable, Codable, Sendable {
 				/// The value to compare against the attribute key.
-				@Codable @UnTagged public enum Value: Equatable, Hashable, Sendable {
+				@Codable @UnTagged public enum Value: Equatable, Hashable, Sendable, Codable {
 					case bool(Bool)
 					case number(Int)
 					case string(String)
@@ -263,7 +263,7 @@ import MetaCodable
 		}
 
 		/// Ranking options for search.
-		@Codable @CodingKeys(.snake_case) public struct RankingOptions: Equatable, Hashable, Sendable {
+		@Codable @CodingKeys(.snake_case) public struct RankingOptions: Equatable, Hashable, Sendable, Codable {
 			/// The ranker to use for the file search.
 			public var ranker: String?
 
@@ -342,7 +342,7 @@ import MetaCodable
 	/// This tool searches the web for relevant results to use in a response.
 	///
 	/// Learn more about the [web search tool](https://platform.openai.com/docs/guides/tools-web-search?api-mode=responses).
-	@Codable @CodingKeys(.snake_case) public struct WebSearch: Equatable, Hashable, Sendable {
+	@Codable @CodingKeys(.snake_case) public struct WebSearch: Equatable, Hashable, Sendable, Codable {
 		/// High level guidance for the amount of context window space to use for the search.
 		public enum ContextSize: String, CaseIterable, Equatable, Hashable, Codable, Sendable {
 			case low

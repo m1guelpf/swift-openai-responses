@@ -2,9 +2,9 @@ import Foundation
 import MetaCodable
 
 /// Text, image, or file inputs to the model, used to generate a response.
-@Codable @UnTagged public enum Input: Equatable, Hashable, Sendable {
+@Codable @UnTagged public enum Input: Equatable, Hashable, Sendable, Codable {
 	/// A list of items used to generate a model response.
-	@Codable @CodingKeys(.snake_case) public struct ItemList: Equatable, Hashable, Sendable {
+	@Codable @CodingKeys(.snake_case) public struct ItemList: Equatable, Hashable, Sendable, Codable {
 		/// A list of items used to generate this response.
 		public var data: [Item.Input]
 
@@ -18,7 +18,7 @@ import MetaCodable
 		public var hasMore: Bool
 	}
 
-	@Codable @CodedAt("type") public enum ListItem: Equatable, Hashable, Sendable {
+	@Codable @CodedAt("type") public enum ListItem: Equatable, Hashable, Sendable, Codable {
 		/// A message input to the model with a role indicating instruction following hierarchy.
 		///
 		/// Instructions given with the `developer` or `system` role take precedence over instructions given with the `user` role.
@@ -39,9 +39,9 @@ import MetaCodable
 	}
 
 	/// Text, image, or audio input to the model, used to generate a response. Can also contain previous assistant responses.
-	@Codable @UnTagged public enum Content: Equatable, Hashable, Sendable {
+	@Codable @UnTagged public enum Content: Equatable, Hashable, Sendable, Codable {
 		/// Text, image, or audio input to the model, used to generate a response. Can also contain previous assistant responses.
-		@Codable @CodedAt("type") @CodingKeys(.snake_case) public enum ContentItem: Equatable, Hashable, Sendable {
+		@Codable @CodedAt("type") @CodingKeys(.snake_case) public enum ContentItem: Equatable, Hashable, Sendable, Codable {
 			/// The detail level of the image sent to the model.
 			public enum ImageDetail: String, CaseIterable, Equatable, Hashable, Codable, Sendable {
 				case auto

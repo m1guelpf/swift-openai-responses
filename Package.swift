@@ -13,7 +13,7 @@ let package = Package(
         .macCatalyst(.v17),
     ],
     products: [
-        .library(name: "OpenAI", targets: ["OpenAI"]),
+        .library(name: "OpenAI", type: .static, targets: ["OpenAI"]),
     ],
     dependencies: [
         .package(url: "https://github.com/SwiftyLab/MetaCodable.git", from: "1.0.0"),
@@ -26,11 +26,14 @@ let package = Package(
                 .product(name: "MetaCodable", package: "MetaCodable"),
                 .product(name: "HelperCoders", package: "MetaCodable"),
             ],
-            path: "./src"),
+            path: "./src"
+        ),
         .testTarget(
             name: "OpenAITests",
             dependencies: ["OpenAI", "Nimble"],
             resources: [
                 .process("Resources"),
-            ]),
-    ])
+            ]
+        ),
+    ]
+)

@@ -1,0 +1,14 @@
+{
+  "content" : [
+    {
+      "annotations" : [
+
+      ],
+      "text" : "Hello, world!",
+      "type" : "output_text"
+    }
+  ],
+  "id" : "msg_123",
+  "role" : "assistant",
+  "status" : "completed"
+}

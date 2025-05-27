@@ -1,0 +1,7 @@
+[
+  {
+    "content" : "Hello, world!",
+    "role" : "user",
+    "type" : "message"
+  }
+]

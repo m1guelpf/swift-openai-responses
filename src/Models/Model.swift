@@ -11,6 +11,7 @@ public enum Model: Equatable, Hashable, Sendable {
 	case gpt4oMini
 	case gpt4Turbo
 	case gpt4
+	case gpt4_1
 	case gpt3_5Turbo
 	case computerUsePreview
 	case other(String)
@@ -20,6 +21,7 @@ public enum Model: Equatable, Hashable, Sendable {
 		switch model {
 			case "o1": self = .o1
 			case "gpt-4": self = .gpt4
+			case "gpt-4.1": self = .gpt4_1
 			case "gpt-4o": self = .gpt4o
 			case "o1-pro": self = .o1Pro
 			case "o1-mini": self = .o1Mini
@@ -39,6 +41,7 @@ extension Model: Codable {
 		switch self {
 			case .o1: try "o1".encode(to: encoder)
 			case .gpt4: try "gpt-4".encode(to: encoder)
+			case .gpt4_1: try "gpt-4.1".encode(to: encoder)
 			case .o1Pro: try "o1-pro".encode(to: encoder)
 			case .gpt4o: try "gpt-4o".encode(to: encoder)
 			case .o1Mini: try "o1-mini".encode(to: encoder)

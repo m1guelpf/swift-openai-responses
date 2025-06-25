@@ -44,6 +44,7 @@ public enum Item: Equatable, Hashable, Sendable {
 		/// A tool call to run a function.
 		///
 		/// See the [function calling guide](https://platform.openai.com/docs/guides/function-calling) for more information.
+		@CodedAs("function_call")
 		case functionCall(Item.FunctionCall)
 
 		/// The output of a function tool call.

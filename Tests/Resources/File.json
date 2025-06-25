@@ -1,0 +1,9 @@
+{
+  "bytes" : 100,
+  "created_at" : 946684800,
+  "expires_at" : 946684800,
+  "filename" : "test.txt",
+  "id" : "file-123",
+  "purpose" : "assistants",
+  "status" : "uploaded"
+}

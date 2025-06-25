@@ -1,0 +1,58 @@
+{
+  "include" : [
+    "file_search_call.results",
+    "message.input_image.image_url",
+    "computer_call_output.output.image_url"
+  ],
+  "input" : "Hello, world!",
+  "instructions" : "You are a helpful assistant",
+  "max_output_tokens" : 1000,
+  "metadata" : {
+    "session_id" : "abc",
+    "user_id" : "123"
+  },
+  "model" : "gpt-4o",
+  "parallel_tool_calls" : true,
+  "previous_response_id" : "resp_123",
+  "reasoning" : {
+    "effort" : "medium",
+    "generate_summary" : "detailed"
+  },
+  "store" : true,
+  "stream" : false,
+  "temperature" : 0.7,
+  "text" : {
+    "format" : {
+      "type" : "text"
+    }
+  },
+  "tool_choice" : "auto",
+  "tools" : [
+    {
+      "search_context_size" : "medium",
+      "type" : "web_search_preview"
+    },
+    {
+      "description" : "Get the current weather for a location",
+      "name" : "get_weather",
+      "parameters" : {
+        "additionalProperties" : false,
+        "properties" : {
+          "location" : {
+            "description" : "The city and state, e.g. San Francisco, CA",
+            "type" : "string"
+          }
+        },
+        "required" : [
+          "location"
+        ],
+        "type" : "object"
+      },
+      "strict" : true,
+      "type" : "function"
+    }
+  ],
+  "top_p" : 1,
+  "truncation" : "auto",
+  "user" : "user_123"
+}

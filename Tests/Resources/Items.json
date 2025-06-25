@@ -1,0 +1,71 @@
+[
+  {
+    "content" : "Hello, world!",
+    "role" : "user",
+    "type" : "message"
+  },
+  {
+    "id" : "fs_123",
+    "queries" : [
+
+    ],
+    "status" : "completed",
+    "type" : "file_search_call"
+  },
+  {
+    "action" : {
+      "button" : {
+        "left" : {
+
+        }
+      },
+      "type" : "click",
+      "x" : 10,
+      "y" : 20
+    },
+    "call_id" : "call_123",
+    "pending_safety_checks" : [
+
+    ],
+    "status" : "completed",
+    "type" : "computer_call"
+  },
+  {
+    "call_id" : "call_123",
+    "output" : {
+      "file_id" : "file_abc",
+      "image_url" : "http:\/\/example.com\/image.png",
+      "type" : "computer_screenshot"
+    },
+    "type" : "computer_call_output"
+  },
+  {
+    "id" : "ws_123",
+    "status" : "completed",
+    "type" : "web_search_call"
+  },
+  {
+    "arguments" : "{\"query\":\"test\"}",
+    "call_id" : "call_456",
+    "id" : "func_123",
+    "name" : "search",
+    "status" : "completed",
+    "type" : "functionCall"
+  },
+  {
+    "call_id" : "call_456",
+    "output" : "{\"result\":\"success\"}",
+    "type" : "function_call_output"
+  },
+  {
+    "id" : "reason_123",
+    "status" : "completed",
+    "summary" : [
+      {
+        "text" : "This is a test summary.",
+        "type" : "summary_text"
+      }
+    ],
+    "type" : "reasoning"
+  }
+]

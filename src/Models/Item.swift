@@ -54,6 +54,38 @@ public enum Item: Equatable, Hashable, Sendable {
 		/// A description of the chain of thought used by a reasoning model while generating a response.
 		case reasoning(Item.Reasoning)
 
+		/// An image generation request made by the model.
+		@CodedAs("image_generation_call")
+		case imageGenerationCall(Item.ImageGenerationCall)
+
+		/// A tool call to run code.
+		@CodedAs("code_interpreter_call")
+		case codeInterpreterCall(Item.CodeInterpreterCall)
+
+		/// A tool call to run a command on the local shell.
+		@CodedAs("local_shell_call")
+		case localShellCall(Item.LocalShellCall)
+
+		/// The output of a local shell tool call.
+		@CodedAs("local_shell_call_output")
+		case localShellCallOutput(Item.LocalShellCallOutput)
+
+		/// A list of tools available on an MCP server.
+		@CodedAs("mcp_list_tools")
+		case mcpListTools(Item.MCPListTools)
+
+		/// A request for human approval of a tool invocation.
+		@CodedAs("mcp_approval_request")
+		case mcpApprovalRequest(Item.MCPApprovalRequest)
+
+		/// A response to an MCP approval request.
+		@CodedAs("mcp_approval_response")
+		case mcpApprovalResponse(Item.MCPApprovalResponse)
+
+		/// An invocation of a tool on an MCP server.
+		@CodedAs("mcp_call")
+		case mcpToolCall(Item.MCPToolCall)
+
 		/// The text content of the input.
 		///
 		/// > Note: This property does not include reasoning text.
@@ -111,28 +143,40 @@ public enum Item: Equatable, Hashable, Sendable {
 				)
 			}
 
+			@Codable @CodingKeys(.snake_case) public struct LogProb: Equatable, Hashable, Sendable {
+				public struct AlternativeLogProb: Equatable, Hashable, Codable, Sendable {
+					public var bytes: [Int]
+					public var logprob: Double
+					public var token: String
+				}
+
+				public var bytes: [Int]
+				public var token: String
+				public var logprob: Double
+				public var topLogprobs: [AlternativeLogProb]?
+			}
+
 			/// A text output from the model.
 			/// - Parameter text: The text output from the model.
 			/// - Parameter annotations: The annotations of the text output.
 			@CodedAs("output_text")
 			case text(
 				text: String,
-				annotations: [Annotation] = []
+				annotations: [Annotation] = [],
+				logprobs: [LogProb] = []
 			)
 
 			/// A refusal from the model.
 			///
 			/// - Parameter refusal: The refusal explanation from the model.
-			case refusal(
-				_ refusal: String
-			)
+			case refusal(_ refusal: String)
 
 			/// The text content of the output.
 			///
 			/// > Note: Annotations are not included when using this property.
 			var text: String {
 				switch self {
-					case let .text(text, _):
+					case let .text(text, _, _):
 						return text
 					case let .refusal(refusal):
 						return refusal
@@ -162,15 +206,45 @@ public enum Item: Equatable, Hashable, Sendable {
 		/// A description of the chain of thought used by a reasoning model while generating a response.
 		case reasoning(Item.Reasoning)
 
+		/// An image generation request made by the model.
+		@CodedAs("image_generation_call")
+		case imageGenerationCall(Item.ImageGenerationCall)
+
+		/// A tool call to run code.
+		@CodedAs("code_interpreter_call")
+		case codeInterpreterCall(Item.CodeInterpreterCall)
+
+		/// A tool call to run a command on the local shell.
+		@CodedAs("local_shell_call")
+		case localShellCall(Item.LocalShellCall)
+
+		/// An invocation of a tool on an MCP server.
+		@CodedAs("mcp_call")
+		case mcpToolCall(Item.MCPToolCall)
+
+		/// A list of tools available on an MCP server.
+		@CodedAs("mcp_list_tools")
+		case mcpListTools(Item.MCPListTools)
+
+		/// A request for human approval of a tool invocation.
+		@CodedAs("mcp_approval_request")
+		case mcpApprovalRequest(Item.MCPApprovalRequest)
+
 		/// The unique ID for this item.
 		public var id: String {
 			switch self {
 				case let .fileSearch(call): call.id
+				case let .mcpToolCall(call): call.id
 				case let .functionCall(call): call.id
 				case let .message(message): message.id
 				case let .webSearchCall(call): call.id
+				case let .localShellCall(call): call.id
+				case let .mcpListTools(tools): tools.id
 				case let .reasoning(reasoning): reasoning.id
+				case let .imageGenerationCall(call): call.id
+				case let .codeInterpreterCall(call): call.id
 				case let .computerToolCall(call): call.callId
+				case let .mcpApprovalRequest(request): request.id
 			}
 		}
 	}
@@ -343,19 +417,42 @@ public enum Item: Equatable, Hashable, Sendable {
 			case inProgress = "in_progress"
 		}
 
+		@Codable @CodedAt("type") public enum Action: Equatable, Hashable, Sendable {
+			/// Performs a web search query.
+			/// - Parameter query: The search query.
+			case search(query: String)
+
+			/// Opens a specific URL from search results.
+			/// - Parameter url: The URL opened by the model.
+			@CodedAs("open_page")
+			case openPage(url: URL)
+
+			/// Searches for a pattern within a loaded page.
+			/// - Parameter pattern: The pattern or text to search for within the page.
+			/// - Parameter url: The URL of the page searched for the pattern.
+			case find(pattern: String, url: URL)
+		}
+
 		/// The unique ID of the web search tool call.
 		public var id: String
 
 		/// The status of the web search tool call.
 		public var status: Status
 
+		/// An object describing the specific action taken in this web search call.
+		///
+		/// Includes details on how the model used the web (search, open_page, find).
+		public var action: Action
+
 		/// Creates a new web search call.
 		///
 		/// - Parameter id: The unique ID of the web search tool call.
 		/// - Parameter status: The status of the web search tool call
-		public init(id: String, status: Status) {
+		/// - Parameter action: An object describing the specific action taken in this web search call.
+		public init(id: String, status: Status, action: Action) {
 			self.id = id
 			self.status = status
+			self.action = action
 		}
 	}
 
@@ -605,15 +702,372 @@ public enum Item: Equatable, Hashable, Sendable {
 		/// The status of the item. Populated when items are returned via API.
 		public var status: Status?
 
+		/// The encrypted content of the reasoning item.
+		public var encryptedContent: String?
+
 		/// Creates a new reasoning item.
 		///
 		/// - Parameter id: The unique identifier of the reasoning content.
 		/// - Parameter summary: Reasoning text contents.
 		/// - Parameter status: The status of the item. Populated when items are returned via API.
-		public init(id: String, summary: [Summary] = [], status: Status? = nil) {
+		/// - Parameter encryptedContent: The encrypted content of the reasoning item.
+		public init(id: String, summary: [Summary] = [], status: Status? = nil, encryptedContent: String? = nil) {
 			self.id = id
 			self.status = status
 			self.summary = summary
+			self.encryptedContent = encryptedContent
+		}
+	}
+
+	/// An image generation request made by the model.
+	public struct ImageGenerationCall: Equatable, Hashable, Sendable {
+		public enum Status: String, CaseIterable, Equatable, Hashable, Codable, Sendable {
+			case inProgress = "in_progress"
+			case completed, generating, failed
+		}
+
+		/// The unique ID of the image generation call.
+		public var id: String
+
+		/// The generated image encoded in base64.
+		public var result: Data?
+
+		/// The status of the image generation call.
+		public var status: String
+
+		/// Creates a new image generation call.
+		///
+		/// - Parameter id: The unique ID of the image generation call.
+		/// - Parameter result: The generated image encoded in base64, or null if not available.
+		/// - Parameter status: The status of the image generation call.
+		public init(id: String, result: Data? = nil, status: String) {
+			self.id = id
+			self.result = result
+			self.status = status
+		}
+	}
+
+	/// A tool call to run code.
+	@Codable @CodingKeys(.snake_case) public struct CodeInterpreterCall: Equatable, Hashable, Sendable {
+		public enum Status: String, CaseIterable, Equatable, Hashable, Codable, Sendable {
+			case completed, incomplete, interpreting, failed
+			case inProgress = "in_progress"
+		}
+
+		/// The outputs generated by the code interpreter, such as logs or images.
+		@Codable @CodedAt("type") public enum Output: Equatable, Hashable, Sendable {
+			/// The logs output from the code interpreter.
+			/// - Parameter logs: The logs output from the code interpreter.
+			case logs(_ logs: String)
+
+			/// The image output from the code interpreter.
+			/// - Parameter url: The URL of the image output from the code interpreter.
+			case image(_ url: URL)
+		}
+
+		/// The unique ID of the code interpreter tool call.
+		public var id: String
+
+		/// The ID of the container used to run the code.
+		public var containerId: String
+
+		/// The code to run, or null if not available.
+		public var code: String?
+
+		/// The status of the code interpreter tool call.
+		public var status: Status
+
+		/// The outputs generated by the code interpreter, such as logs or images.
+		public var outputs: [Output]?
+
+		/// Creates a new code interpreter tool call.
+		///
+		/// - Parameter id: The unique ID of the code interpreter tool call.
+		/// - Parameter containerId: The ID of the container used to run the code.
+		/// - Parameter code: The code to run, or null if not available.
+		/// - Parameter status: The status of the code interpreter tool call.
+		/// - Parameter outputs: The outputs generated by the code interpreter, such as logs or images.
+		public init(id: String, containerId: String, code: String? = nil, status: Status, outputs: [Output]? = nil) {
+			self.id = id
+			self.code = code
+			self.status = status
+			self.outputs = outputs
+			self.containerId = containerId
+		}
+	}
+
+	@Codable @CodingKeys(.snake_case) public struct LocalShellCall: Equatable, Hashable, Sendable {
+		public enum Status: String, CaseIterable, Equatable, Hashable, Codable, Sendable {
+			case completed, incomplete
+			case inProgress = "in_progress"
+		}
+
+		@Codable public struct Action: Equatable, Hashable, Sendable {
+			/// The command to run.
+			public var command: [String]
+
+			/// Environment variables to set for the command.
+			public var env: [String: String]?
+
+			/// Optional timeout in milliseconds for the command.
+			@CodedAt("timeout_ms") public var timeout: TimeInterval?
+
+			/// Optional user to run the command as.
+			public var user: String?
+
+			/// Optional working directory to run the command in.
+			public var workingDirectory: String?
+
+			/// Creates a new action to run a shell command.
+			///
+			/// - Parameter command: The command to run.
+			/// - Parameter env: Environment variables to set for the command.
+			/// - Parameter timeout: Optional timeout in milliseconds for the command.
+			/// - Parameter user: Optional user to run the command as.
+			/// - Parameter workingDirectory: Optional working directory to run the command in.
+			public init(command: [String], env: [String: String]? = nil, timeout: TimeInterval? = nil, user: String? = nil, workingDirectory: String? = nil) {
+				self.env = env
+				self.user = user
+				self.command = command
+				self.timeout = timeout
+				self.workingDirectory = workingDirectory
+			}
+		}
+
+		/// The unique ID of the local shell call.
+		public var id: String
+
+		/// The unique ID of the local shell tool call generated by the model.
+		public var callId: String
+
+		/// The status of the local shell call.
+		public var status: Status
+
+		/// Execute a shell command on the server.
+		public var action: Action
+
+		/// Creates a new local shell call.
+		///
+		/// - Parameter id: The unique ID of the local shell call.
+		/// - Parameter callId: The unique ID of the local shell tool call generated by the model.
+		/// - Parameter status: The status of the local shell call.
+		/// - Parameter action: Execute a shell command on the server.
+		public init(id: String, callId: String, status: Status, action: Action) {
+			self.id = id
+			self.callId = callId
+			self.status = status
+			self.action = action
+		}
+	}
+
+	/// The output of a local shell tool call.
+	@Codable @CodingKeys(.snake_case) public struct LocalShellCallOutput: Equatable, Hashable, Sendable {
+		/// The status of the item.
+		public enum Status: String, CaseIterable, Equatable, Hashable, Codable, Sendable {
+			case completed, incomplete
+			case inProgress = "in_progress"
+		}
+
+		/// The unique ID of the local shell tool call generated by the model.
+		public var id: String
+
+		/// The status of the item.
+		public var status: Status?
+
+		/// A JSON string of the output of the local shell tool call.
+		public var output: String
+
+		/// Creates a new local shell tool call output.
+		///
+		/// - Parameter id: The unique ID of the local shell tool call generated by the model.
+		/// - Parameter status: The status of the item.
+		/// - Parameter output: A JSON string of the output of the local shell tool call.
+		public init(id: String, status: Status? = nil, output: String) {
+			self.id = id
+			self.status = status
+			self.output = output
+		}
+	}
+
+	@Codable public struct MCPToolCall: Equatable, Hashable, Sendable {
+		/// The unique ID of the tool call.
+		public var id: String
+
+		/// The label of the MCP server running the tool.
+		@CodedAs("server_label") public var server: String
+
+		/// The name of the tool that was run.
+		public var name: String
+
+		/// A JSON string of the arguments passed to the tool.
+		public var arguments: String
+
+		/// The output from the tool call.
+		public var output: String?
+
+		/// The error from the tool call, if any.
+		public var error: String?
+
+		/// Creates a new MCP tool call.
+		///
+		/// - Parameter id: The unique ID of the tool call.
+		/// - Parameter server: The label of the MCP server running the tool.
+		/// - Parameter name: The name of the tool that was run.
+		/// - Parameter arguments: A JSON string of the arguments passed to the tool.
+		/// - Parameter output: The output from the tool call.
+		/// - Parameter error: The error from the tool call, if any.
+		public init(id: String, server: String, name: String, arguments: String, output: String? = nil, error: String? = nil) {
+			self.id = id
+			self.name = name
+			self.error = error
+			self.server = server
+			self.output = output
+			self.arguments = arguments
+		}
+	}
+
+	@Codable public struct MCPListTools: Equatable, Hashable, Sendable {
+		@Codable @CodingKeys(.snake_case) public struct MCPTool: Equatable, Hashable, Sendable {
+			/// Additional annotations about the tool.
+			public struct Annotations: Equatable, Hashable, Codable, Sendable {
+				/// A human-readable title for the tool
+				public var title: String?
+
+				/// If true, the tool may perform destructive updates to its environment.
+				/// If false, the tool performs only additive updates.
+				public var destructiveHint: Bool?
+
+				/// If true, calling the tool repeatedly with the same arguments will have no additional effect on its environment.
+				public var idempotentHint: Bool?
+
+				/// If true, this tool may interact with an "open world" of external
+				/// entities. If false, the tool's domain of interaction is closed.
+				/// For example, the world of a web search tool is open, whereas that
+				/// of a memory tool is not.
+				public var openWorldHint: Bool?
+
+				/// If true, the tool does not modify its environment.
+				public var readOnlyHint: Bool?
+
+				/// Creates a new set of annotations for a tool.
+				///
+				/// - Parameter title: A human-readable title for the tool.
+				/// - Parameter destructiveHint: If true, the tool may perform destructive updates to its environment.
+				/// - Parameter idempotentHint: If true, calling the tool repeatedly with the same arguments will have no additional effect on its environment.
+				/// - Parameter openWorldHint: If true, this tool may interact with an "open world" of external entities.
+				/// - Parameter readOnlyHint: If true, the tool does not modify its environment.
+				public init(title: String? = nil, destructiveHint: Bool? = nil, idempotentHint: Bool? = nil, openWorldHint: Bool? = nil, readOnlyHint: Bool? = nil) {
+					self.title = title
+					self.readOnlyHint = readOnlyHint
+					self.openWorldHint = openWorldHint
+					self.idempotentHint = idempotentHint
+					self.destructiveHint = destructiveHint
+				}
+			}
+
+			/// The name of the tool.
+			public var name: String
+
+			/// The description of the tool.
+			public var description: String?
+
+			/// The JSON schema describing the tool's input.
+			public var inputSchema: Tool.Function.Parameters
+
+			/// Additional annotations about the tool.
+			public var annotations: Annotations?
+
+			/// Creates a new MCP tool.
+			///
+			/// - Parameter name: The name of the tool.
+			/// - Parameter description: The description of the tool.
+			/// - Parameter inputSchema: The JSON schema describing the tool's input.
+			/// - Parameter annotations: Additional annotations about the tool.
+			public init(name: String, description: String? = nil, inputSchema: Tool.Function.Parameters, annotations: Annotations? = nil) {
+				self.name = name
+				self.description = description
+				self.inputSchema = inputSchema
+				self.annotations = annotations
+			}
+		}
+
+		/// The unique ID of the list.
+		public var id: String
+
+		/// The label of the MCP server.
+		@CodedAs("server_label") public var server: String
+
+		/// The tools available on the server.
+		public var tools: [MCPTool]
+
+		/// Error message if the server could not list tools.
+		public var error: String?
+
+		/// Creates a new MCP list tools item.
+		///
+		/// - Parameter id: The unique ID of the list.
+		/// - Parameter server: The label of the MCP server.
+		/// - Parameter tools: The tools available on the server.
+		/// - Parameter error: Error message if the server could not list tools.
+		public init(id: String, server: String, tools: [MCPTool], error: String? = nil) {
+			self.id = id
+			self.tools = tools
+			self.error = error
+			self.server = server
+		}
+	}
+
+	@Codable public struct MCPApprovalRequest: Equatable, Hashable, Sendable {
+		/// The unique ID of the approval request.
+		public var id: String
+
+		/// The label of the MCP server making the request.
+		@CodedAs("server_label") public var server: String
+
+		/// The name of the tool to run.
+		public var name: String
+
+		/// A JSON string of arguments for the tool.
+		public var arguments: String
+
+		/// Creates a new MCP approval request.
+		///
+		/// - Parameter id: The unique ID of the approval request.
+		/// - Parameter server: The label of the MCP server making the request.
+		/// - Parameter name: The name of the tool to run.
+		/// - Parameter arguments: A JSON string of arguments for the tool.
+		public init(id: String, server: String, name: String, arguments: String) {
+			self.id = id
+			self.name = name
+			self.server = server
+			self.arguments = arguments
+		}
+	}
+
+	@Codable @CodingKeys(.snake_case) public struct MCPApprovalResponse: Equatable, Hashable, Sendable {
+		/// The unique ID of the approval response
+		public var id: String?
+
+		/// The ID of the approval request being answered.
+		public var approvalRequestId: String
+
+		/// Whether the request was approved.
+		public var approve: Bool
+
+		/// Optional reason for the decision.
+		public var reason: String?
+
+		/// Creates a new MCP approval response.
+		///
+		/// - Parameter id: The unique ID of the approval response.
+		/// - Parameter approvalRequestId: The ID of the approval request being answered.
+		/// - Parameter approve: Whether the request was approved.
+		/// - Parameter reason: Optional reason for the decision.
+		public init(id: String? = nil, approvalRequestId: String, approve: Bool, reason: String? = nil) {
+			self.id = id
+			self.reason = reason
+			self.approve = approve
+			self.approvalRequestId = approvalRequestId
 		}
 	}
 
@@ -692,8 +1146,9 @@ public extension Item.Input {
 	/// See the [web search guide](https://platform.openai.com/docs/guides/tools-web-search) for more information.
 	/// - Parameter id: The unique ID of the web search tool call.
 	/// - Parameter status: The status of the web search tool call.
-	static func webSearchResults(id: String, status: Item.WebSearchCall.Status) -> Self {
-		.webSearchCall(Item.WebSearchCall(id: id, status: status))
+	/// - Parameter action: An object describing the specific action taken in this web search call.
+	static func webSearchResults(id: String, status: Item.WebSearchCall.Status, action: Item.WebSearchCall.Action) -> Self {
+		.webSearchCall(Item.WebSearchCall(id: id, status: status, action: action))
 	}
 
 	/// A tool call to run a function.
@@ -725,5 +1180,118 @@ public extension Item.Input {
 	/// - Parameter status: The status of the item. Populated when items are returned via API.
 	static func reasoning(id: String, summary: [Item.Reasoning.Summary] = [], status: Item.Reasoning.Status? = nil) -> Self {
 		.reasoning(Item.Reasoning(id: id, summary: summary, status: status))
+	}
+
+	/// An image generation request made by the model.
+	///
+	/// - Parameter id: The unique ID of the image generation call.
+	/// - Parameter result: The generated image, or null if not available.
+	/// - Parameter status: The status of the image generation call.
+	static func imageGenerationCall(id: String, result: Data? = nil, status: String) -> Self {
+		.imageGenerationCall(Item.ImageGenerationCall(id: id, result: result, status: status))
+	}
+
+	/// A tool call to run code.
+	///
+	/// See the [code interpreter guide](https://platform.openai.com/docs/guides/tools-code-interpreter) for more information.
+	/// - Parameter id: The unique ID of the code interpreter tool call.
+	/// - Parameter containerId: The ID of the container used to run the code.
+	/// - Parameter code: The code to run, or null if not available.
+	/// - Parameter status: The status of the code interpreter tool call.
+	/// - Parameter outputs: The outputs generated by the code interpreter, such as logs or images.
+	static func codeInterpreterCall(id: String, containerId: String, code: String? = nil, status: Item.CodeInterpreterCall.Status, outputs: [Item.CodeInterpreterCall.Output]? = nil) -> Self {
+		.codeInterpreterCall(Item.CodeInterpreterCall(id: id, containerId: containerId, code: code, status: status, outputs: outputs))
+	}
+
+	/// A tool call to run a command on the local shell.
+	///
+	/// - Parameter id: The unique ID of the local shell call.
+	/// - Parameter callId: The unique ID of the local shell tool call generated by the model.
+	/// - Parameter status: The status of the local shell call.
+	/// - Parameter action: Execute a shell command on the server.
+	static func localShellCall(id: String, callId: String, status: Item.LocalShellCall.Status, action: Item.LocalShellCall.Action) -> Self {
+		.localShellCall(Item.LocalShellCall(id: id, callId: callId, status: status, action: action))
+	}
+
+	/// The output of a local shell tool call.
+	///
+	/// - Parameter id: The unique ID of the local shell tool call generated by the model.
+	/// - Parameter status: The status of the item. Populated when items are returned via API.
+	/// - Parameter output: A JSON string of the output of the local shell tool call.
+	static func localShellCallOutput(id: String, status: Item.LocalShellCallOutput.Status? = nil, output: String) -> Self {
+		.localShellCallOutput(Item.LocalShellCallOutput(id: id, status: status, output: output))
+	}
+
+	/// A tool call to run a tool on an MCP server.
+	///
+	/// See the [MCP tool guide](https://platform.openai.com/docs/guides/tools-mcp) for more information.
+	/// - Parameter id: The unique ID of the tool call.
+	/// - Parameter server: The label of the MCP server running the tool.
+	/// - Parameter name: The name of the tool that was run.
+	/// - Parameter arguments: A JSON string of the arguments passed to the tool.
+	/// - Parameter output: The output from the tool call.
+	/// - Parameter error: The error from the tool call, if any.
+	static func mcpToolCall(id: String, server: String, name: String, arguments: String, output: String? = nil, error: String? = nil) -> Self {
+		.mcpToolCall(Item.MCPToolCall(id: id, server: server, name: name, arguments: arguments, output: output, error: error))
+	}
+
+	/// A list of tools available on an MCP server.
+	///
+	/// See the [MCP tool guide](https://platform.openai.com/docs/guides/tools-mcp) for more information.
+	/// - Parameter id: The unique ID of the list.
+	/// - Parameter server: The label of the MCP server.
+	/// - Parameter tools: The tools available on the server.
+	/// - Parameter error: Error message if the server could not list tools.
+	static func mcpListTools(id: String, server: String, tools: [Item.MCPListTools.MCPTool], error: String? = nil) -> Self {
+		.mcpListTools(Item.MCPListTools(id: id, server: server, tools: tools, error: error))
+	}
+
+	/// A request for approval to run a tool on an MCP server.
+	///
+	/// See the [MCP tool guide](https://platform.openai.com/docs/guides/tools-mcp) for more information.
+	/// - Parameter id: The unique ID of the approval request.
+	/// - Parameter server: The label of the MCP server making the request.
+	/// - Parameter name: The name of the tool to run.
+	/// - Parameter arguments: A JSON string of arguments for the tool.
+	static func mcpApprovalRequest(id: String, server: String, name: String, arguments: String) -> Self {
+		.mcpApprovalRequest(Item.MCPApprovalRequest(id: id, server: server, name: name, arguments: arguments))
+	}
+
+	/// A response to an MCP approval request.
+	///
+	/// See the [MCP tool guide](https://platform.openai.com/docs/guides/tools-mcp) for more information.
+	/// - Parameter id: The unique ID of the approval response.
+	/// - Parameter approvalRequestId: The ID of the approval request being answered.
+	/// - Parameter approve: Whether the request was approved.
+	/// - Parameter reason: Optional reason for the decision.
+	static func mcpApprovalResponse(id: String? = nil, approvalRequestId: String, approve: Bool, reason: String? = nil) -> Self {
+		.mcpApprovalResponse(Item.MCPApprovalResponse(id: id, approvalRequestId: approvalRequestId, approve: approve, reason: reason))
+	}
+}
+
+extension Item.ImageGenerationCall: Codable {
+	private enum CodingKeys: String, CodingKey {
+		case id, result, status
+	}
+
+	public func encode(to encoder: any Encoder) throws {
+		var container = encoder.container(keyedBy: CodingKeys.self)
+		try container.encode(id, forKey: .id)
+		try container.encode(status, forKey: .status)
+		try container.encodeIfPresent(result?.base64EncodedString(), forKey: .result)
+	}
+
+	public init(from decoder: any Decoder) throws {
+		let container = try decoder.container(keyedBy: CodingKeys.self)
+		id = try container.decode(String.self, forKey: .id)
+		status = try container.decode(String.self, forKey: .status)
+
+		if let base64String = try container.decodeIfPresent(String.self, forKey: .result) {
+			guard let data = Data(base64Encoded: base64String) else {
+				throw DecodingError.dataCorruptedError(forKey: .result, in: container, debugDescription: "Invalid base64 string for result")
+			}
+
+			result = data
+		}
 	}
 }

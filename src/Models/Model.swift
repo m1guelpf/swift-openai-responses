@@ -36,6 +36,21 @@ public enum Model: Equatable, Hashable, Sendable {
 	}
 }
 
+public extension Model {
+	enum Image: Equatable, Hashable, Sendable {
+		case gptImage
+		case other(String)
+
+		/// Creates a new `Model.Image` instance from a string.
+		public init(_ model: String) throws {
+			switch model {
+				case "gpt-image-1": self = .gptImage
+				default: self = .other(model)
+			}
+		}
+	}
+}
+
 extension Model: Codable {
 	public func encode(to encoder: any Encoder) throws {
 		switch self {
@@ -52,6 +67,19 @@ extension Model: Codable {
 			case .gpt3_5Turbo: try "gpt-3.5-turbo".encode(to: encoder)
 			case .gpt4_5Preview: try "gpt-4.5-preview".encode(to: encoder)
 			case .computerUsePreview: try "computer-use-preview".encode(to: encoder)
+		}
+	}
+
+	public init(from decoder: any Decoder) throws {
+		try self.init(String(from: decoder))
+	}
+}
+
+extension Model.Image: Codable {
+	public func encode(to encoder: any Encoder) throws {
+		switch self {
+			case .gptImage: try "gpt-image-1".encode(to: encoder)
+			case let .other(value): try value.encode(to: encoder)
 		}
 	}
 

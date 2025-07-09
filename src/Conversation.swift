@@ -208,19 +208,19 @@ private extension Conversation {
 				}
 			case let .outputTextDelta(contentIndex, delta, itemId, outputIndex):
 				updateMessage(index: outputIndex, id: itemId) { message in
-					guard case let .text(text, annotations) = message.content[Int(contentIndex)] else { return }
+					guard case let .text(text, annotations, _) = message.content[Int(contentIndex)] else { return }
 
 					message.content[Int(contentIndex)] = .text(text: text + delta, annotations: annotations)
 				}
 			case let .outputTextDone(contentIndex, itemId, outputIndex, text):
 				updateMessage(index: outputIndex, id: itemId) { message in
-					guard case let .text(_, annotations) = message.content[Int(contentIndex)] else { return }
+					guard case let .text(_, annotations, _) = message.content[Int(contentIndex)] else { return }
 
 					message.content[Int(contentIndex)] = .text(text: text, annotations: annotations)
 				}
 			case let .outputTextAnnotationAdded(annotation, annotationIndex, contentIndex, itemId, outputIndex):
 				updateMessage(index: outputIndex, id: itemId) { message in
-					guard case .text(let text, var annotations) = message.content[Int(contentIndex)] else { return }
+					guard case .text(let text, var annotations, _) = message.content[Int(contentIndex)] else { return }
 
 					annotations.insert(annotation, at: Int(annotationIndex))
 					message.content[Int(contentIndex)] = .text(text: text, annotations: annotations)

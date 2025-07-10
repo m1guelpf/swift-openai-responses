@@ -686,6 +686,10 @@ public enum Item: Equatable, Hashable, Sendable {
 			case text(_ text: String)
 		}
 
+		public struct SummaryDelta: Equatable, Hashable, Codable, Sendable {
+			public var text: String
+		}
+
 		/// The status of the reasoning data.
 		public enum Status: String, CaseIterable, Equatable, Hashable, Codable, Sendable {
 			case completed
@@ -733,14 +737,14 @@ public enum Item: Equatable, Hashable, Sendable {
 		public var result: Data?
 
 		/// The status of the image generation call.
-		public var status: String
+		public var status: Status
 
 		/// Creates a new image generation call.
 		///
 		/// - Parameter id: The unique ID of the image generation call.
 		/// - Parameter result: The generated image encoded in base64, or null if not available.
 		/// - Parameter status: The status of the image generation call.
-		public init(id: String, result: Data? = nil, status: String) {
+		public init(id: String, result: Data? = nil, status: Status) {
 			self.id = id
 			self.result = result
 			self.status = status
@@ -1187,7 +1191,7 @@ public extension Item.Input {
 	/// - Parameter id: The unique ID of the image generation call.
 	/// - Parameter result: The generated image, or null if not available.
 	/// - Parameter status: The status of the image generation call.
-	static func imageGenerationCall(id: String, result: Data? = nil, status: String) -> Self {
+	static func imageGenerationCall(id: String, result: Data? = nil, status: Item.ImageGenerationCall.Status) -> Self {
 		.imageGenerationCall(Item.ImageGenerationCall(id: id, result: result, status: status))
 	}
 
@@ -1284,7 +1288,7 @@ extension Item.ImageGenerationCall: Codable {
 	public init(from decoder: any Decoder) throws {
 		let container = try decoder.container(keyedBy: CodingKeys.self)
 		id = try container.decode(String.self, forKey: .id)
-		status = try container.decode(String.self, forKey: .status)
+		status = try container.decode(Status.self, forKey: .status)
 
 		if let base64String = try container.decodeIfPresent(String.self, forKey: .result) {
 			guard let data = Data(base64Encoded: base64String) else {

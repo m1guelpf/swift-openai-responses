@@ -66,10 +66,12 @@ import MetaCodable
 			/// A file input to the model.
 			/// - Parameter fileData: The content of the file to be sent to the model.
 			/// - Parameter fileId: The ID of the file to be sent to the model.
+			/// - Parameter fileUrl: The URL of the file to be sent to the model.
 			/// - Parameter filename:  The name of the file to be sent to the model.
 			@CodedAs("input_file") case file(
 				fileData: String? = nil,
 				fileId: String? = nil,
+				fileUrl: URL? = nil,
 				filename: String? = nil
 			)
 		}

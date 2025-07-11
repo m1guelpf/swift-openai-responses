@@ -160,21 +160,14 @@ import Foundation
 	/// - Parameter input: Text, image, or file inputs to the model, used to generate a response.
 	@discardableResult public nonisolated func send(_ input: Input) -> Task<Void, Error> {
 		return Task.detached(priority: .userInitiated) {
-			try await self.send(input, dangerouslyRunInCurrentThread: true)
+			try await self.sendAndWaitForResponses(input)
 		}
 	}
 
-	/// Sends a message to the model and returns the response, using the current thread.
+	/// Sends a message to the model and waits for the response.
 	///
 	/// - Parameter input: Text, image, or file inputs to the model, used to generate a response.
-	///
-	/// > Warning: This will run the request on the current thread, which may block the UI.
-	@concurrent public nonisolated func send(_ input: Input, dangerouslyRunInCurrentThread: Bool) async throws {
-		guard dangerouslyRunInCurrentThread else {
-			_ = await MainActor.run { send(input) }
-			return
-		}
-
+	@concurrent public nonisolated func sendAndWaitForResponses(_ input: Input) async throws {
 		let request = await Request(
 			model: config.model,
 			input: input,

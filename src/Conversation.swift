@@ -212,10 +212,6 @@ import Foundation
 private extension Conversation {
 	/// Handles an event from the conversation stream.
 	func handleEvent(_ event: Event) throws {
-		#if DEBUG
-		dump(event)
-		#endif
-
 		switch event {
 			case let .responseCreated(response):
 				entries.append(.response(response))

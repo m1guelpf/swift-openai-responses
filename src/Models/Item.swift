@@ -442,14 +442,14 @@ public enum Item: Equatable, Hashable, Sendable {
 		/// An object describing the specific action taken in this web search call.
 		///
 		/// Includes details on how the model used the web (search, open_page, find).
-		public var action: Action
+		public var action: Action?
 
 		/// Creates a new web search call.
 		///
 		/// - Parameter id: The unique ID of the web search tool call.
 		/// - Parameter status: The status of the web search tool call
 		/// - Parameter action: An object describing the specific action taken in this web search call.
-		public init(id: String, status: Status, action: Action) {
+		public init(id: String, status: Status, action: Action? = nil) {
 			self.id = id
 			self.status = status
 			self.action = action
@@ -678,12 +678,29 @@ public enum Item: Equatable, Hashable, Sendable {
 	}
 
 	/// A description of the chain of thought used by a reasoning model while generating a response.
-	public struct Reasoning: Equatable, Hashable, Codable, Sendable {
+	@Codable @CodingKeys(.snake_case) public struct Reasoning: Equatable, Hashable, Sendable {
 		/// Reasoning text contents.
 		@Codable @CodedAt("type") public enum Summary: Equatable, Hashable, Sendable {
 			/// A short summary of the reasoning used by the model when generating the response.
 			@CodedAs("summary_text")
 			case text(_ text: String)
+
+			var text: String {
+				get {
+					switch self {
+						case let .text(text): text
+					}
+				}
+				set {
+					switch self {
+						case .text: self = .text(newValue)
+					}
+				}
+			}
+
+			init(_ text: String) {
+				self = .text(text)
+			}
 		}
 
 		public struct SummaryDelta: Equatable, Hashable, Codable, Sendable {
@@ -735,6 +752,9 @@ public enum Item: Equatable, Hashable, Sendable {
 
 		/// The generated image encoded in base64.
 		public var result: Data?
+
+		/// Partial image generations
+		public var partialImages: [Data]?
 
 		/// The status of the image generation call.
 		public var status: Status
@@ -1151,7 +1171,7 @@ public extension Item.Input {
 	/// - Parameter id: The unique ID of the web search tool call.
 	/// - Parameter status: The status of the web search tool call.
 	/// - Parameter action: An object describing the specific action taken in this web search call.
-	static func webSearchResults(id: String, status: Item.WebSearchCall.Status, action: Item.WebSearchCall.Action) -> Self {
+	static func webSearchResults(id: String, status: Item.WebSearchCall.Status, action: Item.WebSearchCall.Action? = nil) -> Self {
 		.webSearchCall(Item.WebSearchCall(id: id, status: status, action: action))
 	}
 

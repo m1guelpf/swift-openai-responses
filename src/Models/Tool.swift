@@ -479,12 +479,14 @@ import MetaCodable
 			///
 			/// - Parameter fileIds: An optional list of uploaded files to make available to your code.
 			case auto(fileIds: [String]? = nil)
+
+			public static let auto = Container.auto(fileIds: nil)
 		}
 
 		/// The code interpreter container.
 		public var container: Container
 
-		public init(container: Container) {
+		public init(container: Container = .auto) {
 			self.container = container
 		}
 	}
@@ -860,7 +862,7 @@ extension Tool.CodeInterpreter.Container: Codable {
 			throw DecodingError.dataCorruptedError(forKey: .type, in: container, debugDescription: "Invalid code interpreter container type: \(type)")
 		}
 
-		self = try .auto(fileIds: container.decode([String].self, forKey: .fileIds))
+		self = try .auto(fileIds: container.decodeIfPresent([String].self, forKey: .fileIds))
 	}
 }
 

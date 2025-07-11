@@ -86,12 +86,14 @@ import MetaCodable
 	/// - Parameter delta: The text delta that was added.
 	/// - Parameter itemId: The ID of the output item that the text delta was added to.
 	/// - Parameter outputIndex: The index of the output item that the text delta was added to.
+	/// - Parameter logprobs: The log probabilities for the text delta that was added.
 	@CodedAs("response.output_text.delta")
 	case outputTextDelta(
 		contentIndex: UInt,
 		delta: String,
 		itemId: String,
-		outputIndex: UInt
+		outputIndex: UInt,
+		logprobs: [Item.Output.Content.LogProb]
 	)
 
 	/// Emitted when a text annotation is added.
@@ -116,12 +118,14 @@ import MetaCodable
 	/// - Parameter itemId: The ID of the output item that the text content is finalized.
 	/// - Parameter outputIndex: The index of the output item that the text content is finalized.
 	/// - Parameter text: The text content that is finalized.
+	/// - Parameter logprobs: The log probabilities for the text content that is finalized.
 	@CodedAs("response.output_text.done")
 	case outputTextDone(
 		contentIndex: UInt,
 		itemId: String,
 		outputIndex: UInt,
-		text: String
+		text: String,
+		logprobs: [Item.Output.Content.LogProb]
 	)
 
 	/// Emitted when there is a partial refusal text.
@@ -242,6 +246,7 @@ import MetaCodable
 	/// - Parameter outputIndex: The index of the output item in the response's output array.
 	/// - Parameter contentIndex: The index of the reasoning content part within the output item.
 	/// - Parameter delta: The partial update to the reasoning content.
+	@CodedAs("response.reasoning.delta")
 	case reasoningDelta(
 		itemId: String,
 		outputIndex: UInt,
@@ -255,6 +260,7 @@ import MetaCodable
 	/// - Parameter outputIndex: The index of the output item in the response's output array.
 	/// - Parameter contentIndex: The index of the reasoning content part within the output item.
 	/// - Parameter text: The finalized reasoning text.
+	@CodedAs("response.reasoning.done")
 	case reasoningDone(
 		itemId: String,
 		outputIndex: UInt,
@@ -280,14 +286,14 @@ import MetaCodable
 	///
 	/// - Parameter itemId: The ID of the item this summary part is associated with.
 	/// - Parameter outputIndex: The index of the output item this summary part is associated with.
-	/// - Parameter part: The completed summary part.
 	/// - Parameter summaryIndex: The index of the summary part within the reasoning summary.
+	/// - Parameter part: The completed summary part.
 	@CodedAs("response.reasoning_summary_part.done")
 	case reasoningSummaryPartDone(
 		itemId: String,
 		outputIndex: UInt,
+		summaryIndex: UInt,
 		part: Item.Reasoning.Summary,
-		summaryIndex: UInt
 	)
 
 	/// Emitted when there is a delta (partial update) to the reasoning summary content.
@@ -322,28 +328,28 @@ import MetaCodable
 	///
 	/// - Parameter itemId: The ID of the item this summary text delta is associated with.
 	/// - Parameter outputIndex: The index of the output item this summary text delta is associated with.
-	/// - Parameter delta: The text delta that was added to the summary.
 	/// - Parameter summaryIndex: The index of the summary part within the reasoning summary.
+	/// - Parameter delta: The text delta that was added to the summary.
 	@CodedAs("response.reasoning_summary_text.delta")
 	case reasoningSummaryTextDelta(
 		itemId: String,
 		outputIndex: UInt,
+		summaryIndex: UInt,
 		delta: String,
-		summaryIndex: UInt
 	)
 
 	/// Emitted when a delta is added to a reasoning summary text.
 	///
 	/// - Parameter itemId: The ID of the item this summary text delta is associated with.
 	/// - Parameter outputIndex: The index of the output item this summary text delta is associated with.
-	/// - Parameter text: The full text of the completed reasoning summary.
 	/// - Parameter summaryIndex: The index of the summary part within the reasoning summary.
+	/// - Parameter text: The full text of the completed reasoning summary.
 	@CodedAs("response.reasoning_summary_text.done")
 	case reasoningSummaryTextDone(
 		itemId: String,
 		outputIndex: UInt,
+		summaryIndex: UInt,
 		text: String,
-		summaryIndex: UInt
 	)
 
 	/// Emitted when an image generation tool call is in progress.
@@ -395,11 +401,11 @@ import MetaCodable
 	/// - Parameter itemId: The unique identifier of the MCP tool call item being processed.
 	/// - Parameter outputIndex: The index of the output item in the response's output array.
 	/// - Parameter delta: The partial update to the arguments for the MCP tool call.
-	@CodedAs("response.mcp_call.arguments.delta")
+	@CodedAs("response.mcp_call_arguments.delta")
 	case mcpCallArgumentsDelta(
 		itemId: String,
 		outputIndex: UInt,
-		delta: JSONObject
+		delta: String
 	)
 
 	/// Emitted when the arguments for an MCP tool call are finalized.
@@ -407,20 +413,32 @@ import MetaCodable
 	/// - Parameter itemId: The unique identifier of the MCP tool call item being processed.
 	/// - Parameter outputIndex: The index of the output item in the response's output array.
 	/// - Parameter arguments: The finalized arguments for the MCP tool call.
-	@CodedAs("response.mcp_call.arguments.done")
+	@CodedAs("response.mcp_call_arguments.done")
 	case mcpCallArgumentsDone(
 		itemId: String,
 		outputIndex: UInt,
-		arguments: JSONObject
+		arguments: String
 	)
 
 	/// Emitted when an MCP tool call has completed successfully.
+	///
+	/// - Parameter itemId: The unique identifier of the MCP tool call item that completed.
+	/// - Parameter outputIndex: The index of the output item in the response's output array.
 	@CodedAs("response.mcp_call.completed")
-	case mcpCallCompleted
+	case mcpCallCompleted(
+		itemId: String,
+		outputIndex: UInt,
+	)
 
 	/// Emitted when an MCP tool call has failed.
+	///
+	/// - Parameter itemId: The unique identifier of the MCP tool call item that failed.
+	/// - Parameter outputIndex: The index of the output item in the response's output array.
 	@CodedAs("response.mcp_call.failed")
-	case mcpCallFailed
+	case mcpCallFailed(
+		itemId: String,
+		outputIndex: UInt,
+	)
 
 	/// Emitted when an MCP tool call is in progress.
 	///
@@ -433,16 +451,34 @@ import MetaCodable
 	)
 
 	/// Emitted when the list of available MCP tools has been successfully retrieved.
+	///
+	/// - Parameter itemId: The unique identifier of the MCP tool list item that completed.
+	/// - Parameter outputIndex: The index of the output item in the response for which the MCP tool list is being retrieved.
 	@CodedAs("response.mcp_list_tools.completed")
-	case mcpListToolsCompleted
+	case mcpListToolsCompleted(
+		itemId: String,
+		outputIndex: UInt,
+	)
 
 	/// Emitted when the attempt to list available MCP tools has failed.
+	///
+	/// - Parameter itemId: The unique identifier of the MCP tool list item that failed.
+	/// - Parameter outputIndex: The index of the output item in the response for which the MCP tool list is being retrieved.
 	@CodedAs("response.mcp_list_tools.failed")
-	case mcpListToolsFailed
+	case mcpListToolsFailed(
+		itemId: String,
+		outputIndex: UInt,
+	)
 
 	/// Emitted when the system is in the process of retrieving the list of available MCP tools.
+	///
+	/// - Parameter itemId: The unique identifier of the MCP tool list item in progress.
+	/// - Parameter outputIndex: The index of the output item in the response for which the MCP tool list is being retrieved.
 	@CodedAs("response.mcp_list_tools.in_progress")
-	case mcpListToolsInProgress
+	case mcpListToolsInProgress(
+		itemId: String,
+		outputIndex: UInt
+	)
 
 	/// Emitted when a code interpreter call is in progress.
 	///
@@ -491,6 +527,7 @@ import MetaCodable
 	/// - Parameter itemId: The unique identifier of the code interpreter tool call item.
 	/// - Parameter outputIndex: The index of the output item in the response for which the code is finalized.
 	/// - Parameter code: The final code snippet output by the code interpreter.
+	@CodedAs("response.code_interpreter_call_code.done")
 	case codeInterpreterCallCodeDone(
 		itemId: String,
 		outputIndex: UInt,

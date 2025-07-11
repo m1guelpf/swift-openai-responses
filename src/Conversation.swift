@@ -38,6 +38,14 @@ import Foundation
 		return response.id
 	}
 
+	/// Whether there is a response in progress.
+	public var isResponding: Bool {
+		entries.contains { entry in
+			if case let .response(response) = entry, response.status == .inProgress { return true }
+			return false
+		}
+	}
+
 	/// Whether a web search is in progress.
 	public var isWebSearchInProgress: Bool {
 		entries.contains { entry in
@@ -64,8 +72,33 @@ import Foundation
 		}
 	}
 
+	/// Whether an image generation is in progress.
+	public var isImageGenerationInProgress: Bool {
+		entries.contains { entry in
+			guard case let .response(response) = entry, response.status == .inProgress else { return false }
+
+			return response.output.contains { item in
+				guard case let .imageGenerationCall(imageGenerationCall) = item else { return false }
+
+				return imageGenerationCall.status == .inProgress || imageGenerationCall.status == .generating
+			}
+		}
+	}
+
+	/// Whether a code interpreter call is in progress.
+	public var isCodeInterpreterCallInProgress: Bool {
+		entries.contains { entry in
+			guard case let .response(response) = entry, response.status == .inProgress else { return false }
+
+			return response.output.contains { item in
+				guard case let .codeInterpreterCall(codeInterpreterCall) = item else { return false }
+
+				return codeInterpreterCall.status == .inProgress || codeInterpreterCall.status == .interpreting
+			}
+		}
+	}
+
 	private var config: Config
-	private let encoder = JSONEncoder()
 	private nonisolated let client: ResponsesAPI
 
 	/// Creates a new conversation.
@@ -104,28 +137,28 @@ import Foundation
 	/// Sends a text message to the model and starts listening for a response in the background.
 	///
 	/// - Parameter text: The text message to send.
-	public func send(text: String) -> Task<Void, Error> {
+	@discardableResult public nonisolated func send(text: String) -> Task<Void, Error> {
 		send(.text(text))
 	}
 
 	/// Sends the output of a function call to the model and starts listening for a response in the background.
 	///
 	/// - Parameter functionCallOutput: The output of a function call.
-	public func send(functionCallOutput: Item.FunctionCallOutput) -> Task<Void, Error> {
+	@discardableResult public nonisolated func send(functionCallOutput: Item.FunctionCallOutput) -> Task<Void, Error> {
 		send(.list([.item(.functionCallOutput(functionCallOutput))]))
 	}
 
 	/// Sends the output of a computer tool call to the model and starts listening for a response in the background.
 	///
 	/// - Parameter computerCallOutput: The output of a computer tool call.
-	public func send(computerCallOutput: Item.ComputerToolCallOutput) -> Task<Void, Error> {
+	@discardableResult public nonisolated func send(computerCallOutput: Item.ComputerToolCallOutput) -> Task<Void, Error> {
 		send(.list([.item(.computerToolCallOutput(computerCallOutput))]))
 	}
 
 	/// Sends a message to the model and starts listening for a response in the background.
 	///
 	/// - Parameter input: Text, image, or file inputs to the model, used to generate a response.
-	public func send(_ input: Input) -> Task<Void, Error> {
+	@discardableResult public nonisolated func send(_ input: Input) -> Task<Void, Error> {
 		return Task.detached(priority: .userInitiated) {
 			try await self.send(input, dangerouslyRunInCurrentThread: true)
 		}
@@ -215,17 +248,17 @@ private extension Conversation {
 				updateMessage(index: outputIndex, id: itemId) { message in
 					message.content[Int(contentIndex)] = part
 				}
-			case let .outputTextDelta(contentIndex, delta, itemId, outputIndex):
+			case let .outputTextDelta(contentIndex, delta, itemId, outputIndex, logprobs):
 				updateMessage(index: outputIndex, id: itemId) { message in
-					guard case let .text(text, annotations, _) = message.content[Int(contentIndex)] else { return }
+					guard case let .text(text, annotations, existingLogprobs) = message.content[Int(contentIndex)] else { return }
 
-					message.content[Int(contentIndex)] = .text(text: text + delta, annotations: annotations)
+					message.content[Int(contentIndex)] = .text(text: text + delta, annotations: annotations, logprobs: existingLogprobs + logprobs)
 				}
-			case let .outputTextDone(contentIndex, itemId, outputIndex, text):
+			case let .outputTextDone(contentIndex, itemId, outputIndex, text, logprobs):
 				updateMessage(index: outputIndex, id: itemId) { message in
 					guard case let .text(_, annotations, _) = message.content[Int(contentIndex)] else { return }
 
-					message.content[Int(contentIndex)] = .text(text: text, annotations: annotations)
+					message.content[Int(contentIndex)] = .text(text: text, annotations: annotations, logprobs: logprobs)
 				}
 			case let .outputTextAnnotationAdded(annotation, annotationIndex, contentIndex, itemId, outputIndex):
 				updateMessage(index: outputIndex, id: itemId) { message in
@@ -312,23 +345,27 @@ private extension Conversation {
 
 					// figure out where to put the reasoning
 				}
-			case let .reasoningDone(itemId, outputIndex: outputIndex, contentIndex: contentIndex, text: text):
+			case let .reasoningDone(itemId, outputIndex, contentIndex, text):
 				updateItem(index: outputIndex, id: itemId) { item in
 					guard case var .reasoning(reasoning) = item else { return }
 
 					// figure out where to put the reasoning
 				}
-			case let .reasoningSummaryPartAdded(itemId, outputIndex: outputIndex, part: part, summaryIndex: summaryIndex):
+			case let .reasoningSummaryPartAdded(itemId, outputIndex: outputIndex, part, summaryIndex):
 				updateItem(index: outputIndex, id: itemId) { item in
 					guard case var .reasoning(reasoning) = item else { return }
 
-					// figure out where to put the reasoning
+					reasoning.summary.append(part)
+
+					item = .reasoning(reasoning)
 				}
-			case let .reasoningSummaryPartDone(itemId, outputIndex, part, summaryIndex):
+			case let .reasoningSummaryPartDone(itemId, outputIndex, summaryIndex, part):
 				updateItem(index: outputIndex, id: itemId) { item in
 					guard case var .reasoning(reasoning) = item else { return }
 
-					// figure out where to put the reasoning
+					reasoning.summary[Int(summaryIndex)] = part
+
+					item = .reasoning(reasoning)
 				}
 			case let .reasoningSummaryDelta(itemId, outputIndex, summaryIndex, delta):
 				updateItem(index: outputIndex, id: itemId) { item in
@@ -342,17 +379,23 @@ private extension Conversation {
 
 					// figure out where to put the reasoning
 				}
-			case let .reasoningSummaryTextDelta(itemId, outputIndex, delta, summaryIndex):
+			case let .reasoningSummaryTextDelta(itemId, outputIndex, summaryIndex, delta):
 				updateItem(index: outputIndex, id: itemId) { item in
-					guard case var .reasoning(reasoning) = item else { return }
+					guard case var .reasoning(reasoning) = item, var summary = reasoning.summary[safe: Int(summaryIndex)] else { return }
 
-					// figure out where to put the reasoning
+					summary.text += delta
+
+					reasoning.summary[Int(summaryIndex)] = summary
+					item = .reasoning(reasoning)
 				}
-			case let .reasoningSummaryTextDone(itemId, outputIndex, text, summaryIndex):
+			case let .reasoningSummaryTextDone(itemId, outputIndex, summaryIndex, text):
 				updateItem(index: outputIndex, id: itemId) { item in
-					guard case var .reasoning(reasoning) = item else { return }
+					guard case var .reasoning(reasoning) = item, var summary = reasoning.summary[safe: Int(summaryIndex)] else { return }
 
-					// figure out where to put the reasoning
+					summary.text = text
+
+					reasoning.summary[Int(summaryIndex)] = summary
+					item = .reasoning(reasoning)
 				}
 			case let .imageGenerationCallInProgress(itemId, outputIndex):
 				updateItem(index: outputIndex, id: itemId) { item in
@@ -372,9 +415,12 @@ private extension Conversation {
 				}
 			case let .imageGenerationCallPartialImage(itemId, outputIndex, partialImageB64, partialImageIndex):
 				updateItem(index: outputIndex, id: itemId) { item in
-					guard case var .imageGenerationCall(imageGenerationCall) = item else { return }
+					guard case var .imageGenerationCall(imageGenerationCall) = item,
+					      let partialImage = Data(base64Encoded: partialImageB64) else { return }
 
-					// figure out where to put partial images
+					imageGenerationCall.partialImages[Int(partialImageIndex)] = partialImage
+
+					item = .imageGenerationCall(imageGenerationCall)
 				}
 			case let .imageGenerationCallCompleted(itemId, outputIndex):
 				updateItem(index: outputIndex, id: itemId) { item in
@@ -386,42 +432,32 @@ private extension Conversation {
 				}
 			case let .mcpCallArgumentsDelta(itemId, outputIndex, delta):
 				updateItem(index: outputIndex, id: itemId) { item in
-					guard case var .mcpToolCall(mcpToolCall) = item,
-					      let argumentData = try? encoder.encode(delta),
-					      let arguments = String(data: argumentData, encoding: .utf8) else { return }
+					guard case var .mcpToolCall(mcpToolCall) = item else { return }
 
-					mcpToolCall.arguments += arguments
+					mcpToolCall.arguments += delta
 
 					item = .mcpToolCall(mcpToolCall)
 				}
 			case let .mcpCallArgumentsDone(itemId, outputIndex, arguments):
 				updateItem(index: outputIndex, id: itemId) { item in
-					guard case var .mcpToolCall(mcpToolCall) = item,
-					      let argumentData = try? encoder.encode(arguments),
-					      let arguments = String(data: argumentData, encoding: .utf8) else { return }
+					guard case var .mcpToolCall(mcpToolCall) = item else { return }
 
 					mcpToolCall.arguments = arguments
 
 					item = .mcpToolCall(mcpToolCall)
 				}
 			case .mcpCallCompleted:
-				break // not much to do here, since we don't have a reference to the item
+				break // mcpToolCall does not have a status field we can track
 			case .mcpCallFailed:
-				break // not much to do here, since we don't have a reference to the item
+				break // mcpToolCall does not have a status field we can track
 			case let .mcpCallInProgress(itemId, outputIndex):
-				updateItem(index: outputIndex, id: itemId) { item in
-					guard case var .mcpToolCall(mcpToolCall) = item else { return }
-
-					// mcpToolCall doesn't seem to include a status field?
-
-					item = .mcpToolCall(mcpToolCall)
-				}
-			case .mcpListToolsCompleted:
-				break // not much to do here, since we don't have a reference to the item
+				break // mcpToolCall does not have a status field we can track
+			case let .mcpListToolsCompleted(itemId, outputIndex):
+				break // mcpListTools does not have a status field we can track
 			case .mcpListToolsFailed:
-				break // not much to do here, since we don't have a reference to the item
-			case .mcpListToolsInProgress:
-				break // not much to do here, since we don't have a reference to the item
+				break // mcpListTools does not have a status field we can track
+			case let .mcpListToolsInProgress(itemId, outputIndex):
+				break // mcpListTools does not have a status field we can track
 			case let .codeInterpreterCallInProgress(itemId, outputIndex):
 				updateItem(index: outputIndex, id: itemId) { item in
 					guard case var .codeInterpreterCall(codeInterpreterCall) = item else { return }

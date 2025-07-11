@@ -329,17 +329,9 @@ private extension Conversation {
 					item = .fileSearch(fileSearch)
 				}
 			case let .reasoningDelta(itemId, outputIndex, contentIndex, delta):
-				updateItem(index: outputIndex, id: itemId) { item in
-					guard case var .reasoning(reasoning) = item else { return }
-
-					// figure out where to put the reasoning
-				}
+				break // this doesn't seem to ever get sent
 			case let .reasoningDone(itemId, outputIndex, contentIndex, text):
-				updateItem(index: outputIndex, id: itemId) { item in
-					guard case var .reasoning(reasoning) = item else { return }
-
-					// figure out where to put the reasoning
-				}
+				break // this doesn't seem to ever get sent
 			case let .reasoningSummaryPartAdded(itemId, outputIndex: outputIndex, part, summaryIndex):
 				updateItem(index: outputIndex, id: itemId) { item in
 					guard case var .reasoning(reasoning) = item else { return }

@@ -66,10 +66,12 @@ import MetaCodable
 			/// A file input to the model.
 			/// - Parameter fileData: The content of the file to be sent to the model.
 			/// - Parameter fileId: The ID of the file to be sent to the model.
+			/// - Parameter fileUrl: The URL of the file to be sent to the model.
 			/// - Parameter filename:  The name of the file to be sent to the model.
 			@CodedAs("input_file") case file(
 				fileData: String? = nil,
 				fileId: String? = nil,
+				fileUrl: URL? = nil,
 				filename: String? = nil
 			)
 		}
@@ -237,8 +239,9 @@ public extension Input.ListItem {
 	/// See the [web search guide](https://platform.openai.com/docs/guides/tools-web-search) for more information.
 	/// - Parameter id: The unique ID of the web search tool call.
 	/// - Parameter status: The status of the web search tool call.
-	static func webSearchCall(id: String, status: Item.WebSearchCall.Status) -> Self {
-		.item(Item.Input.webSearchCall(Item.WebSearchCall(id: id, status: status)))
+	/// - Parameter action: An object describing the specific action taken in this web search call.
+	static func webSearchCall(id: String, status: Item.WebSearchCall.Status, action: Item.WebSearchCall.Action? = nil) -> Self {
+		.item(Item.Input.webSearchCall(Item.WebSearchCall(id: id, status: status, action: action)))
 	}
 
 	/// A tool call to run a function.

@@ -1,7 +1,7 @@
 import Foundation
 
 /// A wrapper around the Responses API for managing a conversation.
-@Observable public final class Conversation: Sendable {
+@MainActor @Observable public final class Conversation {
 	/// An entry in the conversation.
 	public enum Entry: Equatable, Sendable {
 		/// A request to the model.
@@ -12,12 +12,12 @@ import Foundation
 	}
 
 	/// The entries in the conversation.
-	@MainActor public private(set) var entries: [Entry] = []
+	public private(set) var entries: [Entry] = []
 
 	/// The messages in the conversation.
 	///
 	/// Note that this doesn't include function calls or other non-message outputs. Use `entries` to access all outputs.
-	@MainActor public var messages: [Message] {
+	public var messages: [Message] {
 		entries.flatMap { entry -> [Message] in
 			switch entry {
 				case let .request(request): request.input.messages
@@ -29,7 +29,7 @@ import Foundation
 	}
 
 	/// The last response ID in the conversation.
-	@MainActor public var previousResponseId: String? {
+	public var previousResponseId: String? {
 		guard let entry = entries.last(where: { entry in
 			if case .response = entry { return true }
 			return false
@@ -38,8 +38,16 @@ import Foundation
 		return response.id
 	}
 
+	/// Whether there is a response in progress.
+	public var isResponding: Bool {
+		entries.contains { entry in
+			if case let .response(response) = entry, response.status == .inProgress { return true }
+			return false
+		}
+	}
+
 	/// Whether a web search is in progress.
-	@MainActor public var isWebSearchInProgress: Bool {
+	public var isWebSearchInProgress: Bool {
 		entries.contains { entry in
 			guard case let .response(response) = entry, response.status == .inProgress else { return false }
 
@@ -52,7 +60,7 @@ import Foundation
 	}
 
 	/// Whether a file search is in progress.
-	@MainActor public var isFileSearchInProgress: Bool {
+	public var isFileSearchInProgress: Bool {
 		entries.contains { entry in
 			guard case let .response(response) = entry, response.status == .inProgress else { return false }
 
@@ -64,15 +72,41 @@ import Foundation
 		}
 	}
 
-	private let client: ResponsesAPI
-	@MainActor private var config: Config
+	/// Whether an image generation is in progress.
+	public var isImageGenerationInProgress: Bool {
+		entries.contains { entry in
+			guard case let .response(response) = entry, response.status == .inProgress else { return false }
+
+			return response.output.contains { item in
+				guard case let .imageGenerationCall(imageGenerationCall) = item else { return false }
+
+				return imageGenerationCall.status == .inProgress || imageGenerationCall.status == .generating
+			}
+		}
+	}
+
+	/// Whether a code interpreter call is in progress.
+	public var isCodeInterpreterCallInProgress: Bool {
+		entries.contains { entry in
+			guard case let .response(response) = entry, response.status == .inProgress else { return false }
+
+			return response.output.contains { item in
+				guard case let .codeInterpreterCall(codeInterpreterCall) = item else { return false }
+
+				return codeInterpreterCall.status == .inProgress || codeInterpreterCall.status == .interpreting
+			}
+		}
+	}
+
+	private var config: Config
+	private nonisolated let client: ResponsesAPI
 
 	/// Creates a new conversation.
 	///
 	/// - Parameter client: A `ResponsesAPI` instance to use for the conversation.
 	/// - Parameter model: The model to use for the conversation. Can be changed later using the `model` property.
 	///	- Parameter configuring: A closure to further configure the conversation.
-	@MainActor public init(client: ResponsesAPI, using model: Model, configuring closure: (inout Config) -> Void = { _ in }) {
+	public init(client: ResponsesAPI, using model: Model, configuring closure: (inout Config) -> Void = { _ in }) {
 		self.client = client
 		config = Config(model: model)
 		closure(&config)
@@ -85,7 +119,7 @@ import Foundation
 	/// - Parameter projectId: The project associated with the request.
 	/// - Parameter model: The model to use for the conversation. Can be changed later using the `model` property.
 	///	- Parameter configuring: A closure to further configure the conversation.
-	@MainActor public convenience init(
+	public convenience init(
 		authToken: String,
 		organizationId: String? = nil,
 		projectId: String? = nil,
@@ -96,48 +130,44 @@ import Foundation
 	}
 
 	/// Restarts the conversation, clearing all entries.
-	@MainActor public func restart() {
+	public func restart() {
 		entries.removeAll()
 	}
 
-	/// Sends a text message to the model.
+	/// Sends a text message to the model and starts listening for a response in the background.
 	///
 	/// - Parameter text: The text message to send.
-	public func send(text: String) async throws {
-		try await send(.text(text))
+	@discardableResult public nonisolated func send(text: String) -> Task<Void, Error> {
+		send(.text(text))
 	}
 
-	/// Sends the output of a function call to the model.
+	/// Sends the output of a function call to the model and starts listening for a response in the background.
 	///
 	/// - Parameter functionCallOutput: The output of a function call.
-	public func send(functionCallOutput: Item.FunctionCallOutput) async throws {
-		try await send(.list([.item(.functionCallOutput(functionCallOutput))]))
+	@discardableResult public nonisolated func send(functionCallOutput: Item.FunctionCallOutput) -> Task<Void, Error> {
+		send(.list([.item(.functionCallOutput(functionCallOutput))]))
 	}
 
-	/// Sends the output of a computer tool call to the model.
+	/// Sends the output of a computer tool call to the model and starts listening for a response in the background.
 	///
 	/// - Parameter computerCallOutput: The output of a computer tool call.
-	public func send(computerCallOutput: Item.ComputerToolCallOutput) async throws {
-		try await send(.list([.item(.computerToolCallOutput(computerCallOutput))]))
+	@discardableResult public nonisolated func send(computerCallOutput: Item.ComputerToolCallOutput) -> Task<Void, Error> {
+		send(.list([.item(.computerToolCallOutput(computerCallOutput))]))
 	}
 
-	/// Sends a message to the model and returns the response.
+	/// Sends a message to the model and starts listening for a response in the background.
 	///
 	/// - Parameter input: Text, image, or file inputs to the model, used to generate a response.
-	public func send(_ input: Input) async throws {
-		try await Task.detached(priority: .userInitiated) {
-			try await self.send(input, dangerouslyRunInCurrentThread: true)
-		}.value
+	@discardableResult public nonisolated func send(_ input: Input) -> Task<Void, Error> {
+		return Task.detached(priority: .userInitiated) {
+			try await self.sendAndWaitForResponses(input)
+		}
 	}
 
-	/// Sends a message to the model and returns the response, using the current thread.
+	/// Sends a message to the model and waits for the response.
 	///
 	/// - Parameter input: Text, image, or file inputs to the model, used to generate a response.
-	///
-	/// > Warning: This will run the request on the current thread, which may block the UI.
-	public func send(_ input: Input, dangerouslyRunInCurrentThread: Bool) async throws {
-		guard dangerouslyRunInCurrentThread else { return try await send(input) }
-
+	@concurrent public nonisolated func sendAndWaitForResponses(_ input: Input) async throws {
 		let request = await Request(
 			model: config.model,
 			input: input,
@@ -164,6 +194,7 @@ import Foundation
 
 		for try await event in stream {
 			try await handleEvent(event)
+			try Task.checkCancellation()
 		}
 	}
 
@@ -171,7 +202,7 @@ import Foundation
 	///
 	/// - Parameter file: The file to upload.
 	/// - Parameter purpose: The intended purpose of the file.
-	public func upload(file: File.Upload) async throws -> File {
+	@concurrent public nonisolated func upload(file: File.Upload) async throws -> File {
 		try await client.upload(file: file, purpose: .userData)
 	}
 }
@@ -180,9 +211,7 @@ import Foundation
 
 private extension Conversation {
 	/// Handles an event from the conversation stream.
-	@MainActor func handleEvent(_ event: Event) throws {
-		dump(event)
-
+	func handleEvent(_ event: Event) throws {
 		switch event {
 			case let .responseCreated(response):
 				entries.append(.response(response))
@@ -193,6 +222,8 @@ private extension Conversation {
 			case let .responseFailed(response: response):
 				updateResponse(id: response.id) { $0 = response }
 			case let .responseIncomplete(response: response):
+				updateResponse(id: response.id) { $0 = response }
+			case let .responseQueued(response: response):
 				updateResponse(id: response.id) { $0 = response }
 			case let .outputItemAdded(item, outputIndex):
 				updateResponse { $0.output.insert(item, at: Int(outputIndex)) }
@@ -206,21 +237,21 @@ private extension Conversation {
 				updateMessage(index: outputIndex, id: itemId) { message in
 					message.content[Int(contentIndex)] = part
 				}
-			case let .outputTextDelta(contentIndex, delta, itemId, outputIndex):
+			case let .outputTextDelta(contentIndex, delta, itemId, outputIndex, logprobs):
 				updateMessage(index: outputIndex, id: itemId) { message in
-					guard case let .text(text, annotations) = message.content[Int(contentIndex)] else { return }
+					guard case let .text(text, annotations, existingLogprobs) = message.content[Int(contentIndex)] else { return }
 
-					message.content[Int(contentIndex)] = .text(text: text + delta, annotations: annotations)
+					message.content[Int(contentIndex)] = .text(text: text + delta, annotations: annotations, logprobs: existingLogprobs + logprobs)
 				}
-			case let .outputTextDone(contentIndex, itemId, outputIndex, text):
+			case let .outputTextDone(contentIndex, itemId, outputIndex, text, logprobs):
 				updateMessage(index: outputIndex, id: itemId) { message in
-					guard case let .text(_, annotations) = message.content[Int(contentIndex)] else { return }
+					guard case let .text(_, annotations, _) = message.content[Int(contentIndex)] else { return }
 
-					message.content[Int(contentIndex)] = .text(text: text, annotations: annotations)
+					message.content[Int(contentIndex)] = .text(text: text, annotations: annotations, logprobs: logprobs)
 				}
 			case let .outputTextAnnotationAdded(annotation, annotationIndex, contentIndex, itemId, outputIndex):
 				updateMessage(index: outputIndex, id: itemId) { message in
-					guard case .text(let text, var annotations) = message.content[Int(contentIndex)] else { return }
+					guard case .text(let text, var annotations, _) = message.content[Int(contentIndex)] else { return }
 
 					annotations.insert(annotation, at: Int(annotationIndex))
 					message.content[Int(contentIndex)] = .text(text: text, annotations: annotations)
@@ -276,26 +307,179 @@ private extension Conversation {
 				}
 			case let .error(error):
 				throw error
-			case let .fileSearchCallInitiated(itemId: itemId, outputIndex: outputIndex):
+			case let .fileSearchCallInitiated(itemId, outputIndex):
 				updateItem(index: outputIndex, id: itemId) { item in
 					guard case var .fileSearch(fileSearch) = item else { return }
 
 					fileSearch.status = .inProgress
 					item = .fileSearch(fileSearch)
 				}
-			case let .fileSearchCallSearching(itemId: itemId, outputIndex: outputIndex):
+			case let .fileSearchCallSearching(itemId, outputIndex):
 				updateItem(index: outputIndex, id: itemId) { item in
 					guard case var .fileSearch(fileSearch) = item else { return }
 
 					fileSearch.status = .searching
 					item = .fileSearch(fileSearch)
 				}
-			case let .fileSearchCallCompleted(itemId: itemId, outputIndex: outputIndex):
+			case let .fileSearchCallCompleted(itemId, outputIndex):
 				updateItem(index: outputIndex, id: itemId) { item in
 					guard case var .fileSearch(fileSearch) = item else { return }
 
 					fileSearch.status = .completed
 					item = .fileSearch(fileSearch)
+				}
+			case let .reasoningDelta(itemId, outputIndex, contentIndex, delta):
+				break // this doesn't seem to ever get sent
+			case let .reasoningDone(itemId, outputIndex, contentIndex, text):
+				break // this doesn't seem to ever get sent
+			case let .reasoningSummaryPartAdded(itemId, outputIndex: outputIndex, part, summaryIndex):
+				updateItem(index: outputIndex, id: itemId) { item in
+					guard case var .reasoning(reasoning) = item else { return }
+
+					reasoning.summary.append(part)
+
+					item = .reasoning(reasoning)
+				}
+			case let .reasoningSummaryPartDone(itemId, outputIndex, summaryIndex, part):
+				updateItem(index: outputIndex, id: itemId) { item in
+					guard case var .reasoning(reasoning) = item else { return }
+
+					reasoning.summary[Int(summaryIndex)] = part
+
+					item = .reasoning(reasoning)
+				}
+			case let .reasoningSummaryDelta(itemId, outputIndex, summaryIndex, delta):
+				updateItem(index: outputIndex, id: itemId) { item in
+					guard case var .reasoning(reasoning) = item else { return }
+
+					// figure out where to put the reasoning
+				}
+			case let .reasoningSummaryDone(itemId, outputIndex, summaryIndex, text):
+				updateItem(index: outputIndex, id: itemId) { item in
+					guard case var .reasoning(reasoning) = item else { return }
+
+					// figure out where to put the reasoning
+				}
+			case let .reasoningSummaryTextDelta(itemId, outputIndex, summaryIndex, delta):
+				updateItem(index: outputIndex, id: itemId) { item in
+					guard case var .reasoning(reasoning) = item, var summary = reasoning.summary[safe: Int(summaryIndex)] else { return }
+
+					summary.text += delta
+
+					reasoning.summary[Int(summaryIndex)] = summary
+					item = .reasoning(reasoning)
+				}
+			case let .reasoningSummaryTextDone(itemId, outputIndex, summaryIndex, text):
+				updateItem(index: outputIndex, id: itemId) { item in
+					guard case var .reasoning(reasoning) = item, var summary = reasoning.summary[safe: Int(summaryIndex)] else { return }
+
+					summary.text = text
+
+					reasoning.summary[Int(summaryIndex)] = summary
+					item = .reasoning(reasoning)
+				}
+			case let .imageGenerationCallInProgress(itemId, outputIndex):
+				updateItem(index: outputIndex, id: itemId) { item in
+					guard case var .imageGenerationCall(imageGenerationCall) = item else { return }
+
+					imageGenerationCall.status = .inProgress
+
+					item = .imageGenerationCall(imageGenerationCall)
+				}
+			case let .imageGenerationCallGenerating(itemId, outputIndex):
+				updateItem(index: outputIndex, id: itemId) { item in
+					guard case var .imageGenerationCall(imageGenerationCall) = item else { return }
+
+					imageGenerationCall.status = .generating
+
+					item = .imageGenerationCall(imageGenerationCall)
+				}
+			case let .imageGenerationCallPartialImage(itemId, outputIndex, partialImageB64, partialImageIndex):
+				updateItem(index: outputIndex, id: itemId) { item in
+					guard case var .imageGenerationCall(imageGenerationCall) = item,
+					      let partialImage = Data(base64Encoded: partialImageB64) else { return }
+
+					if imageGenerationCall.partialImages == nil { imageGenerationCall.partialImages = [] }
+					imageGenerationCall.partialImages![Int(partialImageIndex)] = partialImage
+
+					item = .imageGenerationCall(imageGenerationCall)
+				}
+			case let .imageGenerationCallCompleted(itemId, outputIndex):
+				updateItem(index: outputIndex, id: itemId) { item in
+					guard case var .imageGenerationCall(imageGenerationCall) = item else { return }
+
+					imageGenerationCall.status = .completed
+
+					item = .imageGenerationCall(imageGenerationCall)
+				}
+			case let .mcpCallArgumentsDelta(itemId, outputIndex, delta):
+				updateItem(index: outputIndex, id: itemId) { item in
+					guard case var .mcpToolCall(mcpToolCall) = item else { return }
+
+					mcpToolCall.arguments += delta
+
+					item = .mcpToolCall(mcpToolCall)
+				}
+			case let .mcpCallArgumentsDone(itemId, outputIndex, arguments):
+				updateItem(index: outputIndex, id: itemId) { item in
+					guard case var .mcpToolCall(mcpToolCall) = item else { return }
+
+					mcpToolCall.arguments = arguments
+
+					item = .mcpToolCall(mcpToolCall)
+				}
+			case .mcpCallCompleted:
+				break // mcpToolCall does not have a status field we can track
+			case .mcpCallFailed:
+				break // mcpToolCall does not have a status field we can track
+			case let .mcpCallInProgress(itemId, outputIndex):
+				break // mcpToolCall does not have a status field we can track
+			case let .mcpListToolsCompleted(itemId, outputIndex):
+				break // mcpListTools does not have a status field we can track
+			case .mcpListToolsFailed:
+				break // mcpListTools does not have a status field we can track
+			case let .mcpListToolsInProgress(itemId, outputIndex):
+				break // mcpListTools does not have a status field we can track
+			case let .codeInterpreterCallInProgress(itemId, outputIndex):
+				updateItem(index: outputIndex, id: itemId) { item in
+					guard case var .codeInterpreterCall(codeInterpreterCall) = item else { return }
+
+					codeInterpreterCall.status = .inProgress
+
+					item = .codeInterpreterCall(codeInterpreterCall)
+				}
+			case let .codeInterpreterCallInterpreting(itemId, outputIndex):
+				updateItem(index: outputIndex, id: itemId) { item in
+					guard case var .codeInterpreterCall(codeInterpreterCall) = item else { return }
+
+					codeInterpreterCall.status = .interpreting
+
+					item = .codeInterpreterCall(codeInterpreterCall)
+				}
+			case let .codeInterpreterCallCompleted(itemId, outputIndex):
+				updateItem(index: outputIndex, id: itemId) { item in
+					guard case var .codeInterpreterCall(codeInterpreterCall) = item else { return }
+
+					codeInterpreterCall.status = .completed
+
+					item = .codeInterpreterCall(codeInterpreterCall)
+				}
+			case let .codeInterpreterCallCodeDelta(itemId, outputIndex, delta):
+				updateItem(index: outputIndex, id: itemId) { item in
+					guard case var .codeInterpreterCall(codeInterpreterCall) = item else { return }
+
+					if codeInterpreterCall.code == nil { codeInterpreterCall.code = delta }
+					else { codeInterpreterCall.code! += delta }
+
+					item = .codeInterpreterCall(codeInterpreterCall)
+				}
+			case let .codeInterpreterCallCodeDone(itemId, outputIndex, code):
+				updateItem(index: outputIndex, id: itemId) { item in
+					guard case var .codeInterpreterCall(codeInterpreterCall) = item else { return }
+
+					codeInterpreterCall.code = code
+
+					item = .codeInterpreterCall(codeInterpreterCall)
 				}
 		}
 	}
@@ -304,7 +488,7 @@ private extension Conversation {
 	///
 	/// - Parameter id: The ID of the response to update.
 	/// - Parameter closure: A closure that takes the response and updates it.
-	@MainActor func updateResponse(id: String, modifying closure: (inout Response) -> Void) {
+	func updateResponse(id: String, modifying closure: (inout Response) -> Void) {
 		guard let index = entries.firstIndex(where: { entry in
 			guard case let .response(response) = entry else { return false }
 			return response.id == id
@@ -318,7 +502,7 @@ private extension Conversation {
 	/// Helper function to update the most recent response in the conversation.
 	///
 	/// - Parameter closure: A closure that takes the current response and updates it.
-	@MainActor func updateResponse(modifying closure: (inout Response) -> Void) {
+	func updateResponse(modifying closure: (inout Response) -> Void) {
 		if let previousResponseId {
 			updateResponse(id: previousResponseId, modifying: closure)
 		}
@@ -329,7 +513,7 @@ private extension Conversation {
 	/// - Parameter index: The index of the item to update.
 	/// - Parameter itemId: The ID of the item to update.
 	/// - Parameter closure: A closure that takes the item and updates it.
-	@MainActor func updateItem(index: UInt, id itemId: String, modifying closure: (inout OpenAI.Item.Output) -> Void) {
+	func updateItem(index: UInt, id itemId: String, modifying closure: (inout OpenAI.Item.Output) -> Void) {
 		guard let previousResponseId else { return }
 
 		updateResponse(id: previousResponseId) { response in
@@ -349,7 +533,7 @@ private extension Conversation {
 	/// - Parameter index: The index of the item that contains the message.
 	/// - Parameter itemId: The ID of the item that contains the message.
 	/// - Parameter closure: A closure that takes the message and updates it.
-	@MainActor func updateMessage(index outputIndex: UInt, id itemId: String, modifying closure: (inout Message.Output) -> Void) {
+	func updateMessage(index outputIndex: UInt, id itemId: String, modifying closure: (inout Message.Output) -> Void) {
 		updateItem(index: outputIndex, id: itemId) { item in
 			guard case var .message(message) = item else { return }
 
@@ -432,25 +616,25 @@ public extension Conversation {
 	/// Model ID used to generate the response.
 	///
 	/// OpenAI offers a wide range of models with different capabilities, performance characteristics, and price points. Refer to the [model guide](https://platform.openai.com/docs/models) to browse and compare available models.
-	@MainActor var model: Model {
+	var model: Model {
 		get { config.model }
 		set { config.model = newValue }
 	}
 
 	/// Specify additional output data to include in the model response.
-	@MainActor var include: [Request.Include]? {
+	var include: [Request.Include]? {
 		get { config.include }
 		set { config.include = newValue }
 	}
 
 	/// Inserts a system (or developer) message as the first item in the model's context.
-	@MainActor var instructions: String? {
+	var instructions: String? {
 		get { config.instructions }
 		set { config.instructions = newValue }
 	}
 
 	/// An upper bound for the number of tokens that can be generated for a response, including visible output tokens and [reasoning tokens](https://platform.openai.com/docs/guides/reasoning).
-	@MainActor var maxOutputTokens: UInt? {
+	var maxOutputTokens: UInt? {
 		get { config.maxOutputTokens }
 		set { config.maxOutputTokens = newValue }
 	}
@@ -458,19 +642,19 @@ public extension Conversation {
 	/// Set of 16 key-value pairs that can be attached to an object. This can be useful for storing additional information about the object in a structured format, and querying for objects via API or the dashboard.
 	///
 	/// Keys are strings with a maximum length of 64 characters. Values are strings with a maximum length of 512 characters.
-	@MainActor var metadata: [String: String]? {
+	var metadata: [String: String]? {
 		get { config.metadata }
 		set { config.metadata = newValue }
 	}
 
 	/// Whether to allow the model to run tool calls in parallel.
-	@MainActor var parallelToolCalls: Bool? {
+	var parallelToolCalls: Bool? {
 		get { config.parallelToolCalls }
 		set { config.parallelToolCalls = newValue }
 	}
 
 	/// Configuration options for [reasoning models](https://platform.openai.com/docs/guides/reasoning).
-	@MainActor var reasoning: ReasoningConfig? {
+	var reasoning: ReasoningConfig? {
 		get { config.reasoning }
 		set { config.reasoning = newValue }
 	}
@@ -480,7 +664,7 @@ public extension Conversation {
 	/// Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic.
 	///
 	/// We generally recommend altering this or `top_p` but not both.
-	@MainActor var temperature: Double? {
+	var temperature: Double? {
 		get { config.temperature }
 		set { config.temperature = newValue }
 	}
@@ -489,7 +673,7 @@ public extension Conversation {
 	///
 	/// - [Text inputs and outputs](https://platform.openai.com/docs/guides/text)
 	/// - [Structured Outputs](https://platform.openai.com/docs/guides/structured-outputs)
-	@MainActor var text: TextConfig? {
+	var text: TextConfig? {
 		get { config.text }
 		set { config.text = newValue }
 	}
@@ -497,7 +681,7 @@ public extension Conversation {
 	/// How the model should select which tool (or tools) to use when generating a response.
 	///
 	/// See the `tools` parameter to see how to specify which tools the model can call.
-	@MainActor var toolChoice: Tool.Choice? {
+	var toolChoice: Tool.Choice? {
 		get { config.toolChoice }
 		set { config.toolChoice = newValue }
 	}
@@ -507,7 +691,7 @@ public extension Conversation {
 	/// The two categories of tools you can provide the model are:
 	/// - **Built-in tools**: Tools that are provided by OpenAI that extend the model's capabilities, like [web search](https://platform.openai.com/docs/guides/tools-web-search) or [file search](https://platform.openai.com/docs/guides/tools-file-search). Learn more about [built-in tools](https://platform.openai.com/docs/guides/tools).
 	/// - **Function calls (custom tools)**: Functions that are defined by you, enabling the model to call your own code. Learn more about [function calling](https://platform.openai.com/docs/guides/function-calling).
-	@MainActor var tools: [Tool]? {
+	var tools: [Tool]? {
 		get { config.tools }
 		set { config.tools = newValue }
 	}
@@ -515,13 +699,13 @@ public extension Conversation {
 	/// An alternative to sampling with temperature, called nucleus sampling, where the model considers the results of the tokens with `top_p` probability mass. So 0.1 means only the tokens comprising the top 10% probability mass are considered.
 	///
 	/// We generally recommend altering this or `temperature` but not both.
-	@MainActor var topP: Double? {
+	var topP: Double? {
 		get { config.topP }
 		set { config.topP = newValue }
 	}
 
 	/// The truncation strategy to use for the model response.
-	@MainActor var truncation: Truncation? {
+	var truncation: Truncation? {
 		get { config.truncation }
 		set { config.truncation = newValue }
 	}
@@ -529,7 +713,7 @@ public extension Conversation {
 	/// A unique identifier representing your end-user, which can help OpenAI to monitor and detect abuse.
 	///
 	/// - [End User IDs](https://platform.openai.com/docs/guides/safety-best-practices#end-user-ids)
-	@MainActor var user: String? {
+	var user: String? {
 		get { config.user }
 		set { config.user = newValue }
 	}
@@ -537,7 +721,7 @@ public extension Conversation {
 	/// Updates the conversation configuration.
 	///
 	/// - Parameter closure: A function that takes the current configuration and updates it.
-	@MainActor func updateConfig(_ closure: (inout Config) -> Void) {
+	func updateConfig(_ closure: (inout Config) -> Void) {
 		closure(&config)
 	}
 }

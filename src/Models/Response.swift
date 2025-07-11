@@ -48,7 +48,9 @@ import HelperCoders
 	/// The status of the response generation.
 	public enum Status: String, CaseIterable, Equatable, Hashable, Codable, Sendable {
 		case failed
+		case queued
 		case completed
+		case cancelled
 		case incomplete
 		case inProgress = "in_progress"
 	}
@@ -112,6 +114,9 @@ import HelperCoders
 		}
 	}
 
+	/// Whether to run the model response in the background. [Learn more](https://platform.openai.com/docs/guides/background-responses).
+	public var background: Bool?
+
 	/// When this Response was created.
 	@CodedBy(Since1970DateCoder())
 	public var createdAt: Date
@@ -129,6 +134,13 @@ import HelperCoders
 
 	/// An upper bound for the number of tokens that can be generated for a response, including visible output tokens and [reasoning tokens](https://platform.openai.com/docs/guides/reasoning).
 	public var maxOutputTokens: UInt?
+
+	/// The maximum number of total calls to built-in tools that can be processed in a response.
+	///
+	/// This maximum number applies across all built-in tool calls, not per individual tool.
+	///
+	/// Any further attempts to call a tool by the model will be ignored.
+	public var maxToolCalls: UInt?
 
 	/// Set of 16 key-value pairs that can be attached to an object.
 	///
@@ -153,6 +165,10 @@ import HelperCoders
 	/// The unique ID of the previous response to the model. Use this to create multi-turn conversations.
 	/// - Learn more about [conversation state](https://platform.openai.com/docs/guides/conversation-state).
 	public var previousResponseId: String?
+
+	/// Reference to a prompt template and its variables.
+	/// - [Learn more](https://platform.openai.com/docs/guides/prompt-templates)
+	public var prompt: Prompt?
 
 	/// Configuration options for [reasoning models](https://platform.openai.com/docs/guides/reasoning).
 	/// Only available for o-series models.
@@ -188,6 +204,9 @@ import HelperCoders
 	/// - **Function calls (custom tools)**: Functions that are defined by you, enabling the model to call your own code. Learn more about [function calling](https://platform.openai.com/docs/guides/function-calling).
 	public var tools: [Tool]
 
+	/// An integer between 0 and 20 specifying the number of most likely tokens to return at each token position, each with an associated log probability.
+	public var topLogprobs: UInt?
+
 	/// An alternative to sampling with temperature, called nucleus sampling, where the model considers the results of the tokens with `topP` probability mass.
 	///
 	/// So 0.1 means only the tokens comprising the top 10% probability mass are considered.
@@ -216,7 +235,7 @@ import HelperCoders
 		.flatMap { message in message.content }
 		.map { content in
 			switch content {
-				case let .text(text, _): return text
+				case let .text(text, _, _): return text
 				case let .refusal(refusal): return refusal
 			}
 		}

@@ -8,13 +8,31 @@ import MetaCodable
 /// - **Function calls (custom tools)**: Functions that are defined by you, enabling the model to call your own code. Learn more about [function calling](https://platform.openai.com/docs/guides/function-calling).
 @Codable @CodedAt("type") @CodingKeys(.snake_case) public enum Tool: Equatable, Hashable, Sendable {
 	public enum Choice: Equatable, Hashable, Sendable {
+		/// The model will not call any tool and instead generates a message.
 		case none
+
+		/// The model can pick between generating a message or calling one or more tools.
 		case auto
+
+		/// The model must call one or more tools.
 		case required
+
 		case fileSearch
+		case imageGeneration
+		case codeInterpreter
 		case webSearchPreview
 		case computerUsePreview
+
+		/// Force the model to call a specific function.
+		///
+		/// - Parameter name: The name of the function to call.
 		case function(name: String)
+
+		/// Force the model to call a specific tool on a remote MCP server.
+		///
+		/// - Parameter server: The label of the MCP server to use.
+		/// - Parameter name: The name of the tool to call on the server.
+		case mcp(server: String, name: String? = nil)
 	}
 
 	/// Defines a function in your own code the model can choose to call.
@@ -404,6 +422,149 @@ import MetaCodable
 		}
 	}
 
+	@Codable @CodingKeys(.snake_case) public struct MCP: Equatable, Hashable, Sendable {
+		public enum RequireApproval: Equatable, Hashable, Sendable {
+			/// Approval policies for MCP tools.
+			public enum Approval: String, CaseIterable, Equatable, Hashable, Codable, Sendable {
+				case always
+				case never
+			}
+
+			/// Specify a single approval policy for all tools
+			case all(Approval)
+
+			/// Set approval requirements for specific tools on this MCP server.
+			///
+			/// - Parameter always: Tools that always require approval.
+			/// - Parameter never: Tools that never require approval.
+			case granular(always: [String]? = nil, never: [String]? = nil)
+		}
+
+		/// A label for this MCP server, used to identify it in tool calls.
+		@CodedAt("server_label") public var label: String
+
+		/// The URL for the MCP server.
+		@CodedAt("server_url") public var url: URL
+
+		/// List of allowed tool names.
+		public var allowedTools: [String]?
+
+		/// Optional HTTP headers to send to the MCP server.
+		///
+		/// Use for authentication or other purposes.
+		public var headers: [String: String]?
+
+		/// Specify which of the MCP server's tools require approval.
+		public var requireApproval: RequireApproval?
+
+		/// Optional description of the MCP server, used to provide more context.
+		@CodedAt("server_description") public var description: String?
+
+		public init(label: String, url: URL, allowedTools: [String]? = nil, headers: [String: String]? = nil, requireApproval: RequireApproval? = nil, description: String? = nil) {
+			self.url = url
+			self.label = label
+			self.headers = headers
+			self.description = description
+			self.allowedTools = allowedTools
+			self.requireApproval = requireApproval
+		}
+	}
+
+	public struct CodeInterpreter: Equatable, Hashable, Codable, Sendable {
+		public enum Container: Equatable, Hashable, Sendable {
+			/// The container ID.
+			case id(String)
+
+			/// Configuration for a code interpreter container.
+			///
+			/// - Parameter fileIds: An optional list of uploaded files to make available to your code.
+			case auto(fileIds: [String]? = nil)
+
+			public static let auto = Container.auto(fileIds: nil)
+		}
+
+		/// The code interpreter container.
+		public var container: Container
+
+		public init(container: Container = .auto) {
+			self.container = container
+		}
+	}
+
+	/// A tool that generates images.
+	@Codable @CodingKeys(.snake_case) public struct ImageGeneration: Equatable, Hashable, Sendable {
+		/// Background type for the generated image.
+		public enum Background: String, CaseIterable, Equatable, Hashable, Codable, Sendable {
+			case transparent, opaque, auto
+		}
+
+		public enum ImageMask: Equatable, Hashable, Sendable {
+			case image(Data)
+			case file(id: String)
+		}
+
+		/// The output format of the generated image.
+		public enum Format: String, CaseIterable, Equatable, Hashable, Codable, Sendable {
+			case png, webp, jpeg
+		}
+
+		/// The quality of the generated image.
+		public enum Quality: String, CaseIterable, Equatable, Hashable, Codable, Sendable {
+			case low, medium, high, auto
+		}
+
+		/// The size of the generated image.
+		public enum AspectRatio: String, CaseIterable, Equatable, Hashable, Codable, Sendable {
+			case auto
+			case square = "1024x1024"
+			case landscape = "1024x1536"
+			case portrait = "1536x1024"
+		}
+
+		/// Background type for the generated image.
+		public var background: Background?
+
+		/// Optional mask for inpainting.
+		@CodedAt("input_image_mask") public var imageMask: ImageMask?
+
+		/// The image generation model to use.
+		public var model: Model.Image?
+
+		/// Moderation level for the generated image.
+		public var moderation: String?
+
+		/// Compression level for the output image.
+		///
+		/// Defaults to `100` (no compression).
+		@CodedAt("output_compression") public var compression: UInt?
+
+		/// The output format of the generated image.
+		///
+		/// Defaults to `png`.
+		public var format: Format?
+
+		/// Number of partial images to generate in streaming mode, from 0 (default value) to 3.
+		public var partialImages: UInt?
+
+		/// The quality of the generated image.
+		public var quality: Quality?
+
+		/// The size of the generated image.
+		@CodedAt("size") public var aspectRatio: AspectRatio?
+
+		public init(background: Background? = nil, imageMask: ImageMask? = nil, model: Model.Image? = nil, moderation: String? = nil, compression: UInt? = nil, format: Format? = nil, partialImages: UInt? = nil, quality: Quality? = nil, aspectRatio: AspectRatio? = nil) {
+			self.model = model
+			self.format = format
+			self.quality = quality
+			self.imageMask = imageMask
+			self.moderation = moderation
+			self.background = background
+			self.aspectRatio = aspectRatio
+			self.compression = compression
+			self.partialImages = partialImages
+		}
+	}
+
 	/// Defines a function in your own code the model can choose to call.
 	/// - Learn more about [function calling](https://platform.openai.com/docs/guides/function-calling).
 	case function(Function)
@@ -425,6 +586,29 @@ import MetaCodable
 	/// Learn more about the [web search tool](https://platform.openai.com/docs/guides/tools-web-search?api-mode=responses).
 	@CodedAs("web_search_preview")
 	case webSearch(WebSearch)
+
+	/// Give the model access to additional tools via remote Model Context Protocol (MCP) servers.
+	///
+	/// Learn more about [MCP](https://platform.openai.com/docs/guides/tools-remote-mcp).
+	case mcp(MCP)
+
+	/// A tool that runs Python code to help generate a response to a prompt.
+	///
+	/// Learn more about the [code interpreter tool](https://platform.openai.com/docs/guides/tools-code-interpreter).
+	@CodedAs("code_interpreter")
+	case codeInterpreter(CodeInterpreter)
+
+	/// A tool that generates images
+	///
+	/// Learn more about the [image generation tool](https://platform.openai.com/docs/guides/tools-image-generation).
+	@CodedAs("image_generation")
+	case imageGeneration(ImageGeneration)
+
+	/// A tool that allows the model to execute shell commands in a local environment.
+	///
+	/// Learn more about the [local shell tool](https://platform.openai.com/docs/guides/tools-local-shell).
+	@CodedAs("local_shell")
+	case localShell
 }
 
 public extension Tool {
@@ -467,6 +651,53 @@ public extension Tool {
 	static func webSearch(contextSize: WebSearch.ContextSize = .medium, userLocation: WebSearch.UserLocation? = nil) -> Self {
 		.webSearch(WebSearch(searchContextSize: contextSize, userLocation: userLocation))
 	}
+
+	// Give the model access to additional tools via remote Model Context Protocol (MCP) servers.
+	///
+	/// Learn more about [MCP](https://platform.openai.com/docs/guides/tools-remote-mcp).
+	/// - Parameter label: A label for this MCP server, used to identify it in tool calls.
+	/// - Parameter url: The URL for the MCP server.
+	/// - Parameter allowedTools: List of allowed tool names.
+	/// - Parameter headers: Optional HTTP headers to send to the MCP server.
+	/// - Parameter requireApproval: Specify which of the MCP server's tools require approval.
+	/// - Parameter description: Optional description of the MCP server, used to provide more context.
+	static func mcp(label: String, url: URL, allowedTools: [String]? = nil, headers: [String: String]? = nil, requireApproval: MCP.RequireApproval? = nil, description: String? = nil) -> Self {
+		.mcp(MCP(label: label, url: url, allowedTools: allowedTools, headers: headers, requireApproval: requireApproval, description: description))
+	}
+
+	/// A tool that runs Python code to help generate a response to a prompt.
+	///
+	/// Learn more about the [code interpreter tool](https://platform.openai.com/docs/guides/tools-code-interpreter).
+	/// - Parameter container: The code interpreter container.
+	static func codeInterpreter(container: CodeInterpreter.Container) -> Self {
+		.codeInterpreter(CodeInterpreter(container: container))
+	}
+
+	/// A tool that generates images
+	///
+	/// Learn more about the [image generation tool](https://platform.openai.com/docs/guides/tools-image-generation).
+	/// - Parameter background: Background type for the generated image.
+	/// - Parameter imageMask: Optional mask for inpainting.
+	/// - Parameter model: The image generation model to use.
+	/// - Parameter moderation: Moderation level for the generated image.
+	/// - Parameter compression: Compression level for the output image.
+	/// - Parameter format: The output format of the generated image.
+	/// - Parameter partialImages: Number of partial images to generate in streaming mode, from 0 (default value) to 3.
+	/// - Parameter quality: The quality of the generated image.
+	/// - Parameter aspectRatio: The aspect ratio of the generated image.
+	static func imageGeneration(
+		background: ImageGeneration.Background? = nil,
+		imageMask: ImageGeneration.ImageMask? = nil,
+		model: Model.Image? = nil,
+		moderation: String? = nil,
+		compression: UInt? = nil,
+		format: ImageGeneration.Format? = nil,
+		partialImages: UInt? = nil,
+		quality: ImageGeneration.Quality? = nil,
+		aspectRatio: ImageGeneration.AspectRatio? = nil
+	) -> Self {
+		.imageGeneration(ImageGeneration(background: background, imageMask: imageMask, model: model, moderation: moderation, compression: compression, format: format, partialImages: partialImages, quality: quality, aspectRatio: aspectRatio))
+	}
 }
 
 public extension Tool.FileSearch.Filters {
@@ -492,6 +723,7 @@ extension Tool.Choice: Codable {
 	enum CodingKeys: String, CodingKey {
 		case type
 		case name
+		case serverLabel = "server_label"
 	}
 
 	public func encode(to encoder: any Encoder) throws {
@@ -508,10 +740,21 @@ extension Tool.Choice: Codable {
 			case .computerUsePreview:
 				var container = encoder.container(keyedBy: CodingKeys.self)
 				try container.encode("computer_use_preview", forKey: .type)
+			case .imageGeneration:
+				var container = encoder.container(keyedBy: CodingKeys.self)
+				try container.encode("image_generation", forKey: .type)
+			case .codeInterpreter:
+				var container = encoder.container(keyedBy: CodingKeys.self)
+				try container.encode("code_interpreter", forKey: .type)
 			case let .function(name):
 				var container = encoder.container(keyedBy: CodingKeys.self)
 				try container.encode("function", forKey: .type)
 				try container.encode(name, forKey: .name)
+			case let .mcp(server, name):
+				var container = encoder.container(keyedBy: CodingKeys.self)
+				try container.encode("mcp", forKey: .type)
+				try container.encode(server, forKey: .serverLabel)
+				if let name { try container.encode(name, forKey: .name) }
 		}
 	}
 
@@ -542,5 +785,117 @@ extension Tool.Choice: Codable {
 			default:
 				throw DecodingError.dataCorruptedError(forKey: .type, in: container, debugDescription: "Invalid tool choice: \(type)")
 		}
+	}
+}
+
+extension Tool.MCP.RequireApproval: Codable {
+	static let never = Self.all(.never)
+	static let always = Self.all(.always)
+
+	private enum CodingKeys: String, CodingKey {
+		case always, never
+	}
+
+	private struct ToolList: Codable {
+		var tool_names: [String]
+	}
+
+	public func encode(to encoder: any Encoder) throws {
+		switch self {
+			case let .all(approval):
+				var container = encoder.singleValueContainer()
+				try container.encode(approval.rawValue)
+			case let .granular(always, never):
+				var container = encoder.container(keyedBy: CodingKeys.self)
+				if let always {
+					try container.encode(ToolList(tool_names: always), forKey: .always)
+				}
+				if let never {
+					try container.encode(ToolList(tool_names: never), forKey: .never)
+				}
+		}
+	}
+
+	public init(from decoder: any Decoder) throws {
+		if let approval = try? Approval(from: decoder) {
+			self = .all(approval)
+			return
+		}
+
+		let container = try decoder.container(keyedBy: CodingKeys.self)
+		self = try .granular(
+			always: container.decode(ToolList?.self, forKey: .always)?.tool_names,
+			never: container.decode(ToolList?.self, forKey: .never)?.tool_names
+		)
+	}
+}
+
+extension Tool.CodeInterpreter.Container: Codable {
+	private enum CodingKeys: String, CodingKey {
+		case type
+		case fileIds = "file_ids"
+	}
+
+	public func encode(to encoder: any Encoder) throws {
+		switch self {
+			case let .id(id):
+				var container = encoder.singleValueContainer()
+				try container.encode(id)
+			case let .auto(fileIds):
+				var container = encoder.container(keyedBy: CodingKeys.self)
+				try container.encode("auto", forKey: .type)
+				try container.encode(fileIds, forKey: .fileIds)
+		}
+	}
+
+	public init(from decoder: any Decoder) throws {
+		if let id = try? String(from: decoder) {
+			self = .id(id)
+			return
+		}
+
+		let container = try decoder.container(keyedBy: CodingKeys.self)
+
+		let type = try container.decode(String.self, forKey: .type)
+
+		guard type == "auto" else {
+			throw DecodingError.dataCorruptedError(forKey: .type, in: container, debugDescription: "Invalid code interpreter container type: \(type)")
+		}
+
+		self = try .auto(fileIds: container.decodeIfPresent([String].self, forKey: .fileIds))
+	}
+}
+
+extension Tool.ImageGeneration.ImageMask: Codable {
+	private enum CodingKeys: String, CodingKey {
+		case fileId = "file_id"
+		case imageUrl = "image_url"
+	}
+
+	public func encode(to encoder: any Encoder) throws {
+		var container = encoder.container(keyedBy: CodingKeys.self)
+
+		switch self {
+			case let .file(id: fileId):
+				try container.encode(fileId, forKey: .fileId)
+			case let .image(data):
+				try container.encode(data.base64EncodedString(), forKey: .imageUrl)
+		}
+	}
+
+	public init(from decoder: any Decoder) throws {
+		let container = try decoder.container(keyedBy: CodingKeys.self)
+
+		if let fileId = try? container.decode(String.self, forKey: .fileId) {
+			self = .file(id: fileId)
+			return
+		}
+
+		if let imageUrl = try? container.decode(String.self, forKey: .imageUrl), let data = Data(base64Encoded: imageUrl) {
+			self = .image(data)
+			return
+		}
+
+		throw DecodingError.dataCorruptedError(forKey: .fileId, in: container, debugDescription: "Invalid image mask format")
 	}
 }

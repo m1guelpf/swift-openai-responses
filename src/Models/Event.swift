@@ -293,7 +293,7 @@ import MetaCodable
 		itemId: String,
 		outputIndex: UInt,
 		summaryIndex: UInt,
-		part: Item.Reasoning.Summary,
+		part: Item.Reasoning.Summary
 	)
 
 	/// Emitted when there is a delta (partial update) to the reasoning summary content.
@@ -335,7 +335,7 @@ import MetaCodable
 		itemId: String,
 		outputIndex: UInt,
 		summaryIndex: UInt,
-		delta: String,
+		delta: String
 	)
 
 	/// Emitted when a delta is added to a reasoning summary text.
@@ -349,7 +349,7 @@ import MetaCodable
 		itemId: String,
 		outputIndex: UInt,
 		summaryIndex: UInt,
-		text: String,
+		text: String
 	)
 
 	/// Emitted when an image generation tool call is in progress.
@@ -359,7 +359,7 @@ import MetaCodable
 	@CodedAs("response.image_generation_call.in_progress")
 	case imageGenerationCallInProgress(
 		itemId: String,
-		outputIndex: UInt,
+		outputIndex: UInt
 	)
 
 	/// Emitted when an image generation tool call is actively generating an image (intermediate state).
@@ -369,7 +369,7 @@ import MetaCodable
 	@CodedAs("response.image_generation_call.generating")
 	case imageGenerationCallGenerating(
 		itemId: String,
-		outputIndex: UInt,
+		outputIndex: UInt
 	)
 
 	/// Emitted when a partial image is available during image generation streaming.
@@ -393,7 +393,7 @@ import MetaCodable
 	@CodedAs("response.image_generation_call.completed")
 	case imageGenerationCallCompleted(
 		itemId: String,
-		outputIndex: UInt,
+		outputIndex: UInt
 	)
 
 	/// Emitted when there is a delta (partial update) to the arguments of an MCP tool call.
@@ -427,7 +427,7 @@ import MetaCodable
 	@CodedAs("response.mcp_call.completed")
 	case mcpCallCompleted(
 		itemId: String,
-		outputIndex: UInt,
+		outputIndex: UInt
 	)
 
 	/// Emitted when an MCP tool call has failed.
@@ -437,7 +437,7 @@ import MetaCodable
 	@CodedAs("response.mcp_call.failed")
 	case mcpCallFailed(
 		itemId: String,
-		outputIndex: UInt,
+		outputIndex: UInt
 	)
 
 	/// Emitted when an MCP tool call is in progress.
@@ -457,7 +457,7 @@ import MetaCodable
 	@CodedAs("response.mcp_list_tools.completed")
 	case mcpListToolsCompleted(
 		itemId: String,
-		outputIndex: UInt,
+		outputIndex: UInt
 	)
 
 	/// Emitted when the attempt to list available MCP tools has failed.
@@ -467,7 +467,7 @@ import MetaCodable
 	@CodedAs("response.mcp_list_tools.failed")
 	case mcpListToolsFailed(
 		itemId: String,
-		outputIndex: UInt,
+		outputIndex: UInt
 	)
 
 	/// Emitted when the system is in the process of retrieving the list of available MCP tools.

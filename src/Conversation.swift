@@ -399,7 +399,8 @@ private extension Conversation {
 					guard case var .imageGenerationCall(imageGenerationCall) = item,
 					      let partialImage = Data(base64Encoded: partialImageB64) else { return }
 
-					imageGenerationCall.partialImages[Int(partialImageIndex)] = partialImage
+					if imageGenerationCall.partialImages == nil { imageGenerationCall.partialImages = [] }
+					imageGenerationCall.partialImages![Int(partialImageIndex)] = partialImage
 
 					item = .imageGenerationCall(imageGenerationCall)
 				}

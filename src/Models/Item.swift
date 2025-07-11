@@ -754,6 +754,8 @@ public enum Item: Equatable, Hashable, Sendable {
 		public var result: Data?
 
 		/// Partial image generations
+		///
+		/// > Warning: This field is never populated by the API. It is only available when streaming image generations using the `Conversation` class.
 		public var partialImages: [Data]?
 
 		/// The status of the image generation call.
@@ -764,10 +766,11 @@ public enum Item: Equatable, Hashable, Sendable {
 		/// - Parameter id: The unique ID of the image generation call.
 		/// - Parameter result: The generated image encoded in base64, or null if not available.
 		/// - Parameter status: The status of the image generation call.
-		public init(id: String, result: Data? = nil, status: Status) {
+		public init(id: String, result: Data? = nil, status: Status, partialImages: [Data]? = nil) {
 			self.id = id
 			self.result = result
 			self.status = status
+			self.partialImages = partialImages
 		}
 	}
 

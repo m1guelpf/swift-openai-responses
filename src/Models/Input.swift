@@ -240,7 +240,7 @@ public extension Input.ListItem {
 	/// - Parameter id: The unique ID of the web search tool call.
 	/// - Parameter status: The status of the web search tool call.
 	/// - Parameter action: An object describing the specific action taken in this web search call.
-	static func webSearchCall(id: String, status: Item.WebSearchCall.Status, action: Item.WebSearchCall.Action) -> Self {
+	static func webSearchCall(id: String, status: Item.WebSearchCall.Status, action: Item.WebSearchCall.Action? = nil) -> Self {
 		.item(Item.Input.webSearchCall(Item.WebSearchCall(id: id, status: status, action: action)))
 	}
 

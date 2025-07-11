@@ -155,6 +155,20 @@ import Foundation
 		send(.list([.item(.computerToolCallOutput(computerCallOutput))]))
 	}
 
+	/// Responds to an MCP approval request and starts listening for a response in the background.
+	///
+	/// - Parameter mcpApprovalResponse: The MCP approval response to send.
+	@discardableResult public nonisolated func send(mcpApprovalResponse: Item.MCPApprovalResponse) -> Task<Void, Error> {
+		send(.list([.item(.mcpApprovalResponse(mcpApprovalResponse))]))
+	}
+
+	/// Informs the model of the output of a local shell call and starts listening for a response in the background.
+	///
+	/// - Parameter localShellCallOutput: The output of a local shell call.
+	@discardableResult public nonisolated func send(localShellCallOutput: Item.LocalShellCallOutput) -> Task<Void, Error> {
+		send(.list([.item(.localShellCallOutput(localShellCallOutput))]))
+	}
+
 	/// Sends a message to the model and starts listening for a response in the background.
 	///
 	/// - Parameter input: Text, image, or file inputs to the model, used to generate a response.

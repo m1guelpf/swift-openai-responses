@@ -120,8 +120,21 @@ import MetaCodable
 
 public extension Input {
 	/// Creates a new input to the model with a single message.
-	static func message(role: Message.Role = .user, content: Input.Content, status: Message.Status? = nil) -> Self {
-		.list([.message(Message.Input(role: role, content: content, status: status))])
+	///
+	/// - Parameter role: The role of the message input.
+	/// - Parameter text: The text content of the message.
+	/// - Parameter status: The status of the message. Populated when the message is returned via API.
+	static func message(role: Message.Role = .user, text: String, status: Message.Status? = nil) -> Self {
+		.list([.message(Message.Input(role: role, content: .text(text), status: status))])
+	}
+
+	/// Creates a new input to the model with a single message.
+	///
+	/// - Parameter role: The role of the message input.
+	/// - Parameter content: A list of one or many input items to the model, containing different content types.
+	/// - Parameter status: The status of the message. Populated when the message is returned via API.
+	static func message(role: Message.Role = .user, content: [Input.Content.ContentItem], status: Message.Status? = nil) -> Self {
+		.list([.message(Message.Input(role: role, content: .list(content), status: status))])
 	}
 
 	/// Creates a new input to the model with a single item.

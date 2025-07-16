@@ -27,9 +27,9 @@ import MetaCodable
 		case message(Message.Input)
 
 		/// An internal identifier for an item to reference.
+		/// - Parameter id: The ID of the item to reference.
 		@CodedAs("item_reference")
 		case itemRef(
-			/// The ID of the item to reference.
 			id: String
 		)
 
@@ -81,16 +81,6 @@ import MetaCodable
 
 		/// A list of one or many content items to the model, containing different content types.
 		case list([ContentItem])
-
-		/// Creates a new text input to the model.
-		public init(_ text: String) {
-			self = .text(text)
-		}
-
-		/// Creates a new input to the model with a list of items.
-		public init(_ items: [ContentItem]) {
-			self = .list(items)
-		}
 	}
 
 	/// The messages contained in the input.
@@ -126,15 +116,36 @@ import MetaCodable
 
 	/// A list of one or many input items to the model, containing different content types.
 	case list([ListItem])
+}
 
-	/// Creates a new text input to the model.
-	public init(_ text: String) {
-		self = .text(text)
+public extension Input {
+	/// Creates a new input to the model with a single message.
+	static func message(role: Message.Role = .user, content: Input.Content, status: Message.Status? = nil) -> Self {
+		.list([.message(Message.Input(role: role, content: content, status: status))])
 	}
 
-	/// Creates a new input to the model with a list of items.
-	public init(_ items: [ListItem]) {
-		self = .list(items)
+	/// Creates a new input to the model with a single item.
+	static func item(_ item: Input.ListItem) -> Self {
+		.list([item])
+	}
+}
+
+public extension Input.Content {
+	/// Creates a new image input to the model.
+	/// - Parameter detail: The detail level of the image to be sent to the model.
+	/// - Parameter fileId: The ID of the file to be sent to the model.
+	/// - Parameter imageUrl: The URL of the image to be sent to the model. A fully qualified URL or base64 encoded image in a data URL.
+	static func image(detail: ContentItem.ImageDetail = .auto, fileId: String? = nil, url: String? = nil) -> Self {
+		.list([.image(detail: detail, fileId: fileId, imageUrl: url)])
+	}
+
+	/// Creates a new file input to the model.
+	/// - Parameter fileData: The content of the file to be sent to the model.
+	/// - Parameter fileId: The ID of the file to be sent to the model.
+	/// - Parameter fileUrl: The URL of the file to be sent to the model.
+	/// - Parameter filename:  The name of the file to be sent to the model.
+	static func file(fileData: String? = nil, fileId: String? = nil, fileUrl: URL? = nil, filename: String? = nil) -> Self {
+		.list([.file(fileData: fileData, fileId: fileId, fileUrl: fileUrl, filename: filename)])
 	}
 }
 

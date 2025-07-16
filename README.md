@@ -256,12 +256,10 @@ let file = try await client.upload(file: .file(name: "image.png", contents: imag
 // then, use it on a message
 try await client.create(Request(
 	model: .gpt4o,
-	input: Input([
-		.message(content: Input.Content([
-			.image(fileId: file.id),
-			.text("Take a look at this image and tell me what you see"),
-		])),
-	])
+	input: .message(content: [
+		.image(fileId: file.id),
+		.text("Take a look at this image and tell me what you see"),
+	]),
 ))
 ```
 

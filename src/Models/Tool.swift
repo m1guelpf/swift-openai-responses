@@ -498,6 +498,12 @@ import MetaCodable
 			case transparent, opaque, auto
 		}
 
+		/// Control how much effort the model will exert to match the style and features, especially facial features, of input images.
+		public enum InputFidelity: String, CaseIterable, Equatable, Hashable, Codable, Sendable {
+			case low, high
+		}
+
+		/// Optional mask for inpainting.
 		public enum ImageMask: Equatable, Hashable, Sendable {
 			case image(Data)
 			case file(id: String)
@@ -513,7 +519,7 @@ import MetaCodable
 			case low, medium, high, auto
 		}
 
-		/// The size of the generated image.
+		/// The aspect ratio of the generated image.
 		public enum AspectRatio: String, CaseIterable, Equatable, Hashable, Codable, Sendable {
 			case auto
 			case square = "1024x1024"
@@ -523,6 +529,9 @@ import MetaCodable
 
 		/// Background type for the generated image.
 		public var background: Background?
+
+		/// Control how much effort the model will exert to match the style and features, especially facial features, of input images.
+		public var inputFidelity: InputFidelity?
 
 		/// Optional mask for inpainting.
 		@CodedAt("input_image_mask") public var imageMask: ImageMask?
@@ -541,7 +550,7 @@ import MetaCodable
 		/// The output format of the generated image.
 		///
 		/// Defaults to `png`.
-		public var format: Format?
+		@CodedAt("output_format") public var format: Format?
 
 		/// Number of partial images to generate in streaming mode, from 0 (default value) to 3.
 		public var partialImages: UInt?
@@ -549,10 +558,33 @@ import MetaCodable
 		/// The quality of the generated image.
 		public var quality: Quality?
 
-		/// The size of the generated image.
+		/// The aspect ratio of the generated image.
 		@CodedAt("size") public var aspectRatio: AspectRatio?
 
-		public init(background: Background? = nil, imageMask: ImageMask? = nil, model: Model.Image? = nil, moderation: String? = nil, compression: UInt? = nil, format: Format? = nil, partialImages: UInt? = nil, quality: Quality? = nil, aspectRatio: AspectRatio? = nil) {
+		/// Create a new `ImageGeneration` instance.
+		///
+		/// - Parameter background: Background type for the generated image.
+		/// - Parameter inputFidelity: Control how much effort the model will exert to match the style and features, especially facial features, of input images.
+		/// - Parameter imageMask: Optional mask for inpainting.
+		/// - Parameter model: The image generation model to use.
+		/// - Parameter moderation: Moderation level for the generated image.
+		/// - Parameter compression: Compression level for the output image.
+		/// - Parameter format: The output format of the generated image.
+		/// - Parameter partialImages: Number of partial images to generate in streaming mode, from 0 (default value) to 3.
+		/// - Parameter quality: The quality of the generated image.
+		/// - Parameter aspectRatio: The aspect ratio of the generated image.
+		public init(
+			background: Background? = nil,
+			inputFidelity: InputFidelity? = nil,
+			imageMask: ImageMask? = nil,
+			model: Model.Image? = nil,
+			moderation: String? = nil,
+			compression: UInt? = nil,
+			format: Format? = nil,
+			partialImages: UInt? = nil,
+			quality: Quality? = nil,
+			aspectRatio: AspectRatio? = nil
+		) {
 			self.model = model
 			self.format = format
 			self.quality = quality
@@ -562,6 +594,7 @@ import MetaCodable
 			self.aspectRatio = aspectRatio
 			self.compression = compression
 			self.partialImages = partialImages
+			self.inputFidelity = inputFidelity
 		}
 	}
 
@@ -677,6 +710,7 @@ public extension Tool {
 	///
 	/// Learn more about the [image generation tool](https://platform.openai.com/docs/guides/tools-image-generation).
 	/// - Parameter background: Background type for the generated image.
+	/// - Parameter inputFidelity: Control how much effort the model will exert to match the style and features, especially facial features, of input images.
 	/// - Parameter imageMask: Optional mask for inpainting.
 	/// - Parameter model: The image generation model to use.
 	/// - Parameter moderation: Moderation level for the generated image.
@@ -687,6 +721,7 @@ public extension Tool {
 	/// - Parameter aspectRatio: The aspect ratio of the generated image.
 	static func imageGeneration(
 		background: ImageGeneration.Background? = nil,
+		inputFidelity: ImageGeneration.InputFidelity? = nil,
 		imageMask: ImageGeneration.ImageMask? = nil,
 		model: Model.Image? = nil,
 		moderation: String? = nil,
@@ -696,7 +731,7 @@ public extension Tool {
 		quality: ImageGeneration.Quality? = nil,
 		aspectRatio: ImageGeneration.AspectRatio? = nil
 	) -> Self {
-		.imageGeneration(ImageGeneration(background: background, imageMask: imageMask, model: model, moderation: moderation, compression: compression, format: format, partialImages: partialImages, quality: quality, aspectRatio: aspectRatio))
+		.imageGeneration(ImageGeneration(background: background, inputFidelity: inputFidelity, imageMask: imageMask, model: model, moderation: moderation, compression: compression, format: format, partialImages: partialImages, quality: quality, aspectRatio: aspectRatio))
 	}
 }
 

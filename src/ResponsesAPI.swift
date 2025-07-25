@@ -89,40 +89,57 @@ public final class ResponsesAPI: Sendable {
 		req.httpBody = try encoder.encode(request)
 		req.addValue("application/json", forHTTPHeaderField: "Content-Type")
 
-		let bytes = try await stream(request: req)
-
-		let (stream, continuation) = AsyncThrowingStream.makeStream(of: Event.self)
-
-		let task = Task {
-			defer { continuation.finish() }
-
-			for try await line in bytes.lines {
-				guard let event = parseSSELine(line, as: Event.self) else {
-					continue
-				}
-
-				continuation.yield(with: event)
-
-				try Task.checkCancellation()
-			}
-		}
-
-		continuation.onTermination = { _ in
-			task.cancel()
-		}
-
-		return stream
+		return try await sseStream(of: Event.self, request: req)
 	}
 
 	/// Retrieves a model response with the given ID.
 	///
+	/// - Parameter id: The ID of the response to retrieve.
+	/// - Parameter include: Additional fields to include in the response. See `Request.Include` for available options.
+	///
 	/// - Throws: If the request fails to send or has a non-200 status code (except for 400, which will return an OpenAI error instead).
-	public func get(_ id: String) async throws -> Result<Response, Response.Error> {
+	public func get(_ id: String, include: [Request.Include]? = nil) async throws -> Result<Response, Response.Error> {
 		var req = request
 		req.httpMethod = "GET"
 		req.url!.append(path: "v1/responses/\(id)")
+		try req.url!.append(queryItems: [
+			include.map { try URLQueryItem(name: "include", value: encoder.encodeToString($0)) },
+		])
 
 		return try decoder.decode(Response.ResultResponse.self, from: await send(request: req)).into()
+	}
+
+	/// Continues streaming a model response with the given ID.
+	///
+	/// - Parameter id: The ID of the response to stream.
+	/// - Parameter startingAfter: The sequence number of the event after which to start streaming.
+	/// - Parameter include: Additional fields to include in the response. See `Request.Include` for available options.
+	///
+	/// - Throws: If the request fails to send or has a non-200 status code.
+	public func stream(id: String, startingAfter: Int? = nil, include: [Request.Include]? = nil) async throws -> AsyncThrowingStream<Event, any Swift.Error> {
+		var req = request
+		req.httpMethod = "GET"
+		req.url!.append(path: "v1/responses/\(id)")
+		try req.url!.append(queryItems: [
+			URLQueryItem(name: "stream", value: "true"),
+			startingAfter.map { URLQueryItem(name: "starting_after", value: "\($0)") },
+			include.map { try URLQueryItem(name: "include", value: encoder.encodeToString($0)) },
+		])
+
+		return try await sseStream(of: Event.self, request: req)
+	}
+
+	/// Cancels a model response with the given ID.
+	///
+	/// - Parameter id: The ID of the response to cancel.
+	///
+	/// Only responses created with the background parameter set to true can be cancelled. [Learn more](https://platform.openai.com/docs/guides/background).
+	public func cancel(_ id: String) async throws {
+		var req = request
+		req.httpMethod = "POST"
+		req.url!.append(path: "v1/responses/\(id)/cancel")
+
+		_ = try await send(request: req)
 	}
 
 	/// Deletes a model response with the given ID.
@@ -211,5 +228,31 @@ private extension ResponsesAPI {
 		}
 
 		throw Error.invalidResponse(res)
+	}
+
+	func sseStream<T: Decodable & Sendable>(of _: T.Type, request: URLRequest) async throws -> AsyncThrowingStream<T, Swift.Error> {
+		let bytes = try await stream(request: request)
+
+		let (stream, continuation) = AsyncThrowingStream.makeStream(of: T.self)
+
+		let task = Task {
+			defer { continuation.finish() }
+
+			for try await line in bytes.lines {
+				guard let event = parseSSELine(line, as: T.self) else {
+					continue
+				}
+
+				continuation.yield(with: event)
+
+				try Task.checkCancellation()
+			}
+		}
+
+		continuation.onTermination = { _ in
+			task.cancel()
+		}
+
+		return stream
 	}
 }

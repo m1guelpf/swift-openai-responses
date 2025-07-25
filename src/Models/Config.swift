@@ -17,6 +17,7 @@ import MetaCodable
 	///
 	/// This can be useful for debugging and understanding the model's reasoning process.
 	public enum SummaryConfig: String, CaseIterable, Equatable, Hashable, Codable, Sendable {
+		case auto
 		case concise
 		case detailed
 	}
@@ -26,18 +27,18 @@ import MetaCodable
 	/// Reducing reasoning effort can result in faster responses and fewer tokens used on reasoning in a response.
 	public var effort: Effort?
 
-	/// A summary of the reasoning performed by the model. `computer_use_preview` only.
+	/// A summary of the reasoning performed by the model.
 	///
 	/// This can be useful for debugging and understanding the model's reasoning process.
-	public var generateSummary: SummaryConfig?
+	public var summary: SummaryConfig?
 
 	/// Creates a new `ReasoningConfig` instance.
 	///
 	/// - Parameter effort: Constrains effort on reasoning for reasoning models.
-	/// - Parameter generateSummary: A summary of the reasoning performed by the model.
-	public init(effort: Effort? = nil, generateSummary: SummaryConfig? = nil) {
+	/// - Parameter summary: A summary of the reasoning performed by the model.
+	public init(effort: Effort? = nil, summary: SummaryConfig? = nil) {
 		self.effort = effort
-		self.generateSummary = generateSummary
+		self.summary = summary
 	}
 }
 
@@ -94,10 +95,40 @@ public enum Truncation: String, CaseIterable, Equatable, Hashable, Codable, Send
 
 /// The latency to use when processing the request
 public enum ServiceTier: String, CaseIterable, Equatable, Hashable, Codable, Sendable {
-	/// If the Project is Scale tier enabled, the system will utilize scale tier credits until they are exhausted. Otherwise, the request will be processed using the default service tier with a lower uptime SLA and no latency guarentee.
+	/// The request will be processed with the service tier configured in the Project settings.
+	///
+	/// Unless otherwise configured, the Project will use 'default'.
 	case auto
-	/// The request will be processed using the default service tier with a lower uptime SLA and no latency guarentee.
+
+	/// The requset will be processed with the standard pricing and performance for the selected model.
 	case `default`
+
 	/// The request will be processed with the Flex Processing service tier.
 	case flex
+
+	/// The request will be processed with the Priority Processing service tier.
+	case priority
+}
+
+public struct Prompt: Equatable, Hashable, Codable, Sendable {
+	/// The unique identifier of the prompt template to use.
+	public var id: String
+
+	/// Optional version of the prompt template.
+	public var version: String?
+
+	/// Optional map of values to substitute in for variables in your prompt.
+	///
+	/// The substitution values can either be strings, or other Response input types like images or files.
+	public var variables: [String: String]?
+
+	/// Creates a new `Prompt` instance.
+	/// - Parameter id: The unique identifier of the prompt template to use.
+	/// - Parameter version: Optional version of the prompt template.
+	/// - Parameter variables: Optional map of values to substitute in for variables in your prompt.
+	public init(id: String, version: String? = nil, variables: [String: String]? = nil) {
+		self.id = id
+		self.version = version
+		self.variables = variables
+	}
 }

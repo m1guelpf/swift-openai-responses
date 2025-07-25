@@ -27,9 +27,9 @@ import MetaCodable
 		case message(Message.Input)
 
 		/// An internal identifier for an item to reference.
+		/// - Parameter id: The ID of the item to reference.
 		@CodedAs("item_reference")
 		case itemRef(
-			/// The ID of the item to reference.
 			id: String
 		)
 
@@ -66,10 +66,12 @@ import MetaCodable
 			/// A file input to the model.
 			/// - Parameter fileData: The content of the file to be sent to the model.
 			/// - Parameter fileId: The ID of the file to be sent to the model.
+			/// - Parameter fileUrl: The URL of the file to be sent to the model.
 			/// - Parameter filename:  The name of the file to be sent to the model.
 			@CodedAs("input_file") case file(
 				fileData: String? = nil,
 				fileId: String? = nil,
+				fileUrl: URL? = nil,
 				filename: String? = nil
 			)
 		}
@@ -79,16 +81,6 @@ import MetaCodable
 
 		/// A list of one or many content items to the model, containing different content types.
 		case list([ContentItem])
-
-		/// Creates a new text input to the model.
-		public init(_ text: String) {
-			self = .text(text)
-		}
-
-		/// Creates a new input to the model with a list of items.
-		public init(_ items: [ContentItem]) {
-			self = .list(items)
-		}
 	}
 
 	/// The messages contained in the input.
@@ -124,15 +116,49 @@ import MetaCodable
 
 	/// A list of one or many input items to the model, containing different content types.
 	case list([ListItem])
+}
 
-	/// Creates a new text input to the model.
-	public init(_ text: String) {
-		self = .text(text)
+public extension Input {
+	/// Creates a new input to the model with a single message.
+	///
+	/// - Parameter role: The role of the message input.
+	/// - Parameter text: The text content of the message.
+	/// - Parameter status: The status of the message. Populated when the message is returned via API.
+	static func message(role: Message.Role = .user, text: String, status: Message.Status? = nil) -> Self {
+		.list([.message(Message.Input(role: role, content: .text(text), status: status))])
 	}
 
-	/// Creates a new input to the model with a list of items.
-	public init(_ items: [ListItem]) {
-		self = .list(items)
+	/// Creates a new input to the model with a single message.
+	///
+	/// - Parameter role: The role of the message input.
+	/// - Parameter content: A list of one or many input items to the model, containing different content types.
+	/// - Parameter status: The status of the message. Populated when the message is returned via API.
+	static func message(role: Message.Role = .user, content: [Input.Content.ContentItem], status: Message.Status? = nil) -> Self {
+		.list([.message(Message.Input(role: role, content: .list(content), status: status))])
+	}
+
+	/// Creates a new input to the model with a single item.
+	static func item(_ item: Input.ListItem) -> Self {
+		.list([item])
+	}
+}
+
+public extension Input.Content {
+	/// Creates a new image input to the model.
+	/// - Parameter detail: The detail level of the image to be sent to the model.
+	/// - Parameter fileId: The ID of the file to be sent to the model.
+	/// - Parameter imageUrl: The URL of the image to be sent to the model. A fully qualified URL or base64 encoded image in a data URL.
+	static func image(detail: ContentItem.ImageDetail = .auto, fileId: String? = nil, url: String? = nil) -> Self {
+		.list([.image(detail: detail, fileId: fileId, imageUrl: url)])
+	}
+
+	/// Creates a new file input to the model.
+	/// - Parameter fileData: The content of the file to be sent to the model.
+	/// - Parameter fileId: The ID of the file to be sent to the model.
+	/// - Parameter fileUrl: The URL of the file to be sent to the model.
+	/// - Parameter filename:  The name of the file to be sent to the model.
+	static func file(fileData: String? = nil, fileId: String? = nil, fileUrl: URL? = nil, filename: String? = nil) -> Self {
+		.list([.file(fileData: fileData, fileId: fileId, fileUrl: fileUrl, filename: filename)])
 	}
 }
 
@@ -237,8 +263,9 @@ public extension Input.ListItem {
 	/// See the [web search guide](https://platform.openai.com/docs/guides/tools-web-search) for more information.
 	/// - Parameter id: The unique ID of the web search tool call.
 	/// - Parameter status: The status of the web search tool call.
-	static func webSearchCall(id: String, status: Item.WebSearchCall.Status) -> Self {
-		.item(Item.Input.webSearchCall(Item.WebSearchCall(id: id, status: status)))
+	/// - Parameter action: An object describing the specific action taken in this web search call.
+	static func webSearchCall(id: String, status: Item.WebSearchCall.Status, action: Item.WebSearchCall.Action? = nil) -> Self {
+		.item(Item.Input.webSearchCall(Item.WebSearchCall(id: id, status: status, action: action)))
 	}
 
 	/// A tool call to run a function.

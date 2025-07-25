@@ -240,34 +240,6 @@ import MetaCodable
 		outputIndex: UInt
 	)
 
-	/// Emitted when there is a delta (partial update) to the reasoning content.
-	///
-	/// - Parameter itemId: The unique identifier of the item for which reasoning is being updated.
-	/// - Parameter outputIndex: The index of the output item in the response's output array.
-	/// - Parameter contentIndex: The index of the reasoning content part within the output item.
-	/// - Parameter delta: The partial update to the reasoning content.
-	@CodedAs("response.reasoning.delta")
-	case reasoningDelta(
-		itemId: String,
-		outputIndex: UInt,
-		contentIndex: UInt,
-		delta: String
-	)
-
-	/// Emitted when the reasoning content is finalized for an item.
-	///
-	/// - Parameter itemId: The unique identifier of the item for which reasoning is finalized.
-	/// - Parameter outputIndex: The index of the output item in the response's output array.
-	/// - Parameter contentIndex: The index of the reasoning content part within the output item.
-	/// - Parameter text: The finalized reasoning text.
-	@CodedAs("response.reasoning.done")
-	case reasoningDone(
-		itemId: String,
-		outputIndex: UInt,
-		contentIndex: UInt,
-		text: String
-	)
-
 	/// Emitted when a new reasoning summary part is added.
 	///
 	/// - Parameter itemId: The ID of the item this summary part is associated with.

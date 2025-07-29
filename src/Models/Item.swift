@@ -999,7 +999,7 @@ public enum Item: Equatable, Hashable, Sendable {
 			public var description: String?
 
 			/// The JSON schema describing the tool's input.
-			public var inputSchema: Tool.Function.Parameters
+			public var inputSchema: JSONSchema
 
 			/// Additional annotations about the tool.
 			public var annotations: Annotations?
@@ -1010,7 +1010,7 @@ public enum Item: Equatable, Hashable, Sendable {
 			/// - Parameter description: The description of the tool.
 			/// - Parameter inputSchema: The JSON schema describing the tool's input.
 			/// - Parameter annotations: Additional annotations about the tool.
-			public init(name: String, description: String? = nil, inputSchema: Tool.Function.Parameters, annotations: Annotations? = nil) {
+			public init(name: String, description: String? = nil, inputSchema: JSONSchema, annotations: Annotations? = nil) {
 				self.name = name
 				self.description = description
 				self.inputSchema = inputSchema

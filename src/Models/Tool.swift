@@ -38,148 +38,6 @@ import MetaCodable
 	/// Defines a function in your own code the model can choose to call.
 	/// - Learn more about [function calling](https://platform.openai.com/docs/guides/function-calling).
 	public struct Function: Equatable, Hashable, Codable, Sendable {
-		public struct Parameters: Codable, Hashable, Equatable, Sendable {
-			public var type: JSONType
-			public var properties: [String: Property]?
-			public var required: [String]?
-			public var pattern: String?
-			public var const: String?
-			public var `enum`: [String]?
-			public var multipleOf: Int?
-			public var minimum: Int?
-			public var maximum: Int?
-			public var additionalProperties: Bool?
-
-			public init(
-				type: JSONType,
-				properties: [String: Property]? = nil,
-				required: [String]? = nil,
-				pattern: String? = nil,
-				const: String? = nil,
-				enum: [String]? = nil,
-				multipleOf: Int? = nil,
-				minimum: Int? = nil,
-				maximum: Int? = nil,
-				additionalProperties: Bool? = false
-			) {
-				self.type = type
-				self.enum = `enum`
-				self.const = const
-				self.pattern = pattern
-				self.minimum = minimum
-				self.maximum = maximum
-				self.required = required
-				self.multipleOf = multipleOf
-				self.properties = properties
-				self.additionalProperties = additionalProperties
-			}
-
-			public struct Property: Codable, Hashable, Equatable, Sendable {
-				public var type: JSONType
-				public var description: String?
-				public var format: String?
-				public var items: Items?
-				public var required: [String]?
-				public var pattern: String?
-				public var const: String?
-				public var `enum`: [String]?
-				public var multipleOf: Int?
-				public var minimum: Double?
-				public var maximum: Double?
-				public var minItems: Int?
-				public var maxItems: Int?
-				public var uniqueItems: Bool?
-
-				public init(
-					type: JSONType,
-					description: String? = nil,
-					format: String? = nil,
-					items: Self.Items? = nil,
-					required: [String]? = nil,
-					pattern: String? = nil,
-					const: String? = nil,
-					enum: [String]? = nil,
-					multipleOf: Int? = nil,
-					minimum: Double? = nil,
-					maximum: Double? = nil,
-					minItems: Int? = nil,
-					maxItems: Int? = nil,
-					uniqueItems: Bool? = nil
-				) {
-					self.type = type
-					self.description = description
-					self.format = format
-					self.items = items
-					self.required = required
-					self.pattern = pattern
-					self.const = const
-					self.enum = `enum`
-					self.multipleOf = multipleOf
-					self.minimum = minimum
-					self.maximum = maximum
-					self.minItems = minItems
-					self.maxItems = maxItems
-					self.uniqueItems = uniqueItems
-				}
-
-				public struct Items: Codable, Equatable, Hashable, Sendable {
-					public var type: JSONType
-					public var properties: [String: Property]?
-					public var pattern: String?
-					public var const: String?
-					public var `enum`: [String]?
-					public var multipleOf: Int?
-					public var minimum: Double?
-					public var maximum: Double?
-					public var minItems: Int?
-					public var maxItems: Int?
-					public var uniqueItems: Bool?
-					public var required: [String]?
-					public var additionalProperties: Bool?
-
-					public init(
-						type: JSONType,
-						properties: [String: Property]? = nil,
-						pattern: String? = nil,
-						const: String? = nil,
-						enum: [String]? = nil,
-						multipleOf: Int? = nil,
-						minimum: Double? = nil,
-						maximum: Double? = nil,
-						minItems: Int? = nil,
-						maxItems: Int? = nil,
-						uniqueItems: Bool? = nil,
-						required: [String]? = nil,
-						additionalProperties: Bool? = false
-					) {
-						self.type = type
-						self.properties = properties
-						self.pattern = pattern
-						self.const = const
-						self.enum = `enum`
-						self.multipleOf = multipleOf
-						self.minimum = minimum
-						self.maximum = maximum
-						self.minItems = minItems
-						self.maxItems = maxItems
-						self.uniqueItems = uniqueItems
-						self.required = required
-						self.additionalProperties = additionalProperties
-					}
-				}
-			}
-
-			public enum JSONType: String, Equatable, Hashable, Codable, Sendable {
-				case integer
-				case string
-				case boolean
-				case array
-				case object
-				case number
-				case null
-			}
-		}
-
 		/// The name of the function to call.
 		public var name: String
 
@@ -187,7 +45,7 @@ import MetaCodable
 		public var description: String?
 
 		/// A JSON schema object describing the parameters of the function.
-		public var parameters: Parameters
+		public var parameters: JSONSchema
 
 		/// Whether to enforce strict parameter validation.
 		public var strict: Bool
@@ -198,7 +56,7 @@ import MetaCodable
 		/// - Parameter description: A description of the function. Used by the model to determine whether or not to call the function.
 		/// - Parameter parameters: A JSON schema object describing the parameters of the function.
 		/// - Parameter strict: Whether to enforce strict parameter validation.
-		public init(name: String, description: String? = nil, parameters: Parameters, strict: Bool = true) {
+		public init(name: String, description: String? = nil, parameters: JSONSchema, strict: Bool = true) {
 			self.name = name
 			self.strict = strict
 			self.parameters = parameters
@@ -651,9 +509,16 @@ public extension Tool {
 	/// - Parameter description: A description of the function. Used by the model to determine whether or not to call the function.
 	/// - Parameter parameters: A JSON schema object describing the parameters of the function.
 	/// - Parameter strict: Whether to enforce strict parameter validation.
-	static func function(name: String, description: String? = nil, parameters: Function.Parameters, strict: Bool = true) -> Self {
+	static func function(name: String, description: String? = nil, parameters: JSONSchema, strict: Bool = true) -> Self {
 		.function(Function(name: name, description: description, parameters: parameters, strict: strict))
 	}
+
+//	static func function<T: Toolable>(_: T.Type) -> Self {
+//		let tool = T()
+//		let description = tool.description == "" ? nil : tool.description
+//
+//		return .function(Function(name: tool.name, description: description, parameters))
+//	}
 
 	/// A tool that searches for relevant content from uploaded files.
 	///

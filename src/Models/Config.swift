@@ -59,7 +59,7 @@ public struct TextConfig: Equatable, Hashable, Codable, Sendable {
 		/// - Parameter strict: Whether to enable strict schema adherence when generating the output. If set to `true`, the model will always follow the exact schema defined in the schema field. Only a subset of JSON Schema is supported when `strict` is `true`.
 		@CodedAs("json_schema")
 		case jsonSchema(
-			schema: Tool.Function.Parameters,
+			schema: JSONSchema,
 			description: String,
 			name: String,
 			strict: Bool?

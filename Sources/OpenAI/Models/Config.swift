@@ -52,6 +52,7 @@ public struct TextConfig: Equatable, Hashable, Codable, Sendable {
 	@Codable @CodedAt("type") @CodingKeys(.snake_case) public enum Format: Equatable, Hashable, Sendable {
 		/// Used to generate text responses.
 		case text
+
 		/// JSON Schema response format. Used to generate structured JSON responses. Learn more about [Structured Outputs](https://platform.openai.com/docs/guides/structured-outputs).
 		/// - Parameter schema: The schema for the response format, described as a JSON Schema object. Learn how to build JSON schemas [here](https://json-schema.org/).
 		/// - Parameter description: A description of what the response format is for, used by the model to determine how to respond in the format.
@@ -64,6 +65,7 @@ public struct TextConfig: Equatable, Hashable, Codable, Sendable {
 			name: String,
 			strict: Bool?
 		)
+
 		/// JSON object response format. An older method of generating JSON responses.
 		///
 		/// Using `jsonSchema` is recommended for models that support it.
@@ -130,5 +132,16 @@ public struct Prompt: Equatable, Hashable, Codable, Sendable {
 		self.id = id
 		self.version = version
 		self.variables = variables
+	}
+}
+
+public extension TextConfig.Format {
+	/// JSON Schema response format. Used to generate structured JSON responses. Learn more about [Structured Outputs](https://platform.openai.com/docs/guides/structured-outputs).
+	/// - Parameter schemable: A type conforming to `Schemable`, which provides the schema for the response format.
+	/// - Parameter description: A description of what the response format is for, used by the model to determine how to respond in the format.
+	/// - Parameter name: The name of the response format. Must be a-z, A-Z, 0-9, or contain underscores and dashes, with a maximum length of 64.
+	/// - Parameter strict: Whether to enable strict schema adherence when generating the output. If set to `true`, the model will always follow the exact schema defined in the schema field. Only a subset of JSON Schema is supported when `strict` is `true`.
+	static func jsonSchema<T: Schemable>(_: T.Type, description: String, name: String, strict: Bool? = true) -> Self {
+		.jsonSchema(schema: T.schema, description: description, name: name, strict: strict)
 	}
 }

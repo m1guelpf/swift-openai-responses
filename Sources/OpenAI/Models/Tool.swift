@@ -513,12 +513,25 @@ public extension Tool {
 		.function(Function(name: name, description: description, parameters: parameters, strict: strict))
 	}
 
-//	static func function<T: Toolable>(_: T.Type) -> Self {
-//		let tool = T()
-//		let description = tool.description == "" ? nil : tool.description
-//
-//		return .function(Function(name: tool.name, description: description, parameters))
-//	}
+	/// Defines a function in your own code the model can choose to call.
+	/// - Learn more about [function calling](https://platform.openai.com/docs/guides/function-calling).
+	/// - Parameter name: The name of the function to call.
+	/// - Parameter description: A description of the function. Used by the model to determine whether or not to call the function.
+	/// - Parameter parameters: A JSON schema object describing the parameters of the function.
+	/// - Parameter strict: Whether to enforce strict parameter validation.
+	static func function<T: Schemable>(name: String, description: String? = nil, parameters _: T.Type, strict: Bool = true) -> Self {
+		.function(Function(name: name, description: description, parameters: T.schema, strict: strict))
+	}
+
+	/// Defines a function in your own code the model can choose to call.
+	/// - Learn more about [function calling](https://platform.openai.com/docs/guides/function-calling).
+	/// - Parameter tool: A description of a tool to use, implementing the `Toolable` protocol.
+	///
+	/// > Note: When using the `ResponsesAPI` client, you are still responsible for calling the code and returning a response.
+	/// > If you want this to be handled for you, use the `Conversation` class instead.
+	static func function<Tool: Toolable>(_: Tool.Type) -> Self {
+		return .function(Tool.intoFunction())
+	}
 
 	/// A tool that searches for relevant content from uploaded files.
 	///
@@ -797,5 +810,20 @@ extension Tool.ImageGeneration.ImageMask: Codable {
 		}
 
 		throw DecodingError.dataCorruptedError(forKey: .fileId, in: container, debugDescription: "Invalid image mask format")
+	}
+}
+
+public extension Tool.Function {
+	/// Create a new `Function` instance.
+	///
+	/// - Parameter name: The name of the function to call.
+	/// - Parameter description: A description of the function. Used by the model to determine whether or not to call the function.
+	/// - Parameter parameters: A JSON schema object describing the parameters of the function.
+	/// - Parameter strict: Whether to enforce strict parameter validation.
+	init<T: Schemable>(name: String, description: String? = nil, parameters _: T.Type, strict: Bool = true) {
+		self.name = name
+		self.strict = strict
+		parameters = T.schema
+		self.description = description
 	}
 }

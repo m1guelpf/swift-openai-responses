@@ -1,5 +1,7 @@
 import Foundation
 
+fileprivate typealias RootInput = Input
+
 public enum Message: Equatable, Hashable, Sendable {
 	/// The role of a message.
 	public enum Role: String, CaseIterable, Equatable, Hashable, Codable, Sendable {

@@ -188,17 +188,22 @@ import Foundation
 			include: config.include,
 			instructions: config.instructions,
 			maxOutputTokens: config.maxOutputTokens,
+			maxToolCalls: config.maxToolCalls,
 			metadata: config.metadata,
 			parallelToolCalls: config.parallelToolCalls,
 			previousResponseId: previousResponseId,
+			prompt: config.prompt,
+			promptCacheKey: config.promptCacheKey,
 			reasoning: config.reasoning,
+			safetyIdentifier: config.safetyIdentifier,
+			serviceTier: config.serviceTier,
 			temperature: config.temperature,
 			text: config.text,
 			toolChoice: config.toolChoice,
 			tools: config.tools,
+			topLogprobs: config.topLogprobs,
 			topP: config.topP,
 			truncation: config.truncation,
-			user: config.user
 		)
 
 		let stream = try await client.stream(request)
@@ -573,6 +578,13 @@ public extension Conversation {
 		/// An upper bound for the number of tokens that can be generated for a response, including visible output tokens and [reasoning tokens](https://platform.openai.com/docs/guides/reasoning).
 		public var maxOutputTokens: UInt?
 
+		/// The maximum number of total calls to built-in tools that can be processed in a response.
+		///
+		/// This maximum number applies across all built-in tool calls, not per individual tool.
+		///
+		/// Any further attempts to call a tool by the model will be ignored.
+		public var maxToolCalls: UInt?
+
 		/// Set of 16 key-value pairs that can be attached to an object. This can be useful for storing additional information about the object in a structured format, and querying for objects via API or the dashboard.
 		///
 		/// Keys are strings with a maximum length of 64 characters. Values are strings with a maximum length of 512 characters.
@@ -581,14 +593,31 @@ public extension Conversation {
 		/// Whether to allow the model to run tool calls in parallel.
 		public var parallelToolCalls: Bool?
 
+		/// Reference to a prompt template and its variables. [Learn more](https://platform.openai.com/docs/guides/text?api-mode=responses#reusable-prompts).
+		public var prompt: Prompt?
+
+		/// Used by OpenAI to cache responses for similar requests to optimize your cache hit rates.
+		///
+		/// Replaces the `user` field. [Learn more](https://platform.openai.com/docs/guides/prompt-caching).
+		public var promptCacheKey: String?
+
 		/// Configuration options for [reasoning models](https://platform.openai.com/docs/guides/reasoning).
 		public var reasoning: ReasoningConfig?
+
+		/// A stable identifier used to help detect users of your application that may be violating OpenAI's usage policies.
+		///
+		/// The IDs should be a string that uniquely identifies each user. We recommend hashing their username or email address, in order to avoid sending us any identifying information.
+		/// - [Safety Identifiers](https://platform.openai.com/docs/guides/safety-best-practices#safety-identifiers)
+		public var safetyIdentifier: String?
+
+		/// Specifies the latency tier to use for processing the request
+		public var serviceTier: ServiceTier?
 
 		/// What sampling temperature to use, between 0 and 2.
 		///
 		/// Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic.
 		///
-		/// We generally recommend altering this or `top_p` but not both.
+		/// We generally recommend altering this or `topP` but not both.
 		public var temperature: Double?
 
 		/// Configuration options for a text response from the model. Can be plain text or structured JSON data.
@@ -609,6 +638,9 @@ public extension Conversation {
 		/// - **Function calls (custom tools)**: Functions that are defined by you, enabling the model to call your own code. Learn more about [function calling](https://platform.openai.com/docs/guides/function-calling).
 		public var tools: [Tool]?
 
+		/// An integer between 0 and 20 specifying the number of most likely tokens to return at each token position, each with an associated log probability.
+		public var topLogprobs: UInt?
+
 		/// An alternative to sampling with temperature, called nucleus sampling, where the model considers the results of the tokens with `top_p` probability mass. So 0.1 means only the tokens comprising the top 10% probability mass are considered.
 		///
 		/// We generally recommend altering this or `temperature` but not both.
@@ -616,11 +648,6 @@ public extension Conversation {
 
 		/// The truncation strategy to use for the model response.
 		public var truncation: Truncation?
-
-		/// A unique identifier representing your end-user, which can help OpenAI to monitor and detect abuse.
-		///
-		/// - [End User IDs](https://platform.openai.com/docs/guides/safety-best-practices#end-user-ids)
-		public var user: String?
 	}
 
 	/// Model ID used to generate the response.
@@ -649,6 +676,16 @@ public extension Conversation {
 		set { config.maxOutputTokens = newValue }
 	}
 
+	/// The maximum number of total calls to built-in tools that can be processed in a response.
+	///
+	/// This maximum number applies across all built-in tool calls, not per individual tool.
+	///
+	/// Any further attempts to call a tool by the model will be ignored.
+	var maxToolCalls: UInt? {
+		get { config.maxToolCalls }
+		set { config.maxToolCalls = newValue }
+	}
+
 	/// Set of 16 key-value pairs that can be attached to an object. This can be useful for storing additional information about the object in a structured format, and querying for objects via API or the dashboard.
 	///
 	/// Keys are strings with a maximum length of 64 characters. Values are strings with a maximum length of 512 characters.
@@ -663,17 +700,46 @@ public extension Conversation {
 		set { config.parallelToolCalls = newValue }
 	}
 
+	/// Reference to a prompt template and its variables. [Learn more](https://platform.openai.com/docs/guides/text?api-mode=responses#reusable-prompts).
+	var prompt: Prompt? {
+		get { config.prompt }
+		set { config.prompt = newValue }
+	}
+
+	/// Used by OpenAI to cache responses for similar requests to optimize your cache hit rates.
+	///
+	/// Replaces the `user` field. [Learn more](https://platform.openai.com/docs/guides/prompt-caching).
+	var promptCacheKey: String? {
+		get { config.promptCacheKey }
+		set { config.promptCacheKey = newValue }
+	}
+
 	/// Configuration options for [reasoning models](https://platform.openai.com/docs/guides/reasoning).
 	var reasoning: ReasoningConfig? {
 		get { config.reasoning }
 		set { config.reasoning = newValue }
 	}
 
+	/// A stable identifier used to help detect users of your application that may be violating OpenAI's usage policies.
+	///
+	/// The IDs should be a string that uniquely identifies each user. We recommend hashing their username or email address, in order to avoid sending us any identifying information.
+	/// - [Safety Identifiers](https://platform.openai.com/docs/guides/safety-best-practices#safety-identifiers)
+	var safetyIdentifier: String? {
+		get { config.safetyIdentifier }
+		set { config.safetyIdentifier = newValue }
+	}
+
+	/// Specifies the latency tier to use for processing the request
+	var serviceTier: ServiceTier? {
+		get { config.serviceTier }
+		set { config.serviceTier = newValue }
+	}
+
 	/// What sampling temperature to use, between 0 and 2.
 	///
 	/// Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic.
 	///
-	/// We generally recommend altering this or `top_p` but not both.
+	/// We generally recommend altering this or `topP` but not both.
 	var temperature: Double? {
 		get { config.temperature }
 		set { config.temperature = newValue }
@@ -706,6 +772,12 @@ public extension Conversation {
 		set { config.tools = newValue }
 	}
 
+	/// An integer between 0 and 20 specifying the number of most likely tokens to return at each token position, each with an associated log probability.
+	var topLogprobs: UInt? {
+		get { config.topLogprobs }
+		set { config.topLogprobs = newValue }
+	}
+
 	/// An alternative to sampling with temperature, called nucleus sampling, where the model considers the results of the tokens with `top_p` probability mass. So 0.1 means only the tokens comprising the top 10% probability mass are considered.
 	///
 	/// We generally recommend altering this or `temperature` but not both.
@@ -718,14 +790,6 @@ public extension Conversation {
 	var truncation: Truncation? {
 		get { config.truncation }
 		set { config.truncation = newValue }
-	}
-
-	/// A unique identifier representing your end-user, which can help OpenAI to monitor and detect abuse.
-	///
-	/// - [End User IDs](https://platform.openai.com/docs/guides/safety-best-practices#end-user-ids)
-	var user: String? {
-		get { config.user }
-		set { config.user = newValue }
 	}
 
 	/// Updates the conversation configuration.

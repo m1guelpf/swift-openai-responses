@@ -36,6 +36,43 @@ public indirect enum JSONSchema: Equatable, Hashable, Sendable {
 		exclusiveMinimum: Int? = nil,
 		description: String? = nil
 	)
+
+	var description: String? {
+		switch self {
+			case let .null(description),
+			     let .boolean(description),
+			     let .anyOf(_, description),
+			     let .enum(_, description),
+			     let .object(_, description),
+			     let .string(_, _, description),
+			     let .array(_, _, _, description),
+			     let .number(_, _, _, _, _, description),
+			     let .integer(_, _, _, _, _, description): return description
+		}
+	}
+
+	func withDescription(_: String?) -> JSONSchema {
+		switch self {
+			case .null: return .null(description: description)
+			case .boolean: return .boolean(description: description)
+			case let .anyOf(cases, _): return .anyOf(cases, description: description)
+			case let .enum(cases, _): return .enum(cases: cases, description: description)
+			case let .object(properties, _): return .object(properties: properties, description: description)
+			case let .string(pattern, format, _): return .string(pattern: pattern, format: format, description: description)
+			case let .array(of: items, minItems, maxItems, _):
+				return .array(of: items, minItems: minItems, maxItems: maxItems, description: description)
+			case let .number(multipleOf, maximum, exclusiveMaximum, minimum, exclusiveMinimum, _):
+				return .number(
+					multipleOf: multipleOf, maximum: maximum, exclusiveMaximum: exclusiveMaximum,
+					minimum: minimum, exclusiveMinimum: exclusiveMinimum, description: description
+				)
+			case let .integer(multipleOf, maximum, exclusiveMaximum, minimum, exclusiveMinimum, _):
+				return .integer(
+					multipleOf: multipleOf, maximum: maximum, exclusiveMaximum: exclusiveMaximum,
+					minimum: minimum, exclusiveMinimum: exclusiveMinimum, description: description
+				)
+		}
+	}
 }
 
 extension JSONSchema: Codable {

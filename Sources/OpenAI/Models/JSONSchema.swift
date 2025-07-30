@@ -22,18 +22,18 @@ public indirect enum JSONSchema: Equatable, Hashable, Sendable {
 	case array(of: JSONSchema, minItems: Int? = nil, maxItems: Int? = nil, description: String? = nil)
 	case number(
 		multipleOf: Int? = nil,
-		maximum: Int? = nil,
-		exclusiveMaximum: Int? = nil,
 		minimum: Int? = nil,
 		exclusiveMinimum: Int? = nil,
+		maximum: Int? = nil,
+		exclusiveMaximum: Int? = nil,
 		description: String? = nil
 	)
 	case integer(
 		multipleOf: Int? = nil,
-		maximum: Int? = nil,
-		exclusiveMaximum: Int? = nil,
 		minimum: Int? = nil,
 		exclusiveMinimum: Int? = nil,
+		maximum: Int? = nil,
+		exclusiveMaximum: Int? = nil,
 		description: String? = nil
 	)
 
@@ -63,13 +63,13 @@ public indirect enum JSONSchema: Equatable, Hashable, Sendable {
 				return .array(of: items, minItems: minItems, maxItems: maxItems, description: description)
 			case let .number(multipleOf, maximum, exclusiveMaximum, minimum, exclusiveMinimum, _):
 				return .number(
-					multipleOf: multipleOf, maximum: maximum, exclusiveMaximum: exclusiveMaximum,
-					minimum: minimum, exclusiveMinimum: exclusiveMinimum, description: description
+					multipleOf: multipleOf, minimum: minimum, exclusiveMinimum: exclusiveMinimum,
+					maximum: maximum, exclusiveMaximum: exclusiveMaximum, description: description
 				)
 			case let .integer(multipleOf, maximum, exclusiveMaximum, minimum, exclusiveMinimum, _):
 				return .integer(
-					multipleOf: multipleOf, maximum: maximum, exclusiveMaximum: exclusiveMaximum,
-					minimum: minimum, exclusiveMinimum: exclusiveMinimum, description: description
+					multipleOf: multipleOf, minimum: minimum, exclusiveMinimum: exclusiveMinimum,
+					maximum: maximum, exclusiveMaximum: exclusiveMaximum, description: description
 				)
 		}
 	}
@@ -205,10 +205,10 @@ extension JSONSchema: Codable {
 		if type == "number" {
 			self = try .number(
 				multipleOf: container.decodeIfPresent(Int.self, forKey: .multipleOf),
-				maximum: container.decodeIfPresent(Int.self, forKey: .maximum),
-				exclusiveMaximum: container.decodeIfPresent(Int.self, forKey: .exclusiveMaximum),
 				minimum: container.decodeIfPresent(Int.self, forKey: .minimum),
 				exclusiveMinimum: container.decodeIfPresent(Int.self, forKey: .exclusiveMinimum),
+				maximum: container.decodeIfPresent(Int.self, forKey: .maximum),
+				exclusiveMaximum: container.decodeIfPresent(Int.self, forKey: .exclusiveMaximum),
 				description: description
 			)
 			return
@@ -217,10 +217,10 @@ extension JSONSchema: Codable {
 		if type == "integer" {
 			self = try .integer(
 				multipleOf: container.decodeIfPresent(Int.self, forKey: .multipleOf),
-				maximum: container.decodeIfPresent(Int.self, forKey: .maximum),
-				exclusiveMaximum: container.decodeIfPresent(Int.self, forKey: .exclusiveMaximum),
 				minimum: container.decodeIfPresent(Int.self, forKey: .minimum),
 				exclusiveMinimum: container.decodeIfPresent(Int.self, forKey: .exclusiveMinimum),
+				maximum: container.decodeIfPresent(Int.self, forKey: .maximum),
+				exclusiveMaximum: container.decodeIfPresent(Int.self, forKey: .exclusiveMaximum),
 				description: description
 			)
 			return

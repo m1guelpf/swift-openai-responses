@@ -11,10 +11,31 @@ jobs:
         steps:
             - uses: swift-actions/setup-swift@v2
 
+            - name: Install zstd
+              run: |
+                apt-get update -y
+                apt-get install -y zstd
+
             - uses: actions/checkout@v4
 
+            - name: Restore .build
+              id: restore-build
+              uses: actions/cache/restore@v4
+              with:
+                path: .build
+                restore-keys: "swiftpm-tests-build-${{ runner.os }}-"
+                key: "swiftpm-tests-build-${{ runner.os }}-${{ github.event.pull_request.base.sha || github.event.after }}"
+
+
             - name: Build
-              run: swift build
+              run: swift build --build-tests --enable-code-coverage
+
+            - name: Cache .build
+              if: steps.restore-build.outputs.cache-hit != 'true'
+              uses: actions/cache/save@v4
+              with:
+                path: .build
+                key: "swiftpm-tests-build-${{ runner.os }}-${{ github.event.pull_request.base.sha || github.event.after }}"
 
             - name: Run tests
-              run: swift test
+              run: swift test --skip-build --enable-code-coverage --parallel

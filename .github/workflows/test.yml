@@ -11,9 +11,6 @@ jobs:
         steps:
             - uses: swift-actions/setup-swift@v2
 
-            - name: Install zstd
-              run: brew install zstd
-
             - uses: actions/checkout@v4
 
             - name: Restore .build
@@ -37,3 +34,8 @@ jobs:
 
             - name: Run tests
               run: swift test --skip-build --enable-code-coverage --parallel
+
+            - name: Test coverage
+              uses: maxep/spm-lcov-action@0.3
+              with:
+                  output-file: ./coverage/lcov.info

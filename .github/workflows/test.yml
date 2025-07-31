@@ -36,6 +36,6 @@ jobs:
               run: swift test --skip-build --enable-code-coverage --parallel
 
             - name: Test coverage
-              uses: maxep/spm-lcov-action@0.3
+              uses: maxep/spm-lcov-action@0.3.1
               with:
                   output-file: ./coverage/lcov.info

@@ -28,14 +28,18 @@ import Foundation
 		}
 	}
 
-	/// The last response ID in the conversation.
-	public var previousResponseId: String? {
+	public var lastResponse: Response? {
 		guard let entry = entries.last(where: { entry in
 			if case .response = entry { return true }
 			return false
 		}), case let .response(response) = entry else { return nil }
 
-		return response.id
+		return response
+	}
+
+	/// The last response ID in the conversation.
+	public var previousResponseId: String? {
+		lastResponse?.id
 	}
 
 	/// Whether there is a response in progress.
@@ -100,6 +104,8 @@ import Foundation
 
 	private var config: Config
 	private nonisolated let client: ResponsesAPI
+	private nonisolated let decoder = JSONDecoder()
+	private nonisolated let encoder = JSONEncoder()
 
 	/// Creates a new conversation.
 	///
@@ -137,42 +143,49 @@ import Foundation
 	/// Sends a text message to the model and starts listening for a response in the background.
 	///
 	/// - Parameter text: The text message to send.
-	@discardableResult public nonisolated func send(text: String) -> Task<Void, Error> {
+	@discardableResult public func send(text: String) -> Task<Void, Error> {
 		send(.text(text))
 	}
 
 	/// Sends the output of a function call to the model and starts listening for a response in the background.
 	///
 	/// - Parameter functionCallOutput: The output of a function call.
-	@discardableResult public nonisolated func send(functionCallOutput: Item.FunctionCallOutput) -> Task<Void, Error> {
+	@discardableResult public func send(functionCallOutput: Item.FunctionCallOutput) -> Task<Void, Error> {
 		send(.list([.item(.functionCallOutput(functionCallOutput))]))
 	}
 
 	/// Sends the output of a computer tool call to the model and starts listening for a response in the background.
 	///
 	/// - Parameter computerCallOutput: The output of a computer tool call.
-	@discardableResult public nonisolated func send(computerCallOutput: Item.ComputerToolCallOutput) -> Task<Void, Error> {
+	@discardableResult public func send(computerCallOutput: Item.ComputerToolCallOutput) -> Task<Void, Error> {
 		send(.list([.item(.computerToolCallOutput(computerCallOutput))]))
 	}
 
 	/// Responds to an MCP approval request and starts listening for a response in the background.
 	///
 	/// - Parameter mcpApprovalResponse: The MCP approval response to send.
-	@discardableResult public nonisolated func send(mcpApprovalResponse: Item.MCPApprovalResponse) -> Task<Void, Error> {
+	@discardableResult public func send(mcpApprovalResponse: Item.MCPApprovalResponse) -> Task<Void, Error> {
 		send(.list([.item(.mcpApprovalResponse(mcpApprovalResponse))]))
 	}
 
 	/// Informs the model of the output of a local shell call and starts listening for a response in the background.
 	///
 	/// - Parameter localShellCallOutput: The output of a local shell call.
-	@discardableResult public nonisolated func send(localShellCallOutput: Item.LocalShellCallOutput) -> Task<Void, Error> {
+	@discardableResult public func send(localShellCallOutput: Item.LocalShellCallOutput) -> Task<Void, Error> {
 		send(.list([.item(.localShellCallOutput(localShellCallOutput))]))
 	}
 
 	/// Sends a message to the model and starts listening for a response in the background.
 	///
 	/// - Parameter input: Text, image, or file inputs to the model, used to generate a response.
-	@discardableResult public nonisolated func send(_ input: Input) -> Task<Void, Error> {
+	@discardableResult public func send(_ input: [Item.Input]) -> Task<Void, Error> {
+		send(.list(input.map { .item($0) }))
+	}
+
+	/// Sends a message to the model and starts listening for a response in the background.
+	///
+	/// - Parameter input: Text, image, or file inputs to the model, used to generate a response.
+	@discardableResult public func send(_ input: Input) -> Task<Void, Error> {
 		return Task.detached(priority: .userInitiated) {
 			try await self.sendAndWaitForResponses(input)
 		}
@@ -200,7 +213,7 @@ import Foundation
 			temperature: config.temperature,
 			text: config.text,
 			toolChoice: config.toolChoice,
-			tools: config.tools,
+			tools: config.toolsWithFunctions,
 			topLogprobs: config.topLogprobs,
 			topP: config.topP,
 			truncation: config.truncation,
@@ -215,6 +228,8 @@ import Foundation
 			try await handleEvent(event)
 			try Task.checkCancellation()
 		}
+
+		try await runFunctionsIfNeeded()
 	}
 
 	/// Uploads a file for later use in the API.
@@ -223,6 +238,36 @@ import Foundation
 	/// - Parameter purpose: The intended purpose of the file.
 	@concurrent public nonisolated func upload(file: File.Upload) async throws -> File {
 		try await client.upload(file: file, purpose: .userData)
+	}
+}
+
+// MARK: - Function handling
+
+private extension Conversation {
+	nonisolated func runFunctionsIfNeeded() async throws {
+		let functions = await functions
+		guard let lastResponse = await lastResponse, !functions.isEmpty else { return }
+
+		let results = try await withThrowingTaskGroup(of: Item.FunctionCallOutput.self) { taskGroup in
+			lastResponse.output.compactMap { item in
+				if case let .functionCall(fnCall) = item { return fnCall }
+				return nil
+			}.forEach { fnCall in
+				guard let function = functions.first(where: { $0.name == fnCall.name }) else { return }
+
+				taskGroup.addTask { try await function.respond(to: fnCall) }
+			}
+
+			var results = [Item.FunctionCallOutput]()
+			while let fnCallOutput = try await taskGroup.next() {
+				results.append(fnCallOutput)
+			}
+			return results
+		}
+
+		guard !results.isEmpty else { return }
+
+		try await sendAndWaitForResponses(.list(results.map { .item(.functionCallOutput($0)) }))
 	}
 }
 
@@ -563,7 +608,7 @@ private extension Conversation {
 
 public extension Conversation {
 	/// Configuration options for a conversation.
-	struct Config: Equatable, Sendable {
+	struct Config: Sendable {
 		/// Model ID used to generate the response.
 		///
 		/// OpenAI offers a wide range of models with different capabilities, performance characteristics, and price points. Refer to the [model guide](https://platform.openai.com/docs/models) to browse and compare available models.
@@ -636,7 +681,13 @@ public extension Conversation {
 		/// The two categories of tools you can provide the model are:
 		/// - **Built-in tools**: Tools that are provided by OpenAI that extend the model's capabilities, like [web search](https://platform.openai.com/docs/guides/tools-web-search) or [file search](https://platform.openai.com/docs/guides/tools-file-search). Learn more about [built-in tools](https://platform.openai.com/docs/guides/tools).
 		/// - **Function calls (custom tools)**: Functions that are defined by you, enabling the model to call your own code. Learn more about [function calling](https://platform.openai.com/docs/guides/function-calling).
+		///
+		/// > Warning: Function calls defined here will not be executed automatically.
+		/// > Use the `functions` parameter to have those handled for you.
 		public var tools: [Tool]?
+
+		/// An array of local functions the model may call while generating a response.
+		public var functions: [any Toolable]?
 
 		/// An integer between 0 and 20 specifying the number of most likely tokens to return at each token position, each with an associated log probability.
 		public var topLogprobs: UInt?
@@ -648,6 +699,16 @@ public extension Conversation {
 
 		/// The truncation strategy to use for the model response.
 		public var truncation: Truncation?
+
+		/// A list of tools the model can call while generating a response, including automatically executed functions.
+		var toolsWithFunctions: [Tool] {
+			var tools = [Tool]()
+
+			tools.append(contentsOf: self.tools ?? [])
+			tools.append(contentsOf: functions?.map { .function($0) } ?? [])
+
+			return tools
+		}
 	}
 
 	/// Model ID used to generate the response.
@@ -767,9 +828,18 @@ public extension Conversation {
 	/// The two categories of tools you can provide the model are:
 	/// - **Built-in tools**: Tools that are provided by OpenAI that extend the model's capabilities, like [web search](https://platform.openai.com/docs/guides/tools-web-search) or [file search](https://platform.openai.com/docs/guides/tools-file-search). Learn more about [built-in tools](https://platform.openai.com/docs/guides/tools).
 	/// - **Function calls (custom tools)**: Functions that are defined by you, enabling the model to call your own code. Learn more about [function calling](https://platform.openai.com/docs/guides/function-calling).
+	///
+	/// > Warning: Function calls defined here will not be executed automatically.
+	/// > Use the `functions` parameter to have those handled for you.
 	var tools: [Tool]? {
 		get { config.tools }
 		set { config.tools = newValue }
+	}
+
+	/// An array of local functions the model may call while generating a response.
+	var functions: [any Toolable] {
+		get { config.functions ?? [] }
+		set { config.functions = newValue }
 	}
 
 	/// An integer between 0 and 20 specifying the number of most likely tokens to return at each token position, each with an associated log probability.

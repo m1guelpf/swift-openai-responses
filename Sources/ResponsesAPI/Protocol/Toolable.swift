@@ -1,6 +1,6 @@
 import Foundation
 
-public protocol Toolable {
+public protocol Toolable: Equatable, Sendable {
 	/// Arguments used to call the tool.
 	associatedtype Arguments: Decodable & Schemable
 
@@ -35,18 +35,25 @@ public extension Toolable {
 }
 
 package extension Toolable {
-	static func intoFunction() -> Tool.Function {
+	func intoFunction() -> Tool.Function {
 		guard case .object = Arguments.schema else {
-			fatalError("Tool Arguments must be a struct.")
+			fatalError("Tool arguments must be a struct.")
 		}
 
-		let tool = Self()
+		return Tool.Function(name: name, description: description, parameters: Arguments.schema, strict: strict)
+	}
 
-		return Tool.Function(
-			name: tool.name,
-			description: tool.description,
-			parameters: Arguments.schema,
-			strict: tool.strict
+	func respond(to functionCall: Item.FunctionCall) async throws -> Item.FunctionCallOutput {
+		let parameters = try decoder.decode(Arguments.self, from: Data(functionCall.arguments.utf8))
+
+		let output = try await call(parameters: parameters)
+
+		return try Item.FunctionCallOutput(
+			callId: functionCall.callId,
+			output: encoder.encodeToString(output)
 		)
 	}
 }
+
+fileprivate nonisolated let encoder = JSONEncoder()
+fileprivate nonisolated let decoder = JSONDecoder()

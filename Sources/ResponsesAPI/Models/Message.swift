@@ -82,10 +82,10 @@ public enum Message: Equatable, Hashable, Sendable {
 		/// - Parameter role: The role of the output message. Always `assistant`.
 		/// - Parameter status: The status of the message output.
 		public init(content: [Item.Output.Content] = [], id: String, role: Role = .assistant, status: Status) {
-			self.content = content
 			self.id = id
 			self.role = role
 			self.status = status
+			self.content = content
 		}
 	}
 
@@ -122,8 +122,8 @@ public enum Message: Equatable, Hashable, Sendable {
 	/// The unique ID of the message, if available.
 	public var id: String? {
 		switch self {
-			case .input: return nil
-			case let .output(output): return output.id
+			case .input: nil
+			case let .output(output): output.id
 		}
 	}
 
@@ -132,10 +132,8 @@ public enum Message: Equatable, Hashable, Sendable {
 	/// > Note: This property does not include reasoning text.
 	public var text: String? {
 		switch self {
-			case let .input(message):
-				return message.text
-			case let .output(message):
-				return message.text
+			case let .input(message): message.text
+			case let .output(message): message.text
 		}
 	}
 }

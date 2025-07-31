@@ -529,8 +529,8 @@ public extension Tool {
 	///
 	/// > Note: When using the `ResponsesAPI` client, you are still responsible for calling the code and returning a response.
 	/// > If you want this to be handled for you, use the `Conversation` class instead.
-	static func function<Tool: Toolable>(_: Tool.Type) -> Self {
-		return .function(Tool.intoFunction())
+	static func function<Tool: Toolable>(_ tool: Tool) -> Self {
+		return .function(tool.intoFunction())
 	}
 
 	/// A tool that searches for relevant content from uploaded files.

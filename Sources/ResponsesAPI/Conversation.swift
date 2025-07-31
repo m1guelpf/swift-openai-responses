@@ -528,7 +528,7 @@ private extension Conversation {
 	/// - Parameter index: The index of the item to update.
 	/// - Parameter itemId: The ID of the item to update.
 	/// - Parameter closure: A closure that takes the item and updates it.
-	func updateItem(index: UInt, id itemId: String, modifying closure: (inout OpenAI.Item.Output) -> Void) {
+	func updateItem(index: UInt, id itemId: String, modifying closure: (inout Item.Output) -> Void) {
 		guard let previousResponseId else { return }
 
 		updateResponse(id: previousResponseId) { response in

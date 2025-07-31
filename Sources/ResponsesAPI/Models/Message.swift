@@ -1,6 +1,6 @@
 import Foundation
 
-fileprivate typealias RootInput = Input
+public typealias ModelInput = Input
 
 public enum Message: Equatable, Hashable, Sendable {
 	/// The role of a message.
@@ -21,7 +21,7 @@ public enum Message: Equatable, Hashable, Sendable {
 	/// The content of a message.
 	public enum MessageContent: Equatable, Hashable, Sendable {
 		/// Text, image, or audio input to the model, used to generate a response. Can also contain previous assistant responses.
-		case input(OpenAI.Input.Content)
+		case input(ModelInput.Content)
 
 		/// The content of the output message.
 		case output([Item.Output.Content])
@@ -40,14 +40,14 @@ public enum Message: Equatable, Hashable, Sendable {
 		public var status: Status?
 
 		/// Text, image, or audio input to the model, used to generate a response. Can also contain previous assistant responses.
-		public var content: OpenAI.Input.Content
+		public var content: ModelInput.Content
 
 		/// The text content of the input.
 		public var text: String? {
 			return content.text
 		}
 
-		public init(role: Role = .user, content: OpenAI.Input.Content, status: Status? = nil) {
+		public init(role: Role = .user, content: ModelInput.Content, status: Status? = nil) {
 			self.role = role
 			self.status = status
 			self.content = content

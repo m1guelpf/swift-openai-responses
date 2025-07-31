@@ -14,7 +14,7 @@ let package = Package(
 		.macCatalyst(.v17),
 	],
 	products: [
-		.library(name: "ResponsesAPI", targets: ["OpenAI"]),
+		.library(name: "ResponsesAPI", targets: ["ResponsesAPI"]),
 	],
 	dependencies: [
 		.package(url: "https://github.com/SwiftyLab/MetaCodable.git", from: "1.0.0"),
@@ -23,7 +23,7 @@ let package = Package(
 	],
 	targets: [
 		.target(
-			name: "OpenAI",
+			name: "ResponsesAPI",
 			dependencies: [
 				"SchemableMacro",
 				.product(name: "MetaCodable", package: "MetaCodable"),
@@ -41,7 +41,7 @@ let package = Package(
 		.testTarget(
 			name: "Tests",
 			dependencies: [
-				"OpenAI", "SchemableMacro",
+				"ResponsesAPI", "SchemableMacro",
 				.product(name: "MacroTesting", package: "swift-macro-testing"),
 				.product(name: "SwiftSyntaxMacrosTestSupport", package: "swift-syntax"),
 			],

@@ -268,7 +268,7 @@ public extension Request {
 		topLogprobs: UInt? = nil,
 		topP: Double? = nil,
 		truncation: Truncation? = nil,
-		user: String? = nil
+		user: String
 	) {
 		self.user = user
 		self.text = text

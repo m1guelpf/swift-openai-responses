@@ -414,7 +414,7 @@ public extension Response {
 		truncation: Truncation,
 		usage: Usage? = nil,
 		store: Bool = true,
-		user: String? = nil
+		user: String
 	) {
 		self.id = id
 		self.user = user

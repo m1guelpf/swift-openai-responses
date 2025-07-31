@@ -56,7 +56,7 @@ struct ContentView: View {
 		VStack(spacing: 0) {
 			ScrollView {
                 VStack(spacing: 12) {
-                    ForEach(messages, id: \.self) { message in
+                    ForEach(conversation.messages, id: \.self) { message in
                         MessageBubble(message: message)
                     }
                 }
@@ -92,10 +92,8 @@ struct ContentView: View {
 	func sendMessage() {
 		guard newMessage != "" else { return }
 
-		Task {
-			try await conversation.send(text: newMessage)
-			newMessage = ""
-		}
+		conversation.send(text: newMessage)
+		newMessage = ""
 	}
 }
 ```
@@ -143,25 +141,25 @@ conversation.truncation = .auto
 Your `Conversation` instance contains various helpers to make communicating with the model easier. For example, you can send a simple text message like this:
 
 ```swift
-try await conversation.send(text: "Hey!")
+conversation.send(text: "Hey!")
 ```
 
 There are also helpers for providing the output of a tool call or computer use call:
 
 ```swift
-try await conversation.send(functionCallOutput: .init(callId: callId, output: "{ ... }"))
-try await conversation.send(computerCallOutput: .init(callId: callId, output: .screenshot(fileId: "...")))
+conversation.send(functionCallOutput: .init(callId: callId, output: "{ ... }"))
+conversation.send(computerCallOutput: .init(callId: callId, output: .screenshot(fileId: "...")))
 ```
 
 For more complex use cases, you can construct the `Input` yourself:
 
 ```swift
-try await conversation.send(Input([
-	.message(content: Input.Content([
+conversation.send([
+	.message(content: [
 		.image(fileId: "..."),
 		.text("Take a look at this image and tell me what you see"),
-	])),
-]))
+	]),
+])
 ```
 
 #### Reading messages

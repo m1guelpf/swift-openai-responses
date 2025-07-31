@@ -55,14 +55,13 @@ extension TypeSyntax {
 			case let .identifierType(type):
 				if let generic = type.genericArgumentClause {
 					if type.name.text == "Array" {
-						let arrayType = ArrayTypeSyntax(element: generic.arguments.first!.argument)
+						let element = generic.arguments.first!.argument.as(TypeSyntax.self)!
+						let arrayType = ArrayTypeSyntax(element: element)
 						return TypeSyntax(arrayType).typeInfo
 					}
 
 					if type.name.text == "Dictionary" {
-						let dictTypes = Array(generic.arguments.prefix(2))
-						let dictionaryType = DictionaryTypeSyntax(key: dictTypes[0].argument, value: dictTypes[1].argument)
-						return TypeSyntax(dictionaryType).typeInfo
+						return .primitive(.dictionary)
 					}
 				}
 

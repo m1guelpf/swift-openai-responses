@@ -812,18 +812,3 @@ extension Tool.ImageGeneration.ImageMask: Codable {
 		throw DecodingError.dataCorruptedError(forKey: .fileId, in: container, debugDescription: "Invalid image mask format")
 	}
 }
-
-public extension Tool.Function {
-	/// Create a new `Function` instance.
-	///
-	/// - Parameter name: The name of the function to call.
-	/// - Parameter description: A description of the function. Used by the model to determine whether or not to call the function.
-	/// - Parameter parameters: A JSON schema object describing the parameters of the function.
-	/// - Parameter strict: Whether to enforce strict parameter validation.
-	init<T: Schemable>(name: String, description: String? = nil, parameters _: T.Type, strict: Bool = true) {
-		self.name = name
-		self.strict = strict
-		parameters = T.schema
-		self.description = description
-	}
-}

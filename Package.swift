@@ -27,5 +27,12 @@ let package = Package(
 			],
 			path: "./src"
 		),
+		.testTarget(
+			name: "OpenAITests",
+			dependencies: ["OpenAI"],
+			resources: [
+				.process("Resources"),
+			]
+		),
 	]
 )

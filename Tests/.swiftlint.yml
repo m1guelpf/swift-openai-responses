@@ -1,0 +1,20 @@
+strict: true
+
+trailing_comma:
+  severity: warning
+  mandatory_comma: true
+
+disabled_rules:
+  - line_length
+  - opening_brace
+  - todo
+  - cyclomatic_complexity
+  - function_body_length
+  - nesting
+  - operator_whitespace
+  - type_body_length
+  - file_length
+  - large_tuple
+  - identifier_name
+  - function_parameter_count
+  - type_name

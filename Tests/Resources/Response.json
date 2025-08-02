@@ -1,0 +1,110 @@
+{
+  "created_at" : 1710979200,
+  "id" : "resp_123456789",
+  "instructions" : "You are a helpful assistant",
+  "max_output_tokens" : 1000,
+  "metadata" : {
+    "conversation_id" : "conv_123",
+    "user_id" : "user_456"
+  },
+  "model" : "gpt-4o",
+  "output" : [
+    {
+      "content" : [
+        {
+          "annotations" : [
+            {
+              "file_id" : "file_123",
+              "index" : 0,
+              "type" : "file_citation"
+            },
+            {
+              "end_index" : 15,
+              "start_index" : 0,
+              "title" : "OpenAI Documentation",
+              "type" : "url_citation",
+              "url" : "https:\/\/platform.openai.com\/docs"
+            },
+            {
+              "file_id" : "file_123",
+              "index" : 0,
+              "type" : "file_path"
+            }
+          ],
+          "text" : "Hello! How can I help you today?",
+          "type" : "output_text"
+        }
+      ],
+      "id" : "msg_123",
+      "role" : "assistant",
+      "status" : "completed",
+      "type" : "message"
+    }
+  ],
+  "parallel_tool_calls" : false,
+  "previous_response_id" : "resp_123456788",
+  "reasoning" : {
+    "effort" : "medium",
+    "generate_summary" : "concise"
+  },
+  "status" : "completed",
+  "store" : true,
+  "temperature" : 0.7,
+  "text" : {
+    "format" : {
+      "type" : "text"
+    }
+  },
+  "tool_choice" : "none",
+  "tools" : [
+    {
+      "description" : "Get the current weather for a location",
+      "name" : "get_weather",
+      "parameters" : {
+        "additionalProperties" : false,
+        "properties" : {
+          "location" : {
+            "description" : "The city and state, e.g. San Francisco, CA",
+            "type" : "string"
+          }
+        },
+        "required" : [
+          "location"
+        ],
+        "type" : "object"
+      },
+      "strict" : true,
+      "type" : "function"
+    },
+    {
+      "max_num_results" : 5,
+      "type" : "file_search",
+      "vector_store_ids" : [
+        "vs_123"
+      ]
+    },
+    {
+      "search_context_size" : "medium",
+      "type" : "web_search_preview",
+      "user_location" : {
+        "city" : "San Francisco",
+        "country" : "US",
+        "type" : "approximate"
+      }
+    }
+  ],
+  "top_p" : 1,
+  "truncation" : "auto",
+  "usage" : {
+    "input_tokens" : 50,
+    "input_tokens_details" : {
+      "cached_tokens" : 10
+    },
+    "output_tokens" : 30,
+    "output_tokens_details" : {
+      "reasoning_tokens" : 5
+    },
+    "total_tokens" : 80
+  },
+  "user" : "user_456"
+}

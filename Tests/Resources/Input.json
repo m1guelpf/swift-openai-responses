@@ -3,5 +3,25 @@
     "content" : "Hello, world!",
     "role" : "user",
     "type" : "message"
+  },
+  {
+    "content" : [
+      {
+        "text" : "System instruction",
+        "type" : "input_text"
+      },
+      {
+        "detail" : "high",
+        "file_id" : "img_123",
+        "image_url" : "https:\/\/example.com\/image.jpg",
+        "type" : "input_image"
+      }
+    ],
+    "role" : "system",
+    "type" : "message"
+  },
+  {
+    "id" : "item_123",
+    "type" : "item_reference"
   }
 ]

@@ -16,15 +16,29 @@ func codableInput() throws {
             role: .user,
             content: .text("Hello, world!")
         ),
-        // .inputMessage(
-        //     role: .user,
-        //     content: .text("Hello, world!"),
-        //     status: .completed),
-        // .outputMessage(
-        //     content: [.text(text: "Hello, world!")],
-        //     id: "msg_123",
-        //     role: .assistant,
-        //     status: .completed),
+        .message(
+            role: .system,
+            content: .list([
+                .text("System instruction"),
+                .image(detail: .high, fileId: "img_123", imageUrl: "https://example.com/image.jpg"),
+            ])
+        ),
+        .itemRef(id: "item_123"),
+        // .item(
+        //     Item.Input.inputMessage(
+        //         role: .user,
+        //         content: .text("Input message"),
+        //         status: .completed
+        //     )
+        // ),
+        // .item(
+        //     .outputMessage(
+        //         content: [.text(text: "Hello, world!")],
+        //         id: "msg_123",
+        //         role: .assistant,
+        //         status: .completed
+        //     ),
+        // ),
         // .fileSearch(
         //     id: "search_123",
         //     queries: ["test query"],

@@ -16,20 +16,46 @@ func codableItems() throws {
         // 	status: .completed)),
         .fileSearch(Item.FileSearchCall(
             id: "fs_123",
-            status: .completed
+            status: .completed,
+            results: [
+                Item.FileSearchCall.Result(
+                    attributes: ["type": "document"],
+                    file_id: "file_123",
+                    filename: "test.txt",
+                    score: 95,
+                    text: "Found relevant content"
+                ),
+            ]
         )),
         .computerToolCall(Item.ComputerToolCall(
             action: .click(button: .left, x: 10, y: 20),
             callId: "call_123",
+            pendingSafetyChecks: [
+                Item.ComputerToolCall.SafetyCheck(
+                    code: "safety_check",
+                    id: "check_123",
+                    message: "Safety check required"
+                ),
+            ],
             status: .completed
         )),
         .computerToolCallOutput(Item.ComputerToolCallOutput(
+            id: "output_123",
+            status: .completed,
             callId: "call_123",
-            output: .screenshot(fileId: "file_abc", imageUrl: "http://example.com/image.png")
+            output: .screenshot(fileId: "file_abc", imageUrl: "http://example.com/image.png"),
+            acknowledgedSafetyChecks: [
+                Item.ComputerToolCall.SafetyCheck(
+                    code: "safety_check",
+                    id: "check_123",
+                    message: "Safety check acknowledged"
+                ),
+            ]
         )),
         .webSearchCall(Item.WebSearchCall(
             id: "ws_123",
-            status: .completed
+            status: .completed,
+            action: .search(query: "test query")
         )),
         .functionCall(Item.FunctionCall(
             arguments: "{\"query\":\"test\"}",
@@ -39,13 +65,16 @@ func codableItems() throws {
             status: .completed
         )),
         .functionCallOutput(Item.FunctionCallOutput(
+            id: "output_123",
+            status: .completed,
             callId: "call_456",
             output: "{\"result\":\"success\"}"
         )),
         .reasoning(Item.Reasoning(
             id: "reason_123",
             summary: [.text("This is a test summary.")],
-            status: .completed
+            status: .completed,
+            encryptedContent: "encrypted_content_here"
         )),
     ]
     try assertCodable(items, resource: "Items")

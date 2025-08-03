@@ -3,6 +3,9 @@
     "response" : {
       "created_at" : 1710979200,
       "id" : "resp_123456789",
+      "incomplete_details" : {
+        "reason" : "Token limit reached"
+      },
       "instructions" : "You are a helpful assistant",
       "max_output_tokens" : 1000,
       "metadata" : {
@@ -51,10 +54,12 @@
       "prompt" : {
         "id" : "prompt_456"
       },
+      "prompt_cache_key" : "cache_key_123",
       "reasoning" : {
         "effort" : "medium",
         "summary" : "concise"
       },
+      "safety_identifier" : "user_hash_123",
       "status" : "completed",
       "store" : true,
       "temperature" : 0.7,

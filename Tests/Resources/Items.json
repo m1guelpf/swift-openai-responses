@@ -9,6 +9,17 @@
     "queries" : [
 
     ],
+    "results" : [
+      {
+        "attributes" : {
+          "type" : "document"
+        },
+        "file_id" : "file_123",
+        "filename" : "test.txt",
+        "score" : 95,
+        "text" : "Found relevant content"
+      }
+    ],
     "status" : "completed",
     "type" : "file_search_call"
   },
@@ -25,21 +36,38 @@
     },
     "call_id" : "call_123",
     "pending_safety_checks" : [
-
+      {
+        "code" : "safety_check",
+        "id" : "check_123",
+        "message" : "Safety check required"
+      }
     ],
     "status" : "completed",
     "type" : "computer_call"
   },
   {
+    "acknowledged_safety_checks" : [
+      {
+        "code" : "safety_check",
+        "id" : "check_123",
+        "message" : "Safety check acknowledged"
+      }
+    ],
     "call_id" : "call_123",
+    "id" : "output_123",
     "output" : {
       "file_id" : "file_abc",
       "image_url" : "http:\/\/example.com\/image.png",
       "type" : "computer_screenshot"
     },
+    "status" : "completed",
     "type" : "computer_call_output"
   },
   {
+    "action" : {
+      "query" : "test query",
+      "type" : "search"
+    },
     "id" : "ws_123",
     "status" : "completed",
     "type" : "web_search_call"
@@ -54,10 +82,13 @@
   },
   {
     "call_id" : "call_456",
+    "id" : "output_123",
     "output" : "{\"result\":\"success\"}",
+    "status" : "completed",
     "type" : "function_call_output"
   },
   {
+    "encrypted_content" : "encrypted_content_here",
     "id" : "reason_123",
     "status" : "completed",
     "summary" : [

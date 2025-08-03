@@ -10,7 +10,7 @@ func createResponse() -> Response {
     return Response(
         createdAt: fixedDate,
         id: "resp_123456789",
-        incompleteDetails: nil,
+        incompleteDetails: Response.IncompleteDetails(reason: "Token limit reached"),
         instructions: "You are a helpful assistant",
         maxOutputTokens: 1000,
         metadata: [
@@ -40,11 +40,12 @@ func createResponse() -> Response {
         parallelToolCalls: false,
         previousResponseId: "resp_123456788",
         prompt: .init(id: "prompt_456"),
-        promptCacheKey: nil,
+        promptCacheKey: "cache_key_123",
         reasoning: ReasoningConfig(
             effort: .medium,
             summary: .concise
         ),
+        safetyIdentifier: "user_hash_123",
         status: .completed,
         temperature: 0.7,
         text: TextConfig(format: .text),

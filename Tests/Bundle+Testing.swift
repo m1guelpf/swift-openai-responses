@@ -28,7 +28,7 @@ let updateExpectedJSON = ProcessInfo.processInfo.environment["UPDATE_SNAPSHOTS"]
 
 func encodeJSONString(_ obj: some Encodable, to resource: String) throws -> String {
     let encoder = JSONEncoder()
-    // encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+    encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
     let json = try encoder.encode(obj)
     let jsonString = String(data: json, encoding: .utf8)!
 

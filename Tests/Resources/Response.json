@@ -58,7 +58,7 @@
   "temperature" : 0.7,
   "text" : {
     "format" : {
-
+      "type" : "text"
     }
   },
   "tool_choice" : "none",

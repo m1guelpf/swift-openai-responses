@@ -47,9 +47,9 @@ import MetaCodable
 /// Learn more:
 /// - [Text inputs and outputs](https://platform.openai.com/docs/guides/text)
 /// - [Structured Outputs](https://platform.openai.com/docs/guides/structured-outputs)
-public struct TextConfig: Equatable, Hashable, Codable, Sendable {
+public struct TextConfig: Equatable, Hashable, Sendable {
 	/// An object specifying the format that the model must output.
-	@Codable @CodedAt("type") @CodingKeys(.snake_case) public enum Format: Equatable, Hashable, Sendable {
+	public enum Format: Equatable, Hashable, Sendable {
 		/// Used to generate text responses.
 		case text
 		/// JSON Schema response format. Used to generate structured JSON responses. Learn more about [Structured Outputs](https://platform.openai.com/docs/guides/structured-outputs).
@@ -57,7 +57,6 @@ public struct TextConfig: Equatable, Hashable, Codable, Sendable {
 		/// - Parameter description: A description of what the response format is for, used by the model to determine how to respond in the format.
 		/// - Parameter name: The name of the response format. Must be a-z, A-Z, 0-9, or contain underscores and dashes, with a maximum length of 64.
 		/// - Parameter strict: Whether to enable strict schema adherence when generating the output. If set to `true`, the model will always follow the exact schema defined in the schema field. Only a subset of JSON Schema is supported when `strict` is `true`.
-		@CodedAs("json_schema")
 		case jsonSchema(
 			schema: JSONSchema,
 			description: String,
@@ -69,7 +68,6 @@ public struct TextConfig: Equatable, Hashable, Codable, Sendable {
 		/// Using `jsonSchema` is recommended for models that support it.
 		///
 		/// Note that the model will not generate JSON without a system or user message instructing it to do so.
-		@CodedAs("json_object")
 		case jsonObject
 	}
 
@@ -81,6 +79,73 @@ public struct TextConfig: Equatable, Hashable, Codable, Sendable {
 	/// - Parameter format: An object specifying the format that the model must output.
 	public init(format: Format = .text) {
 		self.format = format
+	}
+}
+
+extension TextConfig: Codable {
+	public init(from decoder: Decoder) throws {
+		let container = try decoder.container(keyedBy: CodingKeys.self)
+		format = try container.decode(Format.self, forKey: .format)
+	}
+
+	public func encode(to encoder: Encoder) throws {
+		var container = encoder.container(keyedBy: CodingKeys.self)
+		try container.encode(format, forKey: .format)
+	}
+
+	private enum CodingKeys: String, CodingKey {
+		case format
+	}
+}
+
+extension TextConfig.Format: Codable {
+	private enum CodingKeys: String, CodingKey {
+		case type
+		case schema
+		case description
+		case name
+		case strict
+	}
+
+	private enum FormatType: String, Codable {
+		case text
+		case jsonSchema = "json_schema"
+		case jsonObject = "json_object"
+	}
+
+	public init(from decoder: Decoder) throws {
+		let container = try decoder.container(keyedBy: CodingKeys.self)
+		let type = try container.decode(FormatType.self, forKey: .type)
+
+		switch type {
+		case .text:
+			self = .text
+		case .jsonObject:
+			self = .jsonObject
+		case .jsonSchema:
+			let schema = try container.decode(JSONSchema.self, forKey: .schema)
+			let description = try container.decode(String.self, forKey: .description)
+			let name = try container.decode(String.self, forKey: .name)
+			let strict = try container.decodeIfPresent(Bool.self, forKey: .strict)
+			self = .jsonSchema(schema: schema, description: description, name: name, strict: strict)
+		}
+	}
+
+	public func encode(to encoder: Encoder) throws {
+		var container = encoder.container(keyedBy: CodingKeys.self)
+
+		switch self {
+		case .text:
+			try container.encode(FormatType.text, forKey: .type)
+		case .jsonObject:
+			try container.encode(FormatType.jsonObject, forKey: .type)
+		case let .jsonSchema(schema, description, name, strict):
+			try container.encode(FormatType.jsonSchema, forKey: .type)
+			try container.encode(schema, forKey: .schema)
+			try container.encode(description, forKey: .description)
+			try container.encode(name, forKey: .name)
+			try container.encodeIfPresent(strict, forKey: .strict)
+		}
 	}
 }
 

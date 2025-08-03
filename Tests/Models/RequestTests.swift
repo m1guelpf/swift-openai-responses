@@ -7,42 +7,39 @@ import Testing
 func codableRequest() throws {
     let request = Request(
         model: .gpt4o,
-        input: .init("Hello, world!"),
+        input: .message(text: "Hello, world!"),
         include: [.fileSearchResults, .inputImageURLs, .computerCallImageURLs],
         instructions: "You are a helpful assistant",
         maxOutputTokens: 1000,
         metadata: ["user_id": "123", "session_id": "abc"],
         parallelToolCalls: true,
         previousResponseId: "resp_123",
+        prompt: .init(id: "prompt_456"),
+        promptCacheKey: nil,
         reasoning: ReasoningConfig(
             effort: .medium,
-            generateSummary: .detailed
+            summary: .detailed
         ),
+        safetyIdentifier: nil,
         store: true,
         stream: false,
         temperature: 0.7,
-        text: TextConfig(format: .text),
+        text: nil,
         toolChoice: .auto,
         tools: [
             .webSearch(.init(searchContextSize: .medium)),
             .function(.init(
                 name: "get_weather",
                 description: "Get the current weather for a location",
-                parameters: .init(
-                    type: .object,
+                parameters: .object(
                     properties: [
-                        "location": .init(
-                            type: .string,
-                            description: "The city and state, e.g. San Francisco, CA"
-                        ),
+                        "location": .string(description: "The city and state, e.g. San Francisco, CA")
                     ],
-                    required: ["location"]
-                )
+                ),
             )),
         ],
         topP: 1,
-        truncation: .auto,
-        user: "user_123"
+        truncation: .auto
     )
     try assertCodable(request, resource: "Request")
 }

@@ -4,6 +4,9 @@
       "annotations" : [
 
       ],
+      "logprobs" : [
+
+      ],
       "text" : "Hello, world!",
       "type" : "output_text"
     }

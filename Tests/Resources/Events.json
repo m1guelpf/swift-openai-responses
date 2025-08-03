@@ -33,6 +33,9 @@
                   "type" : "file_path"
                 }
               ],
+              "logprobs" : [
+
+              ],
               "text" : "Hello! How can I help you today?",
               "type" : "output_text"
             }
@@ -45,16 +48,19 @@
       ],
       "parallel_tool_calls" : false,
       "previous_response_id" : "resp_123456788",
+      "prompt" : {
+        "id" : "prompt_456"
+      },
       "reasoning" : {
         "effort" : "medium",
-        "generate_summary" : "concise"
+        "summary" : "concise"
       },
       "status" : "completed",
       "store" : true,
       "temperature" : 0.7,
       "text" : {
         "format" : {
-          "type" : "text"
+
         }
       },
       "tool_choice" : "none",
@@ -107,8 +113,7 @@
           "reasoning_tokens" : 5
         },
         "total_tokens" : 80
-      },
-      "user" : "user_456"
+      }
     },
     "type" : "response.created"
   },
@@ -117,6 +122,9 @@
       "content" : [
         {
           "annotations" : [
+
+          ],
+          "logprobs" : [
 
           ],
           "text" : "Hello! How can I help you today?",
@@ -139,6 +147,9 @@
       "annotations" : [
 
       ],
+      "logprobs" : [
+
+      ],
       "text" : "Hello! How can I help you today?",
       "type" : "output_text"
     },
@@ -148,12 +159,18 @@
     "content_index" : 0,
     "delta" : "Hello",
     "item_id" : "msg_123",
+    "logprobs" : [
+
+    ],
     "output_index" : 0,
     "type" : "response.output_text.delta"
   },
   {
     "content_index" : 0,
     "item_id" : "msg_123",
+    "logprobs" : [
+
+    ],
     "output_index" : 0,
     "text" : "Hello! How can I help you today?",
     "type" : "response.output_text.done"

@@ -50,7 +50,7 @@
     "id" : "func_123",
     "name" : "search",
     "status" : "completed",
-    "type" : "functionCall"
+    "type" : "function_call"
   },
   {
     "call_id" : "call_456",

@@ -1,1 +1,7 @@
-"Test message"
+[
+  {
+    "content" : "Test message",
+    "role" : "user",
+    "type" : "message"
+  }
+]

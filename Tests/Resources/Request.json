@@ -4,7 +4,13 @@
     "message.input_image.image_url",
     "computer_call_output.output.image_url"
   ],
-  "input" : "Hello, world!",
+  "input" : [
+    {
+      "content" : "Hello, world!",
+      "role" : "user",
+      "type" : "message"
+    }
+  ],
   "instructions" : "You are a helpful assistant",
   "max_output_tokens" : 1000,
   "metadata" : {
@@ -14,18 +20,16 @@
   "model" : "gpt-4o",
   "parallel_tool_calls" : true,
   "previous_response_id" : "resp_123",
+  "prompt" : {
+    "id" : "prompt_456"
+  },
   "reasoning" : {
     "effort" : "medium",
-    "generate_summary" : "detailed"
+    "summary" : "detailed"
   },
   "store" : true,
   "stream" : false,
   "temperature" : 0.7,
-  "text" : {
-    "format" : {
-      "type" : "text"
-    }
-  },
   "tool_choice" : "auto",
   "tools" : [
     {
@@ -53,6 +57,5 @@
     }
   ],
   "top_p" : 1,
-  "truncation" : "auto",
-  "user" : "user_123"
+  "truncation" : "auto"
 }

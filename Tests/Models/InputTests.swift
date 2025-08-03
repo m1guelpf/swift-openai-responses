@@ -5,7 +5,7 @@ import Testing
 
 @Test
 func codableInputText() throws {
-    let input = Input("Test message")
+    let input = Input.message(text: "Test message")
     try assertCodable(input, resource: "InputText")
 }
 

@@ -39,9 +39,11 @@ func createResponse() -> Response {
         ],
         parallelToolCalls: false,
         previousResponseId: "resp_123456788",
+        prompt: .init(id: "prompt_456"),
+        promptCacheKey: nil,
         reasoning: ReasoningConfig(
             effort: .medium,
-            generateSummary: .concise
+            summary: .concise
         ),
         status: .completed,
         temperature: 0.7,
@@ -51,15 +53,10 @@ func createResponse() -> Response {
             .function(Tool.Function(
                 name: "get_weather",
                 description: "Get the current weather for a location",
-                parameters: Tool.Function.Parameters(
-                    type: .object,
+                parameters: .object(
                     properties: [
-                        "location": Tool.Function.Parameters.Property(
-                            type: .string,
-                            description: "The city and state, e.g. San Francisco, CA"
-                        ),
+                        "location": .string(description: "The city and state, e.g. San Francisco, CA"),
                     ],
-                    required: ["location"]
                 ),
                 strict: true
             )),
@@ -85,7 +82,6 @@ func createResponse() -> Response {
             totalTokens: 80
         ),
         store: true,
-        user: "user_456"
     )
 }
 

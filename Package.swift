@@ -50,7 +50,7 @@ let package = Package(
 		.testTarget(
 			name: "Tests",
 			dependencies: [
-				"ResponsesAPI", "SchemableMacros",
+				"ResponsesAPI", "SchemableMacros", "ToolMacros",
 				.product(name: "MacroTesting", package: "swift-macro-testing"),
 				.product(name: "SwiftSyntaxMacrosTestSupport", package: "swift-syntax"),
 			],

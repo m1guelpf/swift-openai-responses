@@ -6,4 +6,4 @@
 public macro StringSchema(
 	pattern: String? = nil,
 	format: JSONSchema.StringFormat? = nil
-) = #externalMacro(module: "SchemableMacro", type: "StringSchemaMacro")
+) = #externalMacro(module: "SchemableMacros", type: "StringSchemaMacro")

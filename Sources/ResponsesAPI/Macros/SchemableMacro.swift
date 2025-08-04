@@ -3,5 +3,5 @@
 /// This macro conforms the type to the `Schemable` protocol
 @attached(extension, conformances: Schemable, names: named(schema))
 public macro Schemable() = #externalMacro(
-	module: "SchemableMacro", type: "SchemableMacro"
+	module: "SchemableMacros", type: "SchemableMacro"
 )

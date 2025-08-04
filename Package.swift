@@ -25,13 +25,22 @@ let package = Package(
 		.target(
 			name: "ResponsesAPI",
 			dependencies: [
-				"SchemableMacro",
+				"ToolMacros",
+				"SchemableMacros",
 				.product(name: "MetaCodable", package: "MetaCodable"),
 				.product(name: "HelperCoders", package: "MetaCodable"),
 			]
 		),
 		.macro(
-			name: "SchemableMacro",
+			name: "SchemableMacros",
+			dependencies: [
+				.product(name: "SwiftSyntax", package: "swift-syntax"),
+				.product(name: "SwiftSyntaxMacros", package: "swift-syntax"),
+				.product(name: "SwiftCompilerPlugin", package: "swift-syntax"),
+			]
+		),
+		.macro(
+			name: "ToolMacros",
 			dependencies: [
 				.product(name: "SwiftSyntax", package: "swift-syntax"),
 				.product(name: "SwiftSyntaxMacros", package: "swift-syntax"),
@@ -41,7 +50,7 @@ let package = Package(
 		.testTarget(
 			name: "Tests",
 			dependencies: [
-				"ResponsesAPI", "SchemableMacro",
+				"ResponsesAPI", "SchemableMacros",
 				.product(name: "MacroTesting", package: "swift-macro-testing"),
 				.product(name: "SwiftSyntaxMacrosTestSupport", package: "swift-syntax"),
 			],

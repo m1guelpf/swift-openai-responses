@@ -1,7 +1,7 @@
 import Testing
 import SwiftSyntax
 import MacroTesting
-import SchemableMacro
+import SchemableMacros
 
 @Suite(.macros([
 	SchemableMacro.self,
@@ -9,7 +9,7 @@ import SchemableMacro
 	StringSchemaMacro.self,
 	NumberSchemaMacro.self,
 ], record: .missing))
-struct SchemableTests {
+struct SchemableMacroTests {
 	@Test("Properly generates schema for a struct with primitives")
 	func structSchemaWithPrimitives() {
 		assertMacro {

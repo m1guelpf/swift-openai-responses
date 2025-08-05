@@ -1,18 +1,7 @@
 import SwiftSyntax
+import SwiftDiagnostics
 import SwiftSyntaxMacros
 import SwiftSyntaxBuilder
-
-public enum ToolMacroError: Error, CustomStringConvertible {
-	case unsupportedDeclaration
-	case functionNotFound
-
-	public var description: String {
-		switch self {
-			case .unsupportedDeclaration: "The @Tool macro can only be applied to structs."
-			case .functionNotFound: "The @Tool macro requires a function named 'call' in the struct."
-		}
-	}
-}
 
 public struct ToolMacro: ExtensionMacro {
 	public static func expansion(
@@ -20,39 +9,62 @@ public struct ToolMacro: ExtensionMacro {
 		attachedTo declaration: some DeclGroupSyntax,
 		providingExtensionsOf type: some TypeSyntaxProtocol,
 		conformingTo _: [TypeSyntax],
-		in _: some MacroExpansionContext
+		in context: some MacroExpansionContext
 	) throws -> [ExtensionDeclSyntax] {
-		guard let structDecl = declaration.as(StructDeclSyntax.self) else {
-			throw ToolMacroError.unsupportedDeclaration
-		}
+		return try ReportableError.report(in: context) {
+			guard let structDecl = declaration.as(StructDeclSyntax.self) else {
+				throw ReportableError(node: declaration, errorMessage: "The @Tool macro can only be applied to structs.")
+			}
 
-		// TODO: Check there's only one function named `call`, and that it's not the Toolable `call` method
-		guard let functionDecl = structDecl.memberBlock.members.first(where: {
-			$0.decl.as(FunctionDeclSyntax.self)?.name.text == "call"
-		})?.decl.as(FunctionDeclSyntax.self) else {
-			throw ToolMacroError.functionNotFound
-		}
-		let functionDocString = DocString.parse(functionDecl.docString)
+			let functionDecl = try getFunctionDeclaration(from: structDecl)
+			let functionDocString = DocString.parse(functionDecl.docString)
 
-		return try [
-			ExtensionDeclSyntax(
-				extendedType: type,
-				inheritanceClause: InheritanceClauseSyntax {
-					InheritedTypeSyntax(
+			if functionDocString.isMissing {
+				context.diagnose(Diagnostic(node: functionDecl, message: MacroExpansionWarningMessage(
+					"It's recommended to add documentation to the `call` function of your tool to help the model understand its purpose and usage."
+				)))
+			}
+
+			return try [
+				ExtensionDeclSyntax(
+					extendedType: type,
+					inheritanceClause: InheritanceClauseSyntax { InheritedTypeSyntax(
 						type: IdentifierTypeSyntax(name: "Toolable")
-					)
-				}
-			) {
-				try MemberBlockItemListSyntax {
-					try addProperties(reading: structDecl, and: functionDocString)
-					try addArguments(reading: functionDecl, and: functionDocString)
-					try addFunction(reading: functionDecl, and: functionDocString)
+					) },
+				) {
+					try MemberBlockItemListSyntax {
+						try addProperties(reading: structDecl, and: functionDocString)
+						try addArguments(reading: functionDecl, and: functionDocString)
+						try addFunction(reading: functionDecl, and: functionDocString)
+					}
+				},
+			]
+		} withDefault: { [] }
+	}
 
-					// TODO: Add `call(arguments: Arguments)` method
-					// - Call the original `call` method with the `Arguments` properties
-				}
-			},
-		]
+	private static func getFunctionDeclaration(from structDecl: StructDeclSyntax) throws(ReportableError) -> FunctionDeclSyntax {
+		let functionDecls = structDecl.memberBlock.members.filter { $0.decl.as(FunctionDeclSyntax.self)?.name.text == "call" }
+
+		guard functionDecls.count <= 1 else {
+			throw ReportableError(node: structDecl, errorMessage: "Structs annotated with the @Tool macro may only contain a single `call` function.")
+		}
+		guard let functionDecl = functionDecls.first?.decl.as(FunctionDeclSyntax.self) else {
+			throw ReportableError(
+				node: structDecl,
+				errorMessage: "Structs annotated with the @Tool macro must contain a `call` function."
+			)
+		}
+
+		guard !functionDecl.signature.parameterClause.parameters.allSatisfy({
+			$0.firstName.text == "arguments" && $0.type.as(IdentifierTypeSyntax.self)?.name.text == "Arguments"
+		}) else {
+			throw ReportableError(
+				node: functionDecl,
+				errorMessage: "When using the @Tool macro, use function parameters directly instead of manually creating an `Arguments` struct."
+			)
+		}
+
+		return functionDecl
 	}
 
 	private static func addProperties(

@@ -26,6 +26,16 @@ struct DocString {
 		properties[property]
 	}
 
+	func `for`(properties: String?...) -> String? {
+		for property in properties {
+			if let property, let value = self.properties[property] {
+				return value
+			}
+		}
+
+		return nil
+	}
+
 	private static func parseParameters(_ docString: inout String) -> [String: String] {
 		var properties: [String: String] = [:]
 

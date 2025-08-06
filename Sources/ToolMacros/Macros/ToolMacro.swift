@@ -92,12 +92,14 @@ public struct ToolMacro: ExtensionMacro {
 		and functionDocString: DocString?
 	) throws -> StructDeclSyntax {
 		var structDecl = try StructDeclSyntax(name: TokenSyntax(stringLiteral: "Arguments")) {
-			// TODO: Ensure all parameters are 1) named 2) not variadic
 			try functionDecl.signature.parameterClause.parameters.map { parameter in
-				let name = (parameter.secondName ?? parameter.firstName).text
-				var decl = try VariableDeclSyntax("let \(raw: name): \(parameter.type)")
+				if parameter.firstName.text == "_" {
+					throw ReportableError(node: parameter, errorMessage: "All parameters must be named.")
+				}
 
-				if let docString = functionDocString?.for(property: name), !docString.isEmpty {
+				var decl = try VariableDeclSyntax("let \(raw: (parameter.secondName ?? parameter.firstName).text): \(parameter.type)")
+
+				if let docString = functionDocString?.for(properties: parameter.firstName.text, parameter.secondName?.text), !docString.isEmpty {
 					decl.leadingTrivia = .docLineComment("/// \(docString)").merging(.newline)
 				}
 
@@ -120,7 +122,7 @@ public struct ToolMacro: ExtensionMacro {
 				let name = (parameter.secondName ?? parameter.firstName).text
 				let expression: ExprSyntax = "arguments.\(raw: name)"
 
-				return LabeledExprSyntax(label: name, expression: expression)
+				return LabeledExprSyntax(label: parameter.firstName.text, expression: expression)
 			}
 		})
 

@@ -97,6 +97,78 @@ struct ToolMacroTests {
 		}
 	}
 
+	@Test("Handles parameters with custom names")
+	func handlesCustomNamedParameters() {
+		assertMacro {
+			#"""
+			@Tool
+			struct GetWeather {
+				/// Get the weather for a location.
+				/// - Parameter at: The location to get the weather for.
+				func call(at location: String) -> String {
+					"Sunny in \(location)"
+				}
+			}
+			"""#
+		} expansion: {
+			#"""
+			struct GetWeather {
+				/// Get the weather for a location.
+				/// - Parameter at: The location to get the weather for.
+				func call(at location: String) -> String {
+					"Sunny in \(location)"
+				}
+			}
+
+			extension GetWeather: Toolable {
+				var name: String {
+					"GetWeather"
+				}
+
+				var description: String {
+					"Get the weather for a location."
+				}
+
+				@Schemable struct Arguments {
+					/// The location to get the weather for.
+					let location: String
+				}
+
+				func call(arguments: Arguments) async throws -> Output {
+					try await self.call(at: arguments.location)
+				}
+			}
+			"""#
+		}
+	}
+
+	@Test("Requires parameters to be named")
+	func errorsWithUnnamedParameters() {
+		assertMacro {
+			#"""
+			@Tool
+			struct GetWeather {
+				/// Get the weather for a location.
+				func call(_ location: String) -> String {
+					"Sunny in \(location)"
+				}
+			}
+			"""#
+		} diagnostics: {
+			#"""
+			@Tool
+			struct GetWeather {
+				/// Get the weather for a location.
+				func call(_ location: String) -> String {
+			           ┬─────────────────
+			           ╰─ 🛑 All parameters must be named.
+					"Sunny in \(location)"
+				}
+			}
+			"""#
+		}
+	}
+
 	@Test("Requires call method")
 	func requiresCallMethod() {
 		assertMacro {

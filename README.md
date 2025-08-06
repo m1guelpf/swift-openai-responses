@@ -1,9 +1,14 @@
 # OpenAI Responses API
+> Hand-crafted Swift SDK for the [OpenAI Responses API](https://platform.openai.com/docs/api-reference/responses).
 
 [![Swift Version](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fm1guelpf%2Fswift-openai-responses%2Fbadge%3Ftype%3Dswift-versions&color=brightgreen)](https://swiftpackageindex.com/m1guelpf/swift-openai-responses)
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/m1guelpf/swift-openai-responses/main/LICENSE)
 
-An unofficial Swift SDK for the [OpenAI Responses API](https://platform.openai.com/docs/api-reference/responses).
+This package contains:
+- A fully typed client for the Responses API that _feels_ Swifty
+- `Schemable` and `Tool` macros, providing elegant ways to define tools and structured responses.
+- A `Conversation` class, handling everything you need for multi-turn streaming conversations in your views.
+
 
 ## Installation
 

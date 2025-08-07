@@ -541,6 +541,22 @@ private extension Conversation {
 
 					item = .codeInterpreterCall(codeInterpreterCall)
 				}
+			case let .customToolCallInputDelta(itemId, outputIndex, delta):
+				updateItem(index: outputIndex, id: itemId) { item in
+					guard case var .customToolCall(customToolCall) = item else { return }
+
+					customToolCall.input += delta
+
+					item = .customToolCall(customToolCall)
+				}
+			case let .customToolCallInputDone(itemId, outputIndex, input):
+				updateItem(index: outputIndex, id: itemId) { item in
+					guard case var .customToolCall(customToolCall) = item else { return }
+
+					customToolCall.input = input
+
+					item = .customToolCall(customToolCall)
+				}
 		}
 	}
 

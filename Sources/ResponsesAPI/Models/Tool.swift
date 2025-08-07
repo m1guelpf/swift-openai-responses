@@ -8,6 +8,14 @@ import MetaCodable
 /// - **Function calls (custom tools)**: Functions that are defined by you, enabling the model to call your own code. Learn more about [function calling](https://platform.openai.com/docs/guides/function-calling).
 @Codable @CodedAt("type") @CodingKeys(.snake_case) public enum Tool: Equatable, Hashable, Sendable {
 	public enum Choice: Equatable, Hashable, Sendable {
+		public enum MultiToolMode: String, Equatable, Hashable, Codable, Sendable {
+			/// Allows the model to pick from among the allowed tools and generate a message.
+			case auto
+
+			/// Requires the model to call one or more of the allowed tools.
+			case required
+		}
+
 		/// The model will not call any tool and instead generates a message.
 		case none
 
@@ -16,6 +24,12 @@ import MetaCodable
 
 		/// The model must call one or more tools.
 		case required
+
+		/// Constrains the tools available to the model to a pre-defined set.
+		///
+		/// - Parameter tools: A list of tool definitions that the model should be allowed to call.
+		/// - Parameter mode: How the model should use the tools.
+		case some(tools: [Choice], mode: MultiToolMode)
 
 		case fileSearch
 		case imageGeneration
@@ -33,6 +47,11 @@ import MetaCodable
 		/// - Parameter server: The label of the MCP server to use.
 		/// - Parameter name: The name of the tool to call on the server.
 		case mcp(server: String, name: String? = nil)
+
+		/// Force the model to call a specific custom tool.
+		///
+		/// - Parameter name: The name of the custom tool to call.
+		case custom(name: String)
 	}
 
 	/// Defines a function in your own code the model can choose to call.
@@ -456,6 +475,51 @@ import MetaCodable
 		}
 	}
 
+	/// A custom tool that processes input using a specified format.
+	///
+	/// - Learn more about [custom tools](https://platform.openai.com/docs/guides/function-calling#custom-tools).
+	@Codable @CodingKeys(.snake_case) public struct Custom: Equatable, Hashable, Sendable {
+		/// A grammar defined by the user.
+		@Codable @CodedAt("type") public enum Format: Equatable, Hashable, Sendable {
+			/// The syntax of the grammar definition.
+			public enum Syntax: String, Equatable, Hashable, Codable, Sendable {
+				case lark, regex
+			}
+
+			/// Unconstrained free-form text.
+			case text
+
+			/// A grammar defined by the user.
+			///
+			/// - Parameter definition: The grammar definition.
+			/// - Parameter syntax: The syntax of the grammar definition.
+			case grammar(
+				definition: String,
+				syntax: Syntax
+			)
+		}
+
+		/// The name of the custom tool, used to identify it in tool calls.
+		public var name: String
+
+		/// Optional description of the custom tool, used to provide more context.
+		public var description: String?
+
+		/// The input format for the custom tool.
+		public var format: Format?
+
+		/// Create a new custom tool.
+		///
+		/// - Parameter name: The name of the custom tool, used to identify it in tool calls.
+		/// - Parameter description: Optional description of the custom tool, used to provide more context.
+		/// - Parameter format: The input format for the custom tool.
+		public init(name: String, description: String? = nil, format: Format? = nil) {
+			self.name = name
+			self.format = format
+			self.description = description
+		}
+	}
+
 	/// Defines a function in your own code the model can choose to call.
 	/// - Learn more about [function calling](https://platform.openai.com/docs/guides/function-calling).
 	case function(Function)
@@ -500,6 +564,11 @@ import MetaCodable
 	/// Learn more about the [local shell tool](https://platform.openai.com/docs/guides/tools-local-shell).
 	@CodedAs("local_shell")
 	case localShell
+
+	/// A custom tool that processes input using a specified format.
+	///
+	/// Learn more about [custom tools](https://platform.openai.com/docs/guides/function-calling#custom-tools).
+	case custom(Custom)
 }
 
 public extension Tool {
@@ -611,6 +680,16 @@ public extension Tool {
 	) -> Self {
 		.imageGeneration(ImageGeneration(background: background, inputFidelity: inputFidelity, imageMask: imageMask, model: model, moderation: moderation, compression: compression, format: format, partialImages: partialImages, quality: quality, aspectRatio: aspectRatio))
 	}
+
+	/// A custom tool that processes input using a specified format.
+	///
+	/// Learn more about [custom tools](https://platform.openai.com/docs/guides/function-calling#custom-tools).
+	/// - Parameter name: The name of the custom tool, used to identify it in tool calls.
+	/// - Parameter description: Optional description of the custom tool, used to provide more context.
+	/// - Parameter format: The input format for the custom tool.
+	static func custom(name: String, description: String? = nil, format: Custom.Format? = nil) -> Self {
+		.custom(Custom(name: name, description: description, format: format))
+	}
 }
 
 public extension Tool.FileSearch.Filters {
@@ -636,6 +715,8 @@ extension Tool.Choice: Codable {
 	enum CodingKeys: String, CodingKey {
 		case type
 		case name
+		case mode
+		case tools
 		case serverLabel = "server_label"
 	}
 
@@ -644,6 +725,11 @@ extension Tool.Choice: Codable {
 			case .none: try "none".encode(to: encoder)
 			case .auto: try "auto".encode(to: encoder)
 			case .required: try "required".encode(to: encoder)
+			case let .some(tools, mode):
+				var container = encoder.container(keyedBy: CodingKeys.self)
+				try container.encode("allowed_tools", forKey: .type)
+				try container.encode(tools, forKey: .tools)
+				try container.encode(mode, forKey: .mode)
 			case .fileSearch:
 				var container = encoder.container(keyedBy: CodingKeys.self)
 				try container.encode("file_search", forKey: .type)
@@ -662,6 +748,10 @@ extension Tool.Choice: Codable {
 			case let .function(name):
 				var container = encoder.container(keyedBy: CodingKeys.self)
 				try container.encode("function", forKey: .type)
+				try container.encode(name, forKey: .name)
+			case let .custom(name):
+				var container = encoder.container(keyedBy: CodingKeys.self)
+				try container.encode("custom", forKey: .type)
 				try container.encode(name, forKey: .name)
 			case let .mcp(server, name):
 				var container = encoder.container(keyedBy: CodingKeys.self)
@@ -690,11 +780,20 @@ extension Tool.Choice: Codable {
 
 		switch type {
 			case "file_search": self = .fileSearch
+			case "code_interpreter": self = .codeInterpreter
+			case "image_generation": self = .imageGeneration
 			case "web_search_preview": self = .webSearchPreview
 			case "computer_use_preview": self = .computerUsePreview
 			case "function":
 				let name = try container.decode(String.self, forKey: .name)
 				self = .function(name: name)
+			case "custom":
+				let name = try container.decode(String.self, forKey: .name)
+				self = .custom(name: name)
+			case "allowed_tools":
+				let tools = try container.decode([Tool.Choice].self, forKey: .tools)
+				let mode = try container.decode(Tool.Choice.MultiToolMode.self, forKey: .mode)
+				self = .some(tools: tools, mode: mode)
 			default:
 				throw DecodingError.dataCorruptedError(forKey: .type, in: container, debugDescription: "Invalid tool choice: \(type)")
 		}

@@ -236,6 +236,11 @@ import HelperCoders
 	/// Whether the response was stored on OpenAI's server for later retrieval.
 	public var store: Bool
 
+	/// Constrains the verbosity of the model's response.
+	///
+	/// Lower values will result in more concise responses, while higher values will result in more verbose responses.
+	public var verbosity: Verbosity?
+
 	/// A unique identifier representing your end-user, which can help OpenAI to monitor and detect abuse. [Learn more](https://platform.openai.com/docs/guides/safety-best-practices#end-user-ids).
 	@available(*, deprecated, message: "This field is being replaced by `safetyIdentifier` and `promptCacheKey`. Use `promptCacheKey` instead to maintain caching optimizations.")
 	public var user: String?
@@ -281,6 +286,7 @@ import HelperCoders
 	/// - Parameter truncation: The truncation strategy used for the model response
 	/// - Parameter usage: Token usage details including input tokens, output tokens, a breakdown of output tokens, and the total tokens used by the model
 	/// - Parameter store: Whether the response was stored on OpenAI's server for later retrieval
+	/// - Parameter verbosity: Constrains the verbosity of the model's response.
 	public init(
 		createdAt: Date,
 		id: String,
@@ -305,6 +311,7 @@ import HelperCoders
 		truncation: Truncation,
 		usage: Usage? = nil,
 		store: Bool = true,
+		verbosity: Verbosity? = nil,
 	) {
 		self.id = id
 		self.topP = topP
@@ -317,6 +324,7 @@ import HelperCoders
 		self.prompt = prompt
 		self.output = output
 		self.metadata = metadata
+		self.verbosity = verbosity
 		self.reasoning = reasoning
 		self.createdAt = createdAt
 		self.toolChoice = toolChoice

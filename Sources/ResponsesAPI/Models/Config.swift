@@ -11,6 +11,7 @@ import MetaCodable
 		case low
 		case high
 		case medium
+		case minimal
 	}
 
 	/// A summary of the reasoning performed by the model.
@@ -133,6 +134,11 @@ public struct Prompt: Equatable, Hashable, Codable, Sendable {
 		self.version = version
 		self.variables = variables
 	}
+}
+
+/// Constrains the verbosity of the model's response.
+public enum Verbosity: String, Equatable, Hashable, Codable, Sendable {
+	case low, medium, high
 }
 
 public extension TextConfig.Format {

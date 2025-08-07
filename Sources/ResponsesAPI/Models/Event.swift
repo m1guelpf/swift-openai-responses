@@ -506,6 +506,30 @@ import MetaCodable
 		code: String
 	)
 
+	/// Event representing a delta (partial update) to the input of a custom tool call.
+	///
+	/// - Parameter itemId: Unique identifier for the API item associated with this event.
+	/// - Parameter outputIndex: The index of the output this delta applies to.
+	/// - Parameter delta: The incremental input data (delta) for the custom tool call.
+	@CodedAs("response.custom_tool_call_input.delta")
+	case customToolCallInputDelta(
+		itemId: String,
+		outputIndex: UInt,
+		delta: String
+	)
+
+	/// Event representing a delta (partial update) to the input of a custom tool call.
+	///
+	/// - Parameter itemId: Unique identifier for the API item associated with this event.
+	/// - Parameter outputIndex: The index of the output this delta applies to.
+	/// - Parameter input: The complete input data for the custom tool call.
+	@CodedAs("response.custom_tool_call_input.done")
+	case customToolCallInputDone(
+		itemId: String,
+		outputIndex: UInt,
+		input: String
+	)
+
 	/// Emitted when an error occurs.
 	///
 	/// - Parameter error: The error that occurred.

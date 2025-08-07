@@ -1,9 +1,10 @@
 // swift-tools-version: 6.0
 
 import PackageDescription
+import CompilerPluginSupport
 
 let package = Package(
-	name: "OpenAI",
+	name: "ResponsesAPI",
 	platforms: [
 		.iOS(.v17),
 		.tvOS(.v17),
@@ -13,19 +14,47 @@ let package = Package(
 		.macCatalyst(.v17),
 	],
 	products: [
-		.library(name: "OpenAI", type: .static, targets: ["OpenAI"]),
+		.library(name: "ResponsesAPI", targets: ["ResponsesAPI"]),
 	],
 	dependencies: [
 		.package(url: "https://github.com/SwiftyLab/MetaCodable.git", from: "1.0.0"),
+		.package(url: "https://github.com/pointfreeco/swift-macro-testing", from: "0.6.0"),
+		.package(url: "https://github.com/swiftlang/swift-syntax.git", "600.0.1"..<"603.0.0"),
 	],
 	targets: [
 		.target(
-			name: "OpenAI",
+			name: "ResponsesAPI",
 			dependencies: [
+				"ToolMacros",
+				"SchemableMacros",
 				.product(name: "MetaCodable", package: "MetaCodable"),
 				.product(name: "HelperCoders", package: "MetaCodable"),
+			]
+		),
+		.macro(
+			name: "SchemableMacros",
+			dependencies: [
+				.product(name: "SwiftSyntax", package: "swift-syntax"),
+				.product(name: "SwiftSyntaxMacros", package: "swift-syntax"),
+				.product(name: "SwiftCompilerPlugin", package: "swift-syntax"),
+			]
+		),
+		.macro(
+			name: "ToolMacros",
+			dependencies: [
+				.product(name: "SwiftSyntax", package: "swift-syntax"),
+				.product(name: "SwiftSyntaxMacros", package: "swift-syntax"),
+				.product(name: "SwiftCompilerPlugin", package: "swift-syntax"),
+			]
+		),
+		.testTarget(
+			name: "Tests",
+			dependencies: [
+				"ResponsesAPI", "SchemableMacros", "ToolMacros",
+				.product(name: "MacroTesting", package: "swift-macro-testing"),
+				.product(name: "SwiftSyntaxMacrosTestSupport", package: "swift-syntax"),
 			],
-			path: "./src"
+			path: "./Tests"
 		),
 	]
 )

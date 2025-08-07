@@ -1,0 +1,41 @@
+name: Test
+
+on:
+    push:
+        branches: [main]
+    pull_request:
+
+jobs:
+    build:
+        runs-on: macos-latest
+        steps:
+            - uses: swift-actions/setup-swift@v2
+
+            - uses: actions/checkout@v4
+
+            - name: Restore .build
+              id: restore-build
+              uses: actions/cache/restore@v4
+              with:
+                path: .build
+                restore-keys: "swiftpm-tests-build-${{ runner.os }}-"
+                key: "swiftpm-tests-build-${{ runner.os }}-${{ github.event.pull_request.base.sha || github.event.after }}"
+
+
+            - name: Build
+              run: swift build --build-tests --enable-code-coverage
+
+            - name: Cache .build
+              if: steps.restore-build.outputs.cache-hit != 'true'
+              uses: actions/cache/save@v4
+              with:
+                path: .build
+                key: "swiftpm-tests-build-${{ runner.os }}-${{ github.event.pull_request.base.sha || github.event.after }}"
+
+            - name: Run tests
+              run: swift test --skip-build --enable-code-coverage --parallel
+
+            - name: Test coverage
+              uses: maxep/spm-lcov-action@0.3.1
+              with:
+                  output-file: ./coverage/lcov.info

@@ -15,3 +15,10 @@ extension UUID: Schemable {
 		.string(format: .uuid)
 	}
 }
+
+/// > Note: This requires `JSONDecoder` to be configured with a date decoding strategy of `.iso8601`.
+extension Date: Schemable {
+	public static var schema: JSONSchema {
+		.string(format: .dateTime)
+	}
+}

@@ -34,7 +34,7 @@ dependencies: [
 -   File > Swift Packages > Add Package Dependency
 -   Add https://github.com/m1guelpf/swift-openai-responses.git
 -   Select "Branch" with "main"
-    
+
 </details>
 
 <details>
@@ -42,7 +42,7 @@ dependencies: [
 <summary>CocoaPods</summary>
 
 Ask ChatGPT to help you migrate away from CocoaPods.
-    
+
 </details>
 
 ## Getting started 🚀
@@ -187,7 +187,6 @@ ScrollView {
 }
 ```
 
-
 ### `ResponsesAPI`
 
 #### Creating a new instance
@@ -210,7 +209,7 @@ let client = ResponsesAPI(
 
 For more advanced use cases like connecting to a custom server, you can customize the `URLRequest` used to connect to the API:
 
-``` swift
+```swift
 let urlRequest = URLRequest(url: MY_CUSTOM_ENDPOINT)
 urlRequest.addValue("Bearer \(YOUR_API_KEY)", forHTTPHeaderField: "Authorization")
 

@@ -14,8 +14,14 @@ public final class ResponsesAPI: Sendable {
 	}
 
 	private let request: URLRequest
-	private let encoder = JSONEncoder()
-	private let decoder = JSONDecoder()
+
+	private let encoder = tap(JSONEncoder()) { encoder in
+		encoder.dateEncodingStrategy = .iso8601
+	}
+
+	private let decoder = tap(JSONDecoder()) { decoder in
+		decoder.dateDecodingStrategy = .iso8601
+	}
 
 	/// Creates a new `ResponsesAPI` instance using the provided `URLRequest`.
 	///

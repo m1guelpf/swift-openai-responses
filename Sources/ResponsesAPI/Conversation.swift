@@ -1,4 +1,5 @@
 import Foundation
+import Observation
 
 /// A wrapper around the Responses API for managing a conversation.
 @MainActor @Observable public final class Conversation {

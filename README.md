@@ -55,7 +55,7 @@ import SwiftUI
 
 struct ContentView: View {
 	@State private var newMessage: String = ""
-	@State private var conversation = Conversation(authToken: OPENAI_KEY, using: .gpt4o)
+	@State private var conversation = Conversation(authToken: OPENAI_KEY, using: .gpt5)
 
 	var body: some View {
 		VStack(spacing: 0) {
@@ -114,13 +114,13 @@ The Conversation class provides a high-level interface for managing a conversati
 To create a `Conversation` instance, all you need is an OpenAI API key, and the model you will be talking to:
 
 ```swift
-@State private var conversation = Conversation(authToken: OPENAI_API_KEY, using: .gpt4o)
+@State private var conversation = Conversation(authToken: OPENAI_API_KEY, using: .gpt5)
 ```
 
 You can optionally provide a closure to configure the conversation, adding a system prompt or tools for the model to use:
 
 ```swift
-@State private var conversation = Conversation(authToken: OPENAI_API_KEY, using: .gpt4o) { config in
+@State private var conversation = Conversation(authToken: OPENAI_API_KEY, using: .gpt5) { config in
 	// configure the model's behaviour
 	config.instructions = "You are a coding assistant that talks like a pirate"
 
@@ -222,7 +222,7 @@ To create a new response, call the `create` method with a `Request` instance:
 
 ```swift
 let response = try await client.create(Request(
-	model: .gpt4o,
+	model: .gpt5,
 	input: .text("Are semicolons optional in JavaScript?"),
 	instructions: "You are a coding assistant that talks like a pirate"
 ))
@@ -236,7 +236,7 @@ To stream back the response as it is generated, use the `stream` method:
 
 ```swift
 let stream = try await client.stream(Request(
-	model: .gpt4o,
+	model: .gpt5,
 	input: .text("Are semicolons optional in JavaScript?"),
 	instructions: "You are a coding assistant that talks like a pirate"
 ))
@@ -257,7 +257,7 @@ let file = try await client.upload(file: .file(name: "image.png", contents: imag
 
 // then, use it on a message
 try await client.create(Request(
-	model: .gpt4o,
+	model: .gpt5,
 	input: .message(content: [
 		.image(fileId: file.id),
 		.text("Take a look at this image and tell me what you see"),

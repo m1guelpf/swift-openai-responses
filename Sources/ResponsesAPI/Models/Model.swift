@@ -14,6 +14,9 @@ public enum Model: Equatable, Hashable, Sendable {
 	case codexMini
 	case gptOSS20b
 	case gptOSS120b
+	case gpt5
+	case gpt5Mini
+	case gpt5Nano
 	case gpt4_5Preview
 	case gpt4o
 	case chatGPT4o
@@ -31,6 +34,9 @@ public enum Model: Equatable, Hashable, Sendable {
 		switch self {
 			case .o1: "o1"
 			case .o3: "o3"
+			case .gpt5: "gpt-5"
+			case .gpt5Mini: "gpt-5-mini"
+			case .gpt5Nano: "gpt-5-nano"
 			case .gpt4: "gpt-4"
 			case .o3Pro: "o3-pro"
 			case .o1Pro: "o1-pro"
@@ -61,6 +67,7 @@ public enum Model: Equatable, Hashable, Sendable {
 		switch model {
 			case "o1": self = .o1
 			case "o3": self = .o3
+			case "gpt-5": self = .gpt5
 			case "gpt-4": self = .gpt4
 			case "gpt-4o": self = .gpt4o
 			case "o1-pro": self = .o1Pro
@@ -69,6 +76,8 @@ public enum Model: Equatable, Hashable, Sendable {
 			case "o3-mini": self = .o3Mini
 			case "o4-mini": self = .o4Mini
 			case "gpt-4.1": self = .gpt4_1
+			case "gpt-5-mini": self = .gpt5Mini
+			case "gpt-5-nano": self = .gpt5Nano
 			case "codex-mini": self = .codexMini
 			case "gpt-4o-mini": self = .gpt4oMini
 			case "gpt-oss-20b": self = .gptOSS20b

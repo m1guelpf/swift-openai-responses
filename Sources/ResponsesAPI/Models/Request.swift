@@ -159,11 +159,6 @@ import MetaCodable
 	/// Lower values will result in more concise responses, while higher values will result in more verbose responses.
 	public var verbosity: Verbosity?
 
-	/// A unique identifier representing your end-user, which can help OpenAI to monitor and detect abuse.
-	/// - [End User IDs](https://platform.openai.com/docs/guides/safety-best-practices#end-user-ids)
-	@available(*, deprecated, message: "This field is being replaced by `safetyIdentifier` and `promptCacheKey`. Use `promptCacheKey` instead to maintain caching optimizations.")
-	public var user: String?
-
 	/// Creates a new `Request` instance.
 	///
 	/// - Parameter model: Model ID used to generate the response.
@@ -244,86 +239,6 @@ import MetaCodable
 		self.promptCacheKey = promptCacheKey
 		self.maxOutputTokens = maxOutputTokens
 		self.safetyIdentifier = safetyIdentifier
-		self.parallelToolCalls = parallelToolCalls
-		self.previousResponseId = previousResponseId
-	}
-}
-
-public extension Request {
-	/// Creates a new `Request` instance.
-	///
-	/// > This initializer is deprecated. Replace the `user` parameter with `safetyIdentifier` and/or `promptCacheKey` depending on your use case.
-	///
-	/// - Parameter model: Model ID used to generate the response.
-	/// - Parameter input: Text, image, or file inputs to the model, used to generate a response.
-	/// - Parameter background: Whether to run the model response in the background.
-	/// - Parameter include: Specify additional output data to include in the model response.
-	/// - Parameter instructions: Inserts a system (or developer) message as the first item in the model's context.
-	/// - Parameter maxOutputTokens: An upper bound for the number of tokens that can be generated for a response, including visible output tokens and reasoning tokens.
-	/// - Parameter maxToolCalls: The maximum number of total calls to built-in tools that can be processed in a response.
-	/// - Parameter metadata: Set of 16 key-value pairs that can be attached to an object.
-	/// - Parameter parallelToolCalls: Whether to allow the model to run tool calls in parallel.
-	/// - Parameter previousResponseId: The unique ID of the previous response to the model.
-	/// - Parameter prompt: Reference to a prompt template and its variables.
-	/// - Parameter reasoning: Configuration options for reasoning models.
-	/// - Parameter serviceTier: Specifies the latency tier to use for processing the request.
-	/// - Parameter store: Whether to store the generated model response for later retrieval via API.
-	/// - Parameter stream: If set to true, the model response data will be streamed to the client as it is generated.
-	/// - Parameter temperature: What sampling temperature to use, between 0 and 2.
-	/// - Parameter text: Configuration options for a text response from the model.
-	/// - Parameter toolChoice: How the model should select which tool (or tools) to use when generating a response.
-	/// - Parameter tools: An array of tools the model may call while generating a response.
-	/// - Parameter topLogprobs: An integer between 0 and 20 specifying the number of most likely tokens to return at each token position, each with an associated log probability.
-	/// - Parameter topP: An alternative to sampling with temperature, called nucleus sampling.
-	/// - Parameter truncation: The truncation strategy to use for the model response.
-	/// - Parameter user: A unique identifier representing your end-user.
-	@available(*, deprecated, message: "The `user` parameter is deprecated. Use `safetyIdentifier` and `promptCacheKey` instead.")
-	init(
-		model: Model,
-		input: Input,
-		background: Bool? = nil,
-		include: [Include]? = nil,
-		instructions: String? = nil,
-		maxOutputTokens: UInt? = nil,
-		maxToolCalls: UInt? = nil,
-		metadata: [String: String]? = nil,
-		parallelToolCalls: Bool? = nil,
-		previousResponseId: String? = nil,
-		prompt: Prompt? = nil,
-		reasoning: ReasoningConfig? = nil,
-		serviceTier: ServiceTier? = nil,
-		store: Bool? = nil,
-		stream: Bool? = nil,
-		temperature: Double? = nil,
-		text: TextConfig? = nil,
-		toolChoice: Tool.Choice? = nil,
-		tools: [Tool]? = nil,
-		topLogprobs: UInt? = nil,
-		topP: Double? = nil,
-		truncation: Truncation? = nil,
-		user: String
-	) {
-		self.user = user
-		self.text = text
-		self.topP = topP
-		self.model = model
-		self.input = input
-		self.store = store
-		self.tools = tools
-		self.prompt = prompt
-		self.stream = stream
-		self.include = include
-		self.metadata = metadata
-		self.reasoning = reasoning
-		self.background = background
-		self.toolChoice = toolChoice
-		self.truncation = truncation
-		self.serviceTier = serviceTier
-		self.topLogprobs = topLogprobs
-		self.temperature = temperature
-		self.instructions = instructions
-		self.maxToolCalls = maxToolCalls
-		self.maxOutputTokens = maxOutputTokens
 		self.parallelToolCalls = parallelToolCalls
 		self.previousResponseId = previousResponseId
 	}

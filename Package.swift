@@ -18,6 +18,7 @@ let package = Package(
 	],
 	dependencies: [
 		.package(url: "https://github.com/SwiftyLab/MetaCodable.git", from: "1.0.0"),
+		.package(url: "https://github.com/swiftlang/swift-docc-plugin", from: "1.1.0"),
 		.package(url: "https://github.com/pointfreeco/swift-macro-testing", from: "0.6.0"),
 		.package(url: "https://github.com/swiftlang/swift-syntax.git", "600.0.1"..<"603.0.0"),
 	],

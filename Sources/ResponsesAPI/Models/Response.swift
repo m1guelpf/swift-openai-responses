@@ -307,7 +307,7 @@ import HelperCoders
 		truncation: Truncation,
 		usage: Usage? = nil,
 		store: Bool = true,
-		verbosity: Verbosity? = nil,
+		verbosity: Verbosity? = nil
 	) {
 		self.id = id
 		self.topP = topP

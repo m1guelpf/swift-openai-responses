@@ -112,7 +112,7 @@ import Foundation
 	/// - Parameter client: A `ResponsesAPI` instance to use for the conversation.
 	/// - Parameter model: The model to use for the conversation. Can be changed later using the `model` property.
 	///	- Parameter configuring: A closure to further configure the conversation.
-	public init(client: ResponsesAPI, using model: Model, configuring closure: (inout Config) -> Void = { _ in }) {
+	public init(client: ResponsesAPI, using model: Model = .gpt5, configuring closure: (inout Config) -> Void = { _ in }) {
 		self.client = client
 		config = Config(model: model)
 		closure(&config)
@@ -129,7 +129,7 @@ import Foundation
 		authToken: String,
 		organizationId: String? = nil,
 		projectId: String? = nil,
-		using model: Model,
+		using model: Model = .gpt5,
 		configuring closure: (inout Config) -> Void = { _ in }
 	) {
 		self.init(client: ResponsesAPI(authToken: authToken, organizationId: organizationId, projectId: projectId), using: model, configuring: closure)

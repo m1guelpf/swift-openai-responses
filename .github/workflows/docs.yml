@@ -42,13 +42,13 @@ jobs:
                 retention-days: 1
                 name: github-pages
                 if-no-files-found: error
-                path: ~/ResponsesAPI.doccarchive.tar
+                path: ./ResponsesAPI.doccarchive.tar
 
             - name: Attach to release
               if: github.ref_type == 'tag'
               uses: softprops/action-gh-release@v2
               with:
-                  files: ~/ResponsesAPI.doccarchive.tar
+                  files: ./ResponsesAPI.doccarchive.tar
     deploy:
       needs: build
       runs-on: ubuntu-latest

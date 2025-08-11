@@ -60,7 +60,7 @@ extension DocString? {
 	var isMissing: Bool {
 		switch self {
 			case .none: true
-			case let .some(docString): docString.docString.isEmpty
+			case let .some(docString): docString.docString.isEmpty || docString.docString.isPlaceholder
 		}
 	}
 }

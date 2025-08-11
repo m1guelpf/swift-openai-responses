@@ -106,9 +106,7 @@ public struct ToolMacro: ExtensionMacro {
 			try properties.append(VariableDeclSyntax("var name: String { \(literal: structDecl.name.text) }"))
 		}
 
-		if !structDeclarations.declaresVariable(named: "description"),
-		   let description = functionDocString?.docString ?? structDecl.docString
-		{
+		if !structDeclarations.declaresVariable(named: "description"), let description = functionDocString?.docString ?? structDecl.docString, !description.isPlaceholder {
 			try properties.append(VariableDeclSyntax("var description: String { \(literal: description) }"))
 		}
 

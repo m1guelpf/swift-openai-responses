@@ -219,10 +219,6 @@ struct ToolMacroTests {
 			        "GetWeather"
 			    }
 
-			    var description: String {
-			        "<#Describe the purpose of your tool to help the model understand when to use it#>"
-			    }
-
 			    @Schemable struct Arguments: Decodable {
 			        let <#Any arguments your tool call requires#>:
 			    }
@@ -347,6 +343,55 @@ struct ToolMacroTests {
 		} expansion: {
 			#"""
 			struct GetWeather {
+				func call(location: String) -> String {
+					"Sunny in \(location)"
+				}
+			}
+
+			extension GetWeather: Toolable {
+				typealias Error = Never
+				typealias Output = String
+
+				var name: String {
+					"GetWeather"
+				}
+
+				@Schemable struct Arguments: Decodable {
+					let location: String
+				}
+
+				func call(parameters: Arguments) async throws -> Output {
+					try await self.call(location: parameters.location)
+				}
+			}
+			"""#
+		}
+
+		assertMacro {
+			#"""
+			@Tool
+			struct GetWeather {
+				/// <#Describe the purpose of your tool to help the model understand when to use it#>
+				func call(location: String) -> String {
+					"Sunny in \(location)"
+				}
+			}
+			"""#
+		} diagnostics: {
+			#"""
+			@Tool
+			struct GetWeather {
+				/// <#Describe the purpose of your tool to help the model understand when to use it#>
+				func call(location: String) -> String {
+			 ╰─ ⚠️ It's recommended to add documentation to the `call` function of your tool to help the model understand its purpose and usage.
+					"Sunny in \(location)"
+				}
+			}
+			"""#
+		} expansion: {
+			#"""
+			struct GetWeather {
+				/// <#Describe the purpose of your tool to help the model understand when to use it#>
 				func call(location: String) -> String {
 					"Sunny in \(location)"
 				}

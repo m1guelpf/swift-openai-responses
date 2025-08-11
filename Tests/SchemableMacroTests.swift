@@ -144,6 +144,45 @@ struct SchemableMacroTests {
 		}
 	}
 
+	@Test("Ignores computed properties in struct")
+	func structWithComputedProperty() {
+		assertMacro {
+			"""
+			@Schemable
+			struct User {
+				let id: Int
+				let username: String
+
+				/// Computed property that returns the user's full name.
+				var fullName: String {
+					return "\\(username) \\(id)"
+				}
+			}
+			"""
+		} expansion: {
+			"""
+			struct User {
+				let id: Int
+				let username: String
+
+				/// Computed property that returns the user's full name.
+				var fullName: String {
+					return "\\(username) \\(id)"
+				}
+			}
+
+			extension User: Schemable {
+				static var schema: JSONSchema {
+					.object(properties: [
+						"id": .integer(description: nil),
+						"username": .string(description: nil),
+					], description: nil)
+				}
+			}
+			"""
+		}
+	}
+
 	@Test("Allows customizing string schema with @StringSchema")
 	func structCustomStringSchema() {
 		assertMacro {

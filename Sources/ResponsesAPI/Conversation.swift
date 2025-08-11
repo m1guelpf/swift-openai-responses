@@ -113,7 +113,7 @@ import Observation
 	/// - Parameter client: A `ResponsesAPI` instance to use for the conversation.
 	/// - Parameter model: The model to use for the conversation. Can be changed later using the `model` property.
 	///	- Parameter configuring: A closure to further configure the conversation.
-	public init(client: ResponsesAPI, using model: Model = .gpt5, configuring closure: (inout Config) -> Void = { _ in }) {
+	init(client: ResponsesAPI, using model: Model = .gpt5, configuring closure: (inout Config) -> Void = { _ in }) {
 		self.client = client
 		config = Config(model: model)
 		closure(&config)
@@ -134,6 +134,15 @@ import Observation
 		configuring closure: (inout Config) -> Void = { _ in }
 	) {
 		self.init(client: ResponsesAPI(authToken: authToken, organizationId: organizationId, projectId: projectId), using: model, configuring: closure)
+	}
+
+	/// Creates a new conversation.
+	///
+	/// - Parameter request: The `URLRequest` to use for the API.
+	/// - Parameter model: The model to use for the conversation. Can be changed later using the `model` property.
+	///	- Parameter configuring: A closure to further configure the conversation.
+	public convenience init(connectingTo request: URLRequest, using model: Model = .gpt5, configuring closure: (inout Config) -> Void = { _ in }) throws {
+		try self.init(client: ResponsesAPI(connectingTo: request), using: model, configuring: closure)
 	}
 
 	/// Restarts the conversation, clearing all entries.
@@ -188,7 +197,11 @@ import Observation
 	/// - Parameter input: Text, image, or file inputs to the model, used to generate a response.
 	@discardableResult public func send(_ input: Input) -> Task<Void, Error> {
 		return Task.detached(priority: .userInitiated) {
-			try await self.sendAndWaitForResponses(input)
+			do { try await self.sendAndWaitForResponses(input) }
+			catch {
+				print(error)
+				throw error
+			}
 		}
 	}
 
@@ -220,9 +233,12 @@ import Observation
 			truncation: config.truncation,
 		)
 
-		let stream = try await client.stream(request)
-		await MainActor.run {
-			self.entries.append(.request(request))
+		await MainActor.run { self.entries.append(.request(request)) }
+		let stream = switch await Result(catching: { try await client.stream(request) }) {
+			case let .success(stream): stream
+			case let .failure(error):
+				await MainActor.run { _ = self.entries.popLast() }
+				throw error
 		}
 
 		for try await event in stream {

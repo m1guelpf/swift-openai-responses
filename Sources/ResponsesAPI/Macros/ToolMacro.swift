@@ -19,7 +19,7 @@
 @attached(
 	extension,
 	conformances: Toolable,
-	names: named(name), named(description), named(Arguments), named(call)
+	names: named(name), named(description), named(Arguments), named(Error), named(Output), named(call)
 )
 public macro Tool() = #externalMacro(
 	module: "ToolMacros", type: "ToolMacro"

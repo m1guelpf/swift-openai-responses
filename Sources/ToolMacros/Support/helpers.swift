@@ -1,6 +1,6 @@
-func tap<T>(_ value: T, _ closure: (inout T) -> Void) -> T {
+func tap<T, E>(_ value: T, _ closure: (inout T) throws(E) -> Void) throws(E) -> T {
 	var mutableValue = value
-	closure(&mutableValue)
+	try closure(&mutableValue)
 	return mutableValue
 }
 

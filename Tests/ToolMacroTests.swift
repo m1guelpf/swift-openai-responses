@@ -29,6 +29,9 @@ struct ToolMacroTests {
 			}
 
 			extension GetWeather: Toolable {
+				typealias Error = Never
+				typealias Output = String
+
 				var name: String {
 					"GetWeather"
 				}
@@ -37,13 +40,13 @@ struct ToolMacroTests {
 					"Get the weather for a location."
 				}
 
-				@Schemable struct Arguments {
+				@Schemable struct Arguments: Decodable {
 					/// The location to get the weather for.
 					let location: String
 				}
 
-				func call(arguments: Arguments) async throws -> Output {
-					try await self.call(location: arguments.location)
+				func call(parameters: Arguments) async throws -> Output {
+					try await self.call(location: parameters.location)
 				}
 			}
 			"""#
@@ -76,6 +79,9 @@ struct ToolMacroTests {
 			}
 
 			extension GetWeather: Toolable {
+				typealias Error = Never
+				typealias Output = String
+
 				var name: String {
 					"GetWeather"
 				}
@@ -84,13 +90,13 @@ struct ToolMacroTests {
 					"Get the weather for a location."
 				}
 
-				@Schemable struct Arguments {
+				@Schemable struct Arguments: Decodable {
 					/// The location to get the weather for.
 					let location: String
 				}
 
-				func call(arguments: Arguments) async throws -> Output {
-					try await self.call(location: arguments.location)
+				func call(parameters: Arguments) async throws -> Output {
+					try await self.call(location: parameters.location)
 				}
 			}
 			"""#
@@ -121,6 +127,9 @@ struct ToolMacroTests {
 			}
 
 			extension GetWeather: Toolable {
+				typealias Error = Never
+				typealias Output = String
+
 				var name: String {
 					"GetWeather"
 				}
@@ -129,13 +138,13 @@ struct ToolMacroTests {
 					"Get the weather for a location."
 				}
 
-				@Schemable struct Arguments {
+				@Schemable struct Arguments: Decodable {
 					/// The location to get the weather for.
 					let location: String
 				}
 
-				func call(arguments: Arguments) async throws -> Output {
-					try await self.call(at: arguments.location)
+				func call(parameters: Arguments) async throws -> Output {
+					try await self.call(at: parameters.location)
 				}
 			}
 			"""#
@@ -174,24 +183,55 @@ struct ToolMacroTests {
 		assertMacro {
 			#"""
 			@Tool
-			struct GetWeather {
-				/// Get the weather for a location.
-				func somethingElse(location: String) -> String {
-					"Sunny in \(location)"
-				}
-			}
+			struct GetWeather {}
 			"""#
 		} diagnostics: {
 			#"""
 			@Tool
 			╰─ 🛑 Structs annotated with the @Tool macro must contain a `call` function.
+			   ✏️ Add a `call` function
+			struct GetWeather {}
+			"""#
+		} fixes: {
+			#"""
+			@Tool
 			struct GetWeather {
-				/// Get the weather for a location.
-				func somethingElse(location: String) -> String {
-					"Sunny in \(location)"
+				/// <#Describe the purpose of your tool to help the model understand when to use it#>
+				func call(<#Any arguments your tool call requires#>) async throws {
+					<#The implementation of your tool call, which can optionally return information to the model#>
 				}
 			}
 			"""#
+		} expansion: {
+			"""
+			struct GetWeather {
+				/// <#Describe the purpose of your tool to help the model understand when to use it#>
+				func call(<#Any arguments your tool call requires#>) async throws {
+					<#The implementation of your tool call, which can optionally return information to the model#>
+				}
+			}
+
+			extension GetWeather: Toolable {
+			    typealias Error = Swift.Error
+			    typealias Output = Void
+
+			    var name: String {
+			        "GetWeather"
+			    }
+
+			    var description: String {
+			        "<#Describe the purpose of your tool to help the model understand when to use it#>"
+			    }
+
+			    @Schemable struct Arguments: Decodable {
+			        let <#Any arguments your tool call requires#>:
+			    }
+
+			    func call(parameters: Arguments) async throws -> Output {
+			    	try await self.call(<#Any arguments your tool call requires#>: parameters.<#Any arguments your tool call requires#>)
+			    }
+			}
+			"""
 		}
 	}
 
@@ -264,8 +304,8 @@ struct ToolMacroTests {
 			@Tool
 			struct GetWeather {
 				/// Get the weather for a location.
-				func call(arguments: Arguments) -> String {
-					"Sunny in \(arguments.location)"
+				func call(parameters: Arguments) -> String {
+					"Sunny in \(parameters.location)"
 				}
 			}
 			"""#
@@ -274,9 +314,9 @@ struct ToolMacroTests {
 			@Tool
 			struct GetWeather {
 				/// Get the weather for a location.
-				func call(arguments: Arguments) -> String {
+				func call(parameters: Arguments) -> String {
 			 ╰─ 🛑 When using the @Tool macro, use function parameters directly instead of manually creating an `Arguments` struct.
-					"Sunny in \(arguments.location)"
+					"Sunny in \(parameters.location)"
 				}
 			}
 			"""#
@@ -313,16 +353,19 @@ struct ToolMacroTests {
 			}
 
 			extension GetWeather: Toolable {
+				typealias Error = Never
+				typealias Output = String
+
 				var name: String {
 					"GetWeather"
 				}
 
-				@Schemable struct Arguments {
+				@Schemable struct Arguments: Decodable {
 					let location: String
 				}
 
-				func call(arguments: Arguments) async throws -> Output {
-					try await self.call(location: arguments.location)
+				func call(parameters: Arguments) async throws -> Output {
+					try await self.call(location: parameters.location)
 				}
 			}
 			"""#
@@ -367,12 +410,15 @@ struct ToolMacroTests {
 			}
 
 			extension GetWeather: Toolable {
-				@Schemable struct Arguments {
+				typealias Error = Never
+				typealias Output = String
+
+				@Schemable struct Arguments: Decodable {
 					let location: String
 				}
 
-				func call(arguments: Arguments) async throws -> Output {
-					try await self.call(location: arguments.location)
+				func call(parameters: Arguments) async throws -> Output {
+					try await self.call(location: parameters.location)
 				}
 			}
 			"""#

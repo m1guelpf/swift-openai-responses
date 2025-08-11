@@ -60,12 +60,12 @@ struct ContentView: View {
 	var body: some View {
 		VStack(spacing: 0) {
 			ScrollView {
-                VStack(spacing: 12) {
-                    ForEach(conversation.messages, id: \.self) { message in
-                        MessageBubble(message: message)
-                    }
-                }
-                .padding()
+				VStack(spacing: 12) {
+					ForEach(conversation.messages, id: \.self) { message in
+						MessageBubble(message: message)
+					}
+				}
+				.padding()
 			}
 
 			HStack(spacing: 12) {

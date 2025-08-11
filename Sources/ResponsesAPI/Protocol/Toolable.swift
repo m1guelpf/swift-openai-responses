@@ -8,7 +8,7 @@ public protocol Toolable: Equatable, Sendable {
 	associatedtype Output: Encodable
 
 	/// The error type that the tool can throw.
-	associatedtype Error: Swift.Error & CustomStringConvertible
+	associatedtype Error: Swift.Error
 
 	/// The name of the tool to call.
 	var name: String { get }
@@ -27,8 +27,8 @@ public protocol Toolable: Equatable, Sendable {
 }
 
 public extension Toolable {
-	typealias Error = Never
-	typealias Output = String
+	typealias Output = Void
+	typealias Error = Swift.Error
 
 	var strict: Bool { true }
 	var description: String { "" }

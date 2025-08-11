@@ -33,6 +33,7 @@ public struct ToolMacro: ExtensionMacro {
 					) },
 				) {
 					try MemberBlockItemListSyntax {
+						try addTypes(reading: functionDecl)
 						try addProperties(reading: structDecl, and: functionDocString)
 						try addArguments(reading: functionDecl, and: functionDocString)
 						try addFunction(reading: functionDecl, and: functionDocString)
@@ -42,21 +43,33 @@ public struct ToolMacro: ExtensionMacro {
 		} withDefault: { [] }
 	}
 
-	private static func getFunctionDeclaration(from structDecl: StructDeclSyntax) throws(ReportableError) -> FunctionDeclSyntax {
+	private static func getFunctionDeclaration(from structDecl: StructDeclSyntax) throws -> FunctionDeclSyntax {
 		let functionDecls = structDecl.memberBlock.members.filter { $0.decl.as(FunctionDeclSyntax.self)?.name.text == "call" }
 
 		guard functionDecls.count <= 1 else {
 			throw ReportableError(node: structDecl, errorMessage: "Structs annotated with the @Tool macro may only contain a single `call` function.")
 		}
 		guard let functionDecl = functionDecls.first?.decl.as(FunctionDeclSyntax.self) else {
-			throw ReportableError(
+			throw try ReportableError(
 				node: structDecl,
-				errorMessage: "Structs annotated with the @Tool macro must contain a `call` function."
+				errorMessage: "Structs annotated with the @Tool macro must contain a `call` function.",
+				fixIts: [
+					FixIt(message: MacroExpansionFixItMessage("Add a `call` function"), changes: [
+						FixIt.Change.replace(oldNode: Syntax(structDecl), newNode: Syntax(tap(structDecl) { structDecl in
+							try structDecl.memberBlock.members.append(MemberBlockItemSyntax(leadingTrivia: .newline, decl: FunctionDeclSyntax("""
+								/// <#Describe the purpose of your tool to help the model understand when to use it#>
+								func call(<#Any arguments your tool call requires#>) async throws {
+									<#The implementation of your tool call, which can optionally return information to the model#>
+								}
+							"""), trailingTrivia: .newline))
+						})),
+					]),
+				]
 			)
 		}
 
 		guard !functionDecl.signature.parameterClause.parameters.allSatisfy({
-			$0.firstName.text == "arguments" && $0.type.as(IdentifierTypeSyntax.self)?.name.text == "Arguments"
+			$0.firstName.text == "parameters" && $0.type.as(IdentifierTypeSyntax.self)?.name.text == "Arguments"
 		}) else {
 			throw ReportableError(
 				node: functionDecl,
@@ -65,6 +78,21 @@ public struct ToolMacro: ExtensionMacro {
 		}
 
 		return functionDecl
+	}
+
+	private static func addTypes(reading functionDecl: FunctionDeclSyntax) throws -> [TypeAliasDeclSyntax] {
+		let returnType = functionDecl.signature.returnClause?.type
+		let errorType = switch functionDecl.signature.effectSpecifiers?.throwsClause {
+			case .none: IdentifierTypeSyntax(name: TokenSyntax(stringLiteral: "Never"))
+			case let .some(throwsClause):
+				if let type = throwsClause.type { type.as(IdentifierTypeSyntax.self)! }
+				else { IdentifierTypeSyntax(name: TokenSyntax(stringLiteral: "Swift.Error")) }
+		}
+
+		return [
+			TypeAliasDeclSyntax(name: TokenSyntax(stringLiteral: "Error"), initializer: TypeInitializerClauseSyntax(value: errorType)),
+			TypeAliasDeclSyntax(name: TokenSyntax(stringLiteral: "Output"), initializer: TypeInitializerClauseSyntax(value: returnType ?? "Void"), trailingTrivia: .newlines(2)),
+		]
 	}
 
 	private static func addProperties(
@@ -107,8 +135,11 @@ public struct ToolMacro: ExtensionMacro {
 			}
 		}
 
-		structDecl.attributes.append(.attribute(AttributeSyntax("@Schemable")))
 		structDecl.trailingTrivia = .newlines(2)
+		structDecl.attributes.append(.attribute(AttributeSyntax("@Schemable")))
+		structDecl.inheritanceClause = InheritanceClauseSyntax {
+			InheritedTypeSyntax(type: IdentifierTypeSyntax(name: "Decodable"))
+		}
 
 		return structDecl
 	}
@@ -120,7 +151,7 @@ public struct ToolMacro: ExtensionMacro {
 		let arguments = LabeledExprListSyntax(itemsBuilder: {
 			functionDecl.signature.parameterClause.parameters.compactMap { parameter in
 				let name = (parameter.secondName ?? parameter.firstName).text
-				let expression: ExprSyntax = "arguments.\(raw: name)"
+				let expression: ExprSyntax = "parameters.\(raw: name)"
 
 				return LabeledExprSyntax(label: parameter.firstName.text, expression: expression)
 			}
@@ -128,7 +159,7 @@ public struct ToolMacro: ExtensionMacro {
 
 		return try FunctionDeclSyntax(
 			"""
-			func call(arguments: Arguments) async throws -> Output {
+			func call(parameters: Arguments) async throws -> Output {
 				try await self.call(\(arguments))
 			}
 			"""

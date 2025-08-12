@@ -1,9 +1,14 @@
 # OpenAI Responses API
+> Hand-crafted Swift SDK for the [OpenAI Responses API](https://platform.openai.com/docs/api-reference/responses).
 
 [![Swift Version](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fm1guelpf%2Fswift-openai-responses%2Fbadge%3Ftype%3Dswift-versions&color=brightgreen)](https://swiftpackageindex.com/m1guelpf/swift-openai-responses)
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/m1guelpf/swift-openai-responses/main/LICENSE)
 
-An unofficial Swift SDK for the [OpenAI Responses API](https://platform.openai.com/docs/api-reference/responses).
+This package contains:
+- A fully typed client for the Responses API that _feels_ Swifty
+- `Schemable` and `Tool` macros, providing elegant ways to define tools and structured responses.
+- A `Conversation` class, handling everything you need for multi-turn streaming conversations in your views.
+
 
 ## Installation
 
@@ -29,7 +34,7 @@ dependencies: [
 -   File > Swift Packages > Add Package Dependency
 -   Add https://github.com/m1guelpf/swift-openai-responses.git
 -   Select "Branch" with "main"
-    
+
 </details>
 
 <details>
@@ -37,7 +42,7 @@ dependencies: [
 <summary>CocoaPods</summary>
 
 Ask ChatGPT to help you migrate away from CocoaPods.
-    
+
 </details>
 
 ## Getting started 🚀
@@ -50,17 +55,17 @@ import SwiftUI
 
 struct ContentView: View {
 	@State private var newMessage: String = ""
-	@State private var conversation = Conversation(authToken: OPENAI_KEY, using: .gpt4o)
+	@State private var conversation = Conversation(authToken: OPENAI_KEY, using: .gpt5)
 
 	var body: some View {
 		VStack(spacing: 0) {
 			ScrollView {
-                VStack(spacing: 12) {
-                    ForEach(messages, id: \.self) { message in
-                        MessageBubble(message: message)
-                    }
-                }
-                .padding()
+				VStack(spacing: 12) {
+					ForEach(conversation.messages, id: \.self) { message in
+						MessageBubble(message: message)
+					}
+				}
+				.padding()
 			}
 
 			HStack(spacing: 12) {
@@ -92,10 +97,8 @@ struct ContentView: View {
 	func sendMessage() {
 		guard newMessage != "" else { return }
 
-		Task {
-			try await conversation.send(text: newMessage)
-			newMessage = ""
-		}
+		conversation.send(text: newMessage)
+		newMessage = ""
 	}
 }
 ```
@@ -111,13 +114,13 @@ The Conversation class provides a high-level interface for managing a conversati
 To create a `Conversation` instance, all you need is an OpenAI API key, and the model you will be talking to:
 
 ```swift
-@State private var conversation = Conversation(authToken: OPENAI_API_KEY, using: .gpt4o)
+@State private var conversation = Conversation(authToken: OPENAI_API_KEY, using: .gpt5)
 ```
 
 You can optionally provide a closure to configure the conversation, adding a system prompt or tools for the model to use:
 
 ```swift
-@State private var conversation = Conversation(authToken: OPENAI_API_KEY, using: .gpt4o) { config in
+@State private var conversation = Conversation(authToken: OPENAI_API_KEY, using: .gpt5) { config in
 	// configure the model's behaviour
 	config.instructions = "You are a coding assistant that talks like a pirate"
 
@@ -143,25 +146,25 @@ conversation.truncation = .auto
 Your `Conversation` instance contains various helpers to make communicating with the model easier. For example, you can send a simple text message like this:
 
 ```swift
-try await conversation.send(text: "Hey!")
+conversation.send(text: "Hey!")
 ```
 
 There are also helpers for providing the output of a tool call or computer use call:
 
 ```swift
-try await conversation.send(functionCallOutput: .init(callId: callId, output: "{ ... }"))
-try await conversation.send(computerCallOutput: .init(callId: callId, output: .screenshot(fileId: "...")))
+conversation.send(functionCallOutput: .init(callId: callId, output: "{ ... }"))
+conversation.send(computerCallOutput: .init(callId: callId, output: .screenshot(fileId: "...")))
 ```
 
 For more complex use cases, you can construct the `Input` yourself:
 
 ```swift
-try await conversation.send(Input([
-	.message(content: Input.Content([
+conversation.send([
+	.message(content: [
 		.image(fileId: "..."),
 		.text("Take a look at this image and tell me what you see"),
-	])),
-]))
+	]),
+])
 ```
 
 #### Reading messages
@@ -183,7 +186,6 @@ ScrollView {
 	}
 }
 ```
-
 
 ### `ResponsesAPI`
 
@@ -207,7 +209,7 @@ let client = ResponsesAPI(
 
 For more advanced use cases like connecting to a custom server, you can customize the `URLRequest` used to connect to the API:
 
-``` swift
+```swift
 let urlRequest = URLRequest(url: MY_CUSTOM_ENDPOINT)
 urlRequest.addValue("Bearer \(YOUR_API_KEY)", forHTTPHeaderField: "Authorization")
 
@@ -220,7 +222,7 @@ To create a new response, call the `create` method with a `Request` instance:
 
 ```swift
 let response = try await client.create(Request(
-	model: .gpt4o,
+	model: .gpt5,
 	input: .text("Are semicolons optional in JavaScript?"),
 	instructions: "You are a coding assistant that talks like a pirate"
 ))
@@ -234,7 +236,7 @@ To stream back the response as it is generated, use the `stream` method:
 
 ```swift
 let stream = try await client.stream(Request(
-	model: .gpt4o,
+	model: .gpt5,
 	input: .text("Are semicolons optional in JavaScript?"),
 	instructions: "You are a coding assistant that talks like a pirate"
 ))
@@ -255,7 +257,7 @@ let file = try await client.upload(file: .file(name: "image.png", contents: imag
 
 // then, use it on a message
 try await client.create(Request(
-	model: .gpt4o,
+	model: .gpt5,
 	input: .message(content: [
 		.image(fileId: file.id),
 		.text("Take a look at this image and tell me what you see"),

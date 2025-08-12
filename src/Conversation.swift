@@ -1,4 +1,5 @@
 import Foundation
+import Observation
 
 /// A wrapper around the Responses API for managing a conversation.
 @MainActor @Observable public final class Conversation {
@@ -28,14 +29,18 @@ import Foundation
 		}
 	}
 
-	/// The last response ID in the conversation.
-	public var previousResponseId: String? {
+	public var lastResponse: Response? {
 		guard let entry = entries.last(where: { entry in
 			if case .response = entry { return true }
 			return false
 		}), case let .response(response) = entry else { return nil }
 
-		return response.id
+		return response
+	}
+
+	/// The last response ID in the conversation.
+	public var previousResponseId: String? {
+		lastResponse?.id
 	}
 
 	/// Whether there is a response in progress.
@@ -100,13 +105,15 @@ import Foundation
 
 	private var config: Config
 	private nonisolated let client: ResponsesAPI
+	private nonisolated let decoder = JSONDecoder()
+	private nonisolated let encoder = JSONEncoder()
 
 	/// Creates a new conversation.
 	///
 	/// - Parameter client: A `ResponsesAPI` instance to use for the conversation.
 	/// - Parameter model: The model to use for the conversation. Can be changed later using the `model` property.
 	///	- Parameter configuring: A closure to further configure the conversation.
-	public init(client: ResponsesAPI, using model: Model, configuring closure: (inout Config) -> Void = { _ in }) {
+	init(client: ResponsesAPI, using model: Model = .gpt5, configuring closure: (inout Config) -> Void = { _ in }) {
 		self.client = client
 		config = Config(model: model)
 		closure(&config)
@@ -123,10 +130,19 @@ import Foundation
 		authToken: String,
 		organizationId: String? = nil,
 		projectId: String? = nil,
-		using model: Model,
+		using model: Model = .gpt5,
 		configuring closure: (inout Config) -> Void = { _ in }
 	) {
 		self.init(client: ResponsesAPI(authToken: authToken, organizationId: organizationId, projectId: projectId), using: model, configuring: closure)
+	}
+
+	/// Creates a new conversation.
+	///
+	/// - Parameter request: The `URLRequest` to use for the API.
+	/// - Parameter model: The model to use for the conversation. Can be changed later using the `model` property.
+	///	- Parameter configuring: A closure to further configure the conversation.
+	public convenience init(connectingTo request: URLRequest, using model: Model = .gpt5, configuring closure: (inout Config) -> Void = { _ in }) throws {
+		try self.init(client: ResponsesAPI(connectingTo: request), using: model, configuring: closure)
 	}
 
 	/// Restarts the conversation, clearing all entries.
@@ -137,44 +153,55 @@ import Foundation
 	/// Sends a text message to the model and starts listening for a response in the background.
 	///
 	/// - Parameter text: The text message to send.
-	@discardableResult public nonisolated func send(text: String) -> Task<Void, Error> {
+	@discardableResult public func send(text: String) -> Task<Void, Error> {
 		send(.text(text))
 	}
 
 	/// Sends the output of a function call to the model and starts listening for a response in the background.
 	///
 	/// - Parameter functionCallOutput: The output of a function call.
-	@discardableResult public nonisolated func send(functionCallOutput: Item.FunctionCallOutput) -> Task<Void, Error> {
+	@discardableResult public func send(functionCallOutput: Item.FunctionCallOutput) -> Task<Void, Error> {
 		send(.list([.item(.functionCallOutput(functionCallOutput))]))
 	}
 
 	/// Sends the output of a computer tool call to the model and starts listening for a response in the background.
 	///
 	/// - Parameter computerCallOutput: The output of a computer tool call.
-	@discardableResult public nonisolated func send(computerCallOutput: Item.ComputerToolCallOutput) -> Task<Void, Error> {
+	@discardableResult public func send(computerCallOutput: Item.ComputerToolCallOutput) -> Task<Void, Error> {
 		send(.list([.item(.computerToolCallOutput(computerCallOutput))]))
 	}
 
 	/// Responds to an MCP approval request and starts listening for a response in the background.
 	///
 	/// - Parameter mcpApprovalResponse: The MCP approval response to send.
-	@discardableResult public nonisolated func send(mcpApprovalResponse: Item.MCPApprovalResponse) -> Task<Void, Error> {
+	@discardableResult public func send(mcpApprovalResponse: Item.MCPApprovalResponse) -> Task<Void, Error> {
 		send(.list([.item(.mcpApprovalResponse(mcpApprovalResponse))]))
 	}
 
 	/// Informs the model of the output of a local shell call and starts listening for a response in the background.
 	///
 	/// - Parameter localShellCallOutput: The output of a local shell call.
-	@discardableResult public nonisolated func send(localShellCallOutput: Item.LocalShellCallOutput) -> Task<Void, Error> {
+	@discardableResult public func send(localShellCallOutput: Item.LocalShellCallOutput) -> Task<Void, Error> {
 		send(.list([.item(.localShellCallOutput(localShellCallOutput))]))
 	}
 
 	/// Sends a message to the model and starts listening for a response in the background.
 	///
 	/// - Parameter input: Text, image, or file inputs to the model, used to generate a response.
-	@discardableResult public nonisolated func send(_ input: Input) -> Task<Void, Error> {
+	@discardableResult public func send(_ input: [Item.Input]) -> Task<Void, Error> {
+		send(.list(input.map { .item($0) }))
+	}
+
+	/// Sends a message to the model and starts listening for a response in the background.
+	///
+	/// - Parameter input: Text, image, or file inputs to the model, used to generate a response.
+	@discardableResult public func send(_ input: Input) -> Task<Void, Error> {
 		return Task.detached(priority: .userInitiated) {
-			try await self.sendAndWaitForResponses(input)
+			do { try await self.sendAndWaitForResponses(input) }
+			catch {
+				print(error)
+				throw error
+			}
 		}
 	}
 
@@ -188,28 +215,38 @@ import Foundation
 			include: config.include,
 			instructions: config.instructions,
 			maxOutputTokens: config.maxOutputTokens,
+			maxToolCalls: config.maxToolCalls,
 			metadata: config.metadata,
 			parallelToolCalls: config.parallelToolCalls,
 			previousResponseId: previousResponseId,
+			prompt: config.prompt,
+			promptCacheKey: config.promptCacheKey,
 			reasoning: config.reasoning,
+			safetyIdentifier: config.safetyIdentifier,
+			serviceTier: config.serviceTier,
 			temperature: config.temperature,
 			text: config.text,
 			toolChoice: config.toolChoice,
-			tools: config.tools,
+			tools: config.toolsWithFunctions,
+			topLogprobs: config.topLogprobs,
 			topP: config.topP,
 			truncation: config.truncation,
-			user: config.user
 		)
 
-		let stream = try await client.stream(request)
-		await MainActor.run {
-			self.entries.append(.request(request))
+		await MainActor.run { self.entries.append(.request(request)) }
+		let stream = switch await Result(catching: { try await client.stream(request) }) {
+			case let .success(stream): stream
+			case let .failure(error):
+				await MainActor.run { _ = self.entries.popLast() }
+				throw error
 		}
 
 		for try await event in stream {
 			try await handleEvent(event)
 			try Task.checkCancellation()
 		}
+
+		try await runFunctionsIfNeeded()
 	}
 
 	/// Uploads a file for later use in the API.
@@ -221,11 +258,43 @@ import Foundation
 	}
 }
 
+// MARK: - Function handling
+
+private extension Conversation {
+	nonisolated func runFunctionsIfNeeded() async throws {
+		let functions = await functions
+		guard let lastResponse = await lastResponse, !functions.isEmpty else { return }
+
+		let results = try await withThrowingTaskGroup(of: Item.FunctionCallOutput.self) { taskGroup in
+			lastResponse.output.compactMap { item in
+				if case let .functionCall(fnCall) = item { return fnCall }
+				return nil
+			}.forEach { fnCall in
+				guard let function = functions.first(where: { $0.name == fnCall.name }) else { return }
+
+				taskGroup.addTask { try await function.respond(to: fnCall) }
+			}
+
+			var results = [Item.FunctionCallOutput]()
+			while let fnCallOutput = try await taskGroup.next() {
+				results.append(fnCallOutput)
+			}
+			return results
+		}
+
+		guard !results.isEmpty else { return }
+
+		try await sendAndWaitForResponses(.list(results.map { .item(.functionCallOutput($0)) }))
+	}
+}
+
 // MARK: - Conversation stream handling
 
 private extension Conversation {
 	/// Handles an event from the conversation stream.
 	func handleEvent(_ event: Event) throws {
+		if config.debug == true { print(event) }
+
 		switch event {
 			case let .responseCreated(response):
 				entries.append(.response(response))
@@ -491,6 +560,22 @@ private extension Conversation {
 
 					item = .codeInterpreterCall(codeInterpreterCall)
 				}
+			case let .customToolCallInputDelta(itemId, outputIndex, delta):
+				updateItem(index: outputIndex, id: itemId) { item in
+					guard case var .customToolCall(customToolCall) = item else { return }
+
+					customToolCall.input += delta
+
+					item = .customToolCall(customToolCall)
+				}
+			case let .customToolCallInputDone(itemId, outputIndex, input):
+				updateItem(index: outputIndex, id: itemId) { item in
+					guard case var .customToolCall(customToolCall) = item else { return }
+
+					customToolCall.input = input
+
+					item = .customToolCall(customToolCall)
+				}
 		}
 	}
 
@@ -523,7 +608,7 @@ private extension Conversation {
 	/// - Parameter index: The index of the item to update.
 	/// - Parameter itemId: The ID of the item to update.
 	/// - Parameter closure: A closure that takes the item and updates it.
-	func updateItem(index: UInt, id itemId: String, modifying closure: (inout OpenAI.Item.Output) -> Void) {
+	func updateItem(index: UInt, id itemId: String, modifying closure: (inout Item.Output) -> Void) {
 		guard let previousResponseId else { return }
 
 		updateResponse(id: previousResponseId) { response in
@@ -558,7 +643,7 @@ private extension Conversation {
 
 public extension Conversation {
 	/// Configuration options for a conversation.
-	struct Config: Equatable, Sendable {
+	struct Config: Sendable {
 		/// Model ID used to generate the response.
 		///
 		/// OpenAI offers a wide range of models with different capabilities, performance characteristics, and price points. Refer to the [model guide](https://platform.openai.com/docs/models) to browse and compare available models.
@@ -573,6 +658,13 @@ public extension Conversation {
 		/// An upper bound for the number of tokens that can be generated for a response, including visible output tokens and [reasoning tokens](https://platform.openai.com/docs/guides/reasoning).
 		public var maxOutputTokens: UInt?
 
+		/// The maximum number of total calls to built-in tools that can be processed in a response.
+		///
+		/// This maximum number applies across all built-in tool calls, not per individual tool.
+		///
+		/// Any further attempts to call a tool by the model will be ignored.
+		public var maxToolCalls: UInt?
+
 		/// Set of 16 key-value pairs that can be attached to an object. This can be useful for storing additional information about the object in a structured format, and querying for objects via API or the dashboard.
 		///
 		/// Keys are strings with a maximum length of 64 characters. Values are strings with a maximum length of 512 characters.
@@ -581,14 +673,31 @@ public extension Conversation {
 		/// Whether to allow the model to run tool calls in parallel.
 		public var parallelToolCalls: Bool?
 
+		/// Reference to a prompt template and its variables. [Learn more](https://platform.openai.com/docs/guides/text?api-mode=responses#reusable-prompts).
+		public var prompt: Prompt?
+
+		/// Used by OpenAI to cache responses for similar requests to optimize your cache hit rates.
+		///
+		/// Replaces the `user` field. [Learn more](https://platform.openai.com/docs/guides/prompt-caching).
+		public var promptCacheKey: String?
+
 		/// Configuration options for [reasoning models](https://platform.openai.com/docs/guides/reasoning).
 		public var reasoning: ReasoningConfig?
+
+		/// A stable identifier used to help detect users of your application that may be violating OpenAI's usage policies.
+		///
+		/// The IDs should be a string that uniquely identifies each user. We recommend hashing their username or email address, in order to avoid sending us any identifying information.
+		/// - [Safety Identifiers](https://platform.openai.com/docs/guides/safety-best-practices#safety-identifiers)
+		public var safetyIdentifier: String?
+
+		/// Specifies the latency tier to use for processing the request
+		public var serviceTier: ServiceTier?
 
 		/// What sampling temperature to use, between 0 and 2.
 		///
 		/// Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic.
 		///
-		/// We generally recommend altering this or `top_p` but not both.
+		/// We generally recommend altering this or `topP` but not both.
 		public var temperature: Double?
 
 		/// Configuration options for a text response from the model. Can be plain text or structured JSON data.
@@ -607,7 +716,16 @@ public extension Conversation {
 		/// The two categories of tools you can provide the model are:
 		/// - **Built-in tools**: Tools that are provided by OpenAI that extend the model's capabilities, like [web search](https://platform.openai.com/docs/guides/tools-web-search) or [file search](https://platform.openai.com/docs/guides/tools-file-search). Learn more about [built-in tools](https://platform.openai.com/docs/guides/tools).
 		/// - **Function calls (custom tools)**: Functions that are defined by you, enabling the model to call your own code. Learn more about [function calling](https://platform.openai.com/docs/guides/function-calling).
+		///
+		/// > Warning: Function calls defined here will not be executed automatically.
+		/// > Use the `functions` parameter to have those handled for you.
 		public var tools: [Tool]?
+
+		/// An array of local functions the model may call while generating a response.
+		public var functions: [any Toolable]?
+
+		/// An integer between 0 and 20 specifying the number of most likely tokens to return at each token position, each with an associated log probability.
+		public var topLogprobs: UInt?
 
 		/// An alternative to sampling with temperature, called nucleus sampling, where the model considers the results of the tokens with `top_p` probability mass. So 0.1 means only the tokens comprising the top 10% probability mass are considered.
 		///
@@ -617,10 +735,20 @@ public extension Conversation {
 		/// The truncation strategy to use for the model response.
 		public var truncation: Truncation?
 
-		/// A unique identifier representing your end-user, which can help OpenAI to monitor and detect abuse.
+		/// Enables debug mode for the conversation.
 		///
-		/// - [End User IDs](https://platform.openai.com/docs/guides/safety-best-practices#end-user-ids)
-		public var user: String?
+		/// When enabled, the conversation will log additional information to the console, such as the event stream received from the API.
+		public var debug: Bool?
+
+		/// A list of tools the model can call while generating a response, including automatically executed functions.
+		var toolsWithFunctions: [Tool] {
+			var tools = [Tool]()
+
+			tools.append(contentsOf: self.tools ?? [])
+			tools.append(contentsOf: functions?.map { .function($0) } ?? [])
+
+			return tools
+		}
 	}
 
 	/// Model ID used to generate the response.
@@ -649,6 +777,16 @@ public extension Conversation {
 		set { config.maxOutputTokens = newValue }
 	}
 
+	/// The maximum number of total calls to built-in tools that can be processed in a response.
+	///
+	/// This maximum number applies across all built-in tool calls, not per individual tool.
+	///
+	/// Any further attempts to call a tool by the model will be ignored.
+	var maxToolCalls: UInt? {
+		get { config.maxToolCalls }
+		set { config.maxToolCalls = newValue }
+	}
+
 	/// Set of 16 key-value pairs that can be attached to an object. This can be useful for storing additional information about the object in a structured format, and querying for objects via API or the dashboard.
 	///
 	/// Keys are strings with a maximum length of 64 characters. Values are strings with a maximum length of 512 characters.
@@ -663,17 +801,46 @@ public extension Conversation {
 		set { config.parallelToolCalls = newValue }
 	}
 
+	/// Reference to a prompt template and its variables. [Learn more](https://platform.openai.com/docs/guides/text?api-mode=responses#reusable-prompts).
+	var prompt: Prompt? {
+		get { config.prompt }
+		set { config.prompt = newValue }
+	}
+
+	/// Used by OpenAI to cache responses for similar requests to optimize your cache hit rates.
+	///
+	/// Replaces the `user` field. [Learn more](https://platform.openai.com/docs/guides/prompt-caching).
+	var promptCacheKey: String? {
+		get { config.promptCacheKey }
+		set { config.promptCacheKey = newValue }
+	}
+
 	/// Configuration options for [reasoning models](https://platform.openai.com/docs/guides/reasoning).
 	var reasoning: ReasoningConfig? {
 		get { config.reasoning }
 		set { config.reasoning = newValue }
 	}
 
+	/// A stable identifier used to help detect users of your application that may be violating OpenAI's usage policies.
+	///
+	/// The IDs should be a string that uniquely identifies each user. We recommend hashing their username or email address, in order to avoid sending us any identifying information.
+	/// - [Safety Identifiers](https://platform.openai.com/docs/guides/safety-best-practices#safety-identifiers)
+	var safetyIdentifier: String? {
+		get { config.safetyIdentifier }
+		set { config.safetyIdentifier = newValue }
+	}
+
+	/// Specifies the latency tier to use for processing the request
+	var serviceTier: ServiceTier? {
+		get { config.serviceTier }
+		set { config.serviceTier = newValue }
+	}
+
 	/// What sampling temperature to use, between 0 and 2.
 	///
 	/// Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic.
 	///
-	/// We generally recommend altering this or `top_p` but not both.
+	/// We generally recommend altering this or `topP` but not both.
 	var temperature: Double? {
 		get { config.temperature }
 		set { config.temperature = newValue }
@@ -701,9 +868,24 @@ public extension Conversation {
 	/// The two categories of tools you can provide the model are:
 	/// - **Built-in tools**: Tools that are provided by OpenAI that extend the model's capabilities, like [web search](https://platform.openai.com/docs/guides/tools-web-search) or [file search](https://platform.openai.com/docs/guides/tools-file-search). Learn more about [built-in tools](https://platform.openai.com/docs/guides/tools).
 	/// - **Function calls (custom tools)**: Functions that are defined by you, enabling the model to call your own code. Learn more about [function calling](https://platform.openai.com/docs/guides/function-calling).
+	///
+	/// > Warning: Function calls defined here will not be executed automatically.
+	/// > Use the `functions` parameter to have those handled for you.
 	var tools: [Tool]? {
 		get { config.tools }
 		set { config.tools = newValue }
+	}
+
+	/// An array of local functions the model may call while generating a response.
+	var functions: [any Toolable] {
+		get { config.functions ?? [] }
+		set { config.functions = newValue }
+	}
+
+	/// An integer between 0 and 20 specifying the number of most likely tokens to return at each token position, each with an associated log probability.
+	var topLogprobs: UInt? {
+		get { config.topLogprobs }
+		set { config.topLogprobs = newValue }
 	}
 
 	/// An alternative to sampling with temperature, called nucleus sampling, where the model considers the results of the tokens with `top_p` probability mass. So 0.1 means only the tokens comprising the top 10% probability mass are considered.
@@ -720,12 +902,12 @@ public extension Conversation {
 		set { config.truncation = newValue }
 	}
 
-	/// A unique identifier representing your end-user, which can help OpenAI to monitor and detect abuse.
+	/// Enables debug mode for the conversation.
 	///
-	/// - [End User IDs](https://platform.openai.com/docs/guides/safety-best-practices#end-user-ids)
-	var user: String? {
-		get { config.user }
-		set { config.user = newValue }
+	/// When enabled, the conversation will log additional information to the console, such as the event stream received from the API.
+	var debug: Bool? {
+		get { config.debug }
+		set { config.debug = newValue }
 	}
 
 	/// Updates the conversation configuration.

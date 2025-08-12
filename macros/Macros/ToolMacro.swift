@@ -11,37 +11,25 @@ public struct ToolMacro: ExtensionMacro {
 		conformingTo _: [TypeSyntax],
 		in context: some MacroExpansionContext
 	) throws -> [ExtensionDeclSyntax] {
-		return try ReportableError.report(in: context) {
+		return try ReportableError.report(in: context, for: declaration) {
 			guard let structDecl = declaration.as(StructDeclSyntax.self) else {
-				throw ReportableError(node: declaration, errorMessage: "The @Tool macro can only be applied to structs.")
+				throw ReportableError(errorMessage: "The @Tool macro can only be applied to structs.")
 			}
 
 			let functionDecl = try getFunctionDeclaration(from: structDecl)
 			let functionDocString = DocString.parse(functionDecl.docString)
 
 			if functionDocString.isMissing {
-				context.diagnose(Diagnostic(node: functionDecl, message: MacroExpansionWarningMessage(
-					"Make sure to document the `call` function of your tool to help the model understand its purpose and usage."
-				), fixIt: FixIt(
-					message: MacroExpansionFixItMessage("Add documentation for the `call` function."),
-					changes: [FixIt.Change.replaceLeadingTrivia(
-						token: functionDecl.funcKeyword,
-						newTrivia: .newline.merging(.docLineComment("/// <#Describe the purpose of your tool to help the model understand when to use it#>")).merging(.newline)
-					)]
-				)))
+				context.diagnose(Diagnostic(
+					node: declaration,
+					message: MacroExpansionWarningMessage("Make sure to document the `call` function of your tool to help the model understand its purpose and usage.")
+				))
 			} else {
 				for parameter in functionDecl.signature.parameterClause.parameters {
 					if parameter.firstName.text != "_", !parameter.firstName.text.isPlaceholder, functionDocString?.for(properties: parameter.firstName.text, parameter.secondName?.text) == nil {
 						context.diagnose(Diagnostic(
-							node: parameter,
+							node: declaration,
 							message: MacroExpansionWarningMessage("You should document the `\(parameter.firstName.text)` parameter to help the model understand its usage."),
-							fixIt: FixIt(
-								message: MacroExpansionFixItMessage("Add documentation for `\(parameter.firstName.text)`."),
-								changes: [FixIt.Change.replaceLeadingTrivia(
-									token: functionDecl.funcKeyword,
-									newTrivia: .newline.merging(functionDocString!.withComment(forProperty: parameter.firstName.text, "<#Describe the purpose of this parameter to help the model understand how to generate it#>").trivia).merging(.newline)
-								)]
-							)
 						))
 					}
 				}
@@ -69,19 +57,18 @@ public struct ToolMacro: ExtensionMacro {
 		let functionDecls = structDecl.memberBlock.members.filter { $0.decl.as(FunctionDeclSyntax.self)?.name.text == "call" }
 
 		guard functionDecls.count <= 1 else {
-			throw ReportableError(node: structDecl, errorMessage: "Structs annotated with the @Tool macro may only contain a single `call` function.")
+			throw ReportableError(errorMessage: "Structs annotated with the @Tool macro may only contain a single `call` function.")
 		}
 		guard let functionDecl = functionDecls.first?.decl.as(FunctionDeclSyntax.self) else {
 			throw try ReportableError(
-				node: structDecl,
 				errorMessage: "Structs annotated with the @Tool macro must contain a `call` function.",
 				fixIts: [
 					FixIt(message: MacroExpansionFixItMessage("Add a `call` function"), changes: [
 						FixIt.Change.replace(oldNode: Syntax(structDecl), newNode: Syntax(tap(structDecl) { structDecl in
 							try structDecl.memberBlock.members.append(MemberBlockItemSyntax(leadingTrivia: .newline, decl: FunctionDeclSyntax("""
 								/// <#Describe the purpose of your tool to help the model understand when to use it#>
-								func call(<#Any arguments your tool call requires#>) async throws {
-									<#The implementation of your tool call, which can optionally return information to the model#>
+								func call() async throws {
+									// <#The implementation of your tool call, which can optionally return information to the model#>
 								}
 							"""), trailingTrivia: .newline))
 						})),
@@ -90,11 +77,14 @@ public struct ToolMacro: ExtensionMacro {
 			)
 		}
 
+		if functionDecl.signature.parameterClause.parameters.isEmpty {
+			throw ReportableError(errorMessage: "The `call` function must have at least one parameter.")
+		}
+
 		guard !functionDecl.signature.parameterClause.parameters.allSatisfy({
 			$0.firstName.text == "parameters" && $0.type.as(IdentifierTypeSyntax.self)?.name.text == "Arguments"
 		}) else {
 			throw ReportableError(
-				node: functionDecl,
 				errorMessage: "When using the @Tool macro, use function parameters directly instead of manually creating an `Arguments` struct."
 			)
 		}
@@ -141,12 +131,12 @@ public struct ToolMacro: ExtensionMacro {
 		forwarding context: some MacroExpansionContext
 	) throws -> StructDeclSyntax {
 		var structDecl = try StructDeclSyntax(name: TokenSyntax(stringLiteral: "Arguments")) {
-			try functionDecl.signature.parameterClause.parameters.map { parameter in
+			try functionDecl.signature.parameterClause.parameters.enumerated().map { i, parameter in
 				if parameter.firstName.text == "_" {
-					throw ReportableError(node: parameter, errorMessage: "All parameters must be named.")
+					throw ReportableError(errorMessage: "All parameters of the `call` function must have a name. The parameter at index \(i) does not have a name.")
 				}
 
-				var decl = try VariableDeclSyntax("let \(raw: (parameter.secondName ?? parameter.firstName).text): \(parameter.type)")
+				var decl = try VariableDeclSyntax("let \(raw: parameter.firstName.text): \(parameter.type)")
 
 				if let docString = functionDocString?.for(properties: parameter.firstName.text, parameter.secondName?.text), !docString.isEmpty {
 					decl.leadingTrivia = .docLineComment("/// \(docString)").merging(.newline)
@@ -174,8 +164,7 @@ public struct ToolMacro: ExtensionMacro {
 	) throws -> FunctionDeclSyntax {
 		let arguments = LabeledExprListSyntax(itemsBuilder: {
 			functionDecl.signature.parameterClause.parameters.compactMap { parameter in
-				let name = (parameter.secondName ?? parameter.firstName).text
-				let expression: ExprSyntax = "parameters.\(raw: name)"
+				let expression: ExprSyntax = "parameters.\(raw: parameter.firstName.text)"
 
 				return LabeledExprSyntax(label: parameter.firstName.text, expression: expression)
 			}

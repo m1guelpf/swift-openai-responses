@@ -122,9 +122,9 @@ struct ToolMacroTests {
 			@Tool
 			struct GetWeather {
 				/// Get the weather for a location.
-				/// - Parameter at: The location to get the weather for.
-				func call(at location: String) -> String {
-					"Sunny in \(location)"
+				/// - Parameter inCity: The location to get the weather for.
+				func call(location inCity: String) -> String {
+					"Sunny in \(inCity)"
 				}
 			}
 			"""#
@@ -132,9 +132,9 @@ struct ToolMacroTests {
 			#"""
 			struct GetWeather {
 				/// Get the weather for a location.
-				/// - Parameter at: The location to get the weather for.
-				func call(at location: String) -> String {
-					"Sunny in \(location)"
+				/// - Parameter inCity: The location to get the weather for.
+				func call(location inCity: String) -> String {
+					"Sunny in \(inCity)"
 				}
 			}
 
@@ -162,7 +162,7 @@ struct ToolMacroTests {
 				}
 
 				func call(parameters: Arguments) async throws -> Output {
-					try await self.call(at: parameters.location)
+					try await self.call(location: parameters.location)
 				}
 			}
 			"""#
@@ -184,11 +184,10 @@ struct ToolMacroTests {
 		} diagnostics: {
 			#"""
 			@Tool
+			╰─ 🛑 All parameters of the `call` function must have a name. The parameter at index 0 does not have a name.
 			struct GetWeather {
 				/// Get the weather for a location.
 				func call(_ location: String) -> String {
-			           ┬─────────────────
-			           ╰─ 🛑 All parameters must be named.
 					"Sunny in \(location)"
 				}
 			}
@@ -204,51 +203,20 @@ struct ToolMacroTests {
 			struct GetWeather {}
 			"""#
 		} diagnostics: {
-			#"""
+			"""
 			@Tool
 			╰─ 🛑 Structs annotated with the @Tool macro must contain a `call` function.
 			   ✏️ Add a `call` function
 			struct GetWeather {}
-			"""#
+			"""
 		} fixes: {
-			#"""
+			"""
 			@Tool
 			struct GetWeather {
 				/// <#Describe the purpose of your tool to help the model understand when to use it#>
-				func call(<#Any arguments your tool call requires#>) async throws {
-					<#The implementation of your tool call, which can optionally return information to the model#>
+				func call() async throws {
+					// <#The implementation of your tool call, which can optionally return information to the model#>
 				}
-			}
-			"""#
-		} expansion: {
-			"""
-			struct GetWeather {
-				/// <#Describe the purpose of your tool to help the model understand when to use it#>
-				func call(<#Any arguments your tool call requires#>) async throws {
-					<#The implementation of your tool call, which can optionally return information to the model#>
-				}
-			}
-
-			extension GetWeather: Toolable {
-			    typealias Error = Swift.Error
-			    typealias Output = NullableVoid
-
-			    var name: String {
-			        "GetWeather"
-			    }
-
-			    struct Arguments: Decodable, Schemable {
-			        let <#Any arguments your tool call requires#>:
-
-			        static var schema: JSONSchema {
-			        	.object(properties: [:], description: nil)
-			        }
-			    }
-
-			    func call(parameters: Arguments) async throws -> Output {
-			    	try await self.call(<#Any arguments your tool call requires#>: parameters.<#Any arguments your tool call requires#>)
-			    	return NullableVoid()
-			    }
 			}
 			"""
 		}
@@ -331,10 +299,10 @@ struct ToolMacroTests {
 		} diagnostics: {
 			#"""
 			@Tool
+			╰─ 🛑 When using the @Tool macro, use function parameters directly instead of manually creating an `Arguments` struct.
 			struct GetWeather {
 				/// Get the weather for a location.
 				func call(parameters: Arguments) -> String {
-			 ╰─ 🛑 When using the @Tool macro, use function parameters directly instead of manually creating an `Arguments` struct.
 					"Sunny in \(parameters.location)"
 				}
 			}
@@ -356,20 +324,9 @@ struct ToolMacroTests {
 		} diagnostics: {
 			#"""
 			@Tool
+			╰─ ⚠️ Make sure to document the `call` function of your tool to help the model understand its purpose and usage.
 			struct GetWeather {
 				func call(location: String) -> String {
-			 ╰─ ⚠️ Make sure to document the `call` function of your tool to help the model understand its purpose and usage.
-			    ✏️ Add documentation for the `call` function.
-					"Sunny in \(location)"
-				}
-			}
-			"""#
-		} fixes: {
-			#"""
-			@Tool
-			struct GetWeather {
-			/// <#Describe the purpose of your tool to help the model understand when to use it#>
-			func call(location: String) -> String {
 					"Sunny in \(location)"
 				}
 			}
@@ -377,8 +334,7 @@ struct ToolMacroTests {
 		} expansion: {
 			#"""
 			struct GetWeather {
-			/// <#Describe the purpose of your tool to help the model understand when to use it#>
-			func call(location: String) -> String {
+				func call(location: String) -> String {
 					"Sunny in \(location)"
 				}
 			}
@@ -421,21 +377,10 @@ struct ToolMacroTests {
 		} diagnostics: {
 			#"""
 			@Tool
+			╰─ ⚠️ Make sure to document the `call` function of your tool to help the model understand its purpose and usage.
 			struct GetWeather {
 				/// <#Describe the purpose of your tool to help the model understand when to use it#>
 				func call(location: String) -> String {
-			 ╰─ ⚠️ Make sure to document the `call` function of your tool to help the model understand its purpose and usage.
-			    ✏️ Add documentation for the `call` function.
-					"Sunny in \(location)"
-				}
-			}
-			"""#
-		} fixes: {
-			#"""
-			@Tool
-			struct GetWeather {
-			/// <#Describe the purpose of your tool to help the model understand when to use it#>
-			func call(location: String) -> String {
 					"Sunny in \(location)"
 				}
 			}
@@ -443,8 +388,8 @@ struct ToolMacroTests {
 		} expansion: {
 			#"""
 			struct GetWeather {
-			/// <#Describe the purpose of your tool to help the model understand when to use it#>
-			func call(location: String) -> String {
+				/// <#Describe the purpose of your tool to help the model understand when to use it#>
+				func call(location: String) -> String {
 					"Sunny in \(location)"
 				}
 			}
@@ -490,23 +435,10 @@ struct ToolMacroTests {
 		} diagnostics: {
 			#"""
 			@Tool
+			╰─ ⚠️ You should document the `location` parameter to help the model understand its usage.
 			struct GetWeather {
 				/// Get the weather for a location.
 				func call(location: String) -> String {
-			           ┬───────────────
-			           ╰─ ⚠️ You should document the `location` parameter to help the model understand its usage.
-			              ✏️ Add documentation for `location`.
-					"Sunny in \(location)"
-				}
-			}
-			"""#
-		} fixes: {
-			#"""
-			@Tool
-			struct GetWeather {
-			/// Get the weather for a location.
-			/// - Parameter location: <#Describe the purpose of this parameter to help the model understand how to generate it#>
-			func call(location: String) -> String {
 					"Sunny in \(location)"
 				}
 			}
@@ -514,9 +446,8 @@ struct ToolMacroTests {
 		} expansion: {
 			#"""
 			struct GetWeather {
-			/// Get the weather for a location.
-			/// - Parameter location: <#Describe the purpose of this parameter to help the model understand how to generate it#>
-			func call(location: String) -> String {
+				/// Get the weather for a location.
+				func call(location: String) -> String {
 					"Sunny in \(location)"
 				}
 			}
@@ -534,12 +465,11 @@ struct ToolMacroTests {
 				}
 
 				struct Arguments: Decodable, Schemable {
-					/// <#Describe the purpose of this parameter to help the model understand how to generate it#>
 					let location: String
 
 					static var schema: JSONSchema {
 						.object(properties: [
-							"location": .string(description: "<#Describe the purpose of this parameter to help the model understand how to generate it#>"),
+							"location": .string(description: nil),
 						], description: nil)
 					}
 				}

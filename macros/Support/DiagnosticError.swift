@@ -3,17 +3,19 @@ import SwiftDiagnostics
 import SwiftSyntaxMacros
 
 struct ReportableError: Error {
-	fileprivate let diagnostic: Diagnostic
+	private let fixIts: [FixIt]
+	private let message: MacroExpansionErrorMessage
 
-	init(node: SyntaxProtocol, errorMessage message: String, fixIts: [FixIt] = []) {
-		diagnostic = Diagnostic(node: node, message: MacroExpansionErrorMessage(message), fixIts: fixIts)
+	init(errorMessage message: String, fixIts: [FixIt] = []) {
+		self.fixIts = fixIts
+		self.message = MacroExpansionErrorMessage(message)
 	}
 
-	static func report<T>(in context: some MacroExpansionContext, _ body: () throws -> T, withDefault: () -> T) throws -> T {
+	static func report<T>(in context: some MacroExpansionContext, for node: SyntaxProtocol, _ body: () throws -> T, withDefault: () -> T) throws -> T {
 		do {
 			return try body()
 		} catch let error as ReportableError {
-			context.diagnose(error.diagnostic)
+			context.diagnose(Diagnostic(node: node, message: error.message, fixIts: error.fixIts))
 			return withDefault()
 		}
 	}

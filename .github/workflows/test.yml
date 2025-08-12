@@ -69,7 +69,7 @@ jobs:
                 key: "swiftpm-tests-build-${{ runner.os }}-${{ matrix.swift }}-${{ github.event.pull_request.base.sha || github.event.after }}"
 
             - name: Build
-              run: swiftly run swift build --build-tests +${{ matrix.swift }}
+              run: swift build --build-tests
 
             - name: Cache .build
               if: steps.restore-build.outputs.cache-hit != 'true'
@@ -79,4 +79,4 @@ jobs:
                 key: "swiftpm-tests-build-${{ runner.os }}-${{ matrix.swift }}-${{ github.event.pull_request.base.sha || github.event.after }}"
 
             - name: Run tests
-              run: swiftly run swift test --skip-build --parallel +${{ matrix.swift }}
+              run: swift test --skip-build --parallel

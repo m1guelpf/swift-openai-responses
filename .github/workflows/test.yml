@@ -14,41 +14,9 @@ jobs:
         runs-on: ${{ matrix.os }}
         steps:
             - name: Install Swift toolchain
-              shell: bash
-              run: |
-                set -e
-
-                export SWIFTLY_BIN_DIR=${{ github.workspace }}/.swiftly/bin
-                export SWIFTLY_HOME_DIR=${{ github.workspace }}/.swiftly/share
-
-                echo "$SWIFTLY_BIN_DIR" >> $GITHUB_PATH
-                echo "SWIFTLY_BIN_DIR=$SWIFTLY_BIN_DIR" >> $GITHUB_ENV
-                echo "SWIFTLY_HOME_DIR=$SWIFTLY_HOME_DIR" >> $GITHUB_ENV
-
-                export PATH=$SWIFTLY_BIN_DIR:$PATH
-
-                mkdir -p $SWIFTLY_BIN_DIR
-                mkdir -p $SWIFTLY_HOME_DIR
-
-                if ${{ runner.os == 'Linux' }} ; then
-                  curl -O https://download.swift.org/swiftly/linux/swiftly-$(uname -m).tar.gz
-                  file swiftly-$(uname -m).tar.gz
-                  tar -xzf swiftly-$(uname -m).tar.gz -C $SWIFTLY_BIN_DIR
-                  rm swiftly-$(uname -m).tar.gz
-                  sudo apt-get update
-                  sudo apt-get -y install gnupg2 libpython3-dev libz3-dev python3-lldb-13
-                else
-                  curl -O https://download.swift.org/swiftly/darwin/swiftly.pkg
-                  installer -pkg swiftly.pkg -target CurrentUserHomeDirectory
-                  cp ~/.swiftly/bin/swiftly $SWIFTLY_BIN_DIR
-                  rm swiftly.pkg
-                fi
-
-                swiftly init --no-modify-profile --quiet-shell-followup --assume-yes --skip-install --verbose
-                echo "swiftly version: $(swiftly --version)" >&2
-
-                swiftly install --use ${{ matrix.swift }}
-                swiftly list
+              uses: vapor/swiftly-action@v0.2
+              with:
+                toolchain: ${{ matrix.swift }}
 
             - uses: actions/checkout@v4
 

@@ -70,7 +70,7 @@ extension StructSchemaGenerator {
 			guard let type = patternBinding.typeAnnotation?.type else {
 				context.diagnose(.init(
 					node: variableDecl,
-					message: MacroExpansionErrorMessage("You must provide a type for the property '\(identifier.text)'."),
+					message: MacroExpansionErrorMessage("You must provide a type for the property '\(identifier.text)'.")
 				))
 				return nil
 			}

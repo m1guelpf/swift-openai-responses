@@ -29,7 +29,7 @@ public struct ToolMacro: ExtensionMacro {
 					if parameter.firstName.text != "_", !parameter.firstName.text.isPlaceholder, functionDocString?.for(properties: parameter.firstName.text, parameter.secondName?.text) == nil {
 						context.diagnose(Diagnostic(
 							node: declaration,
-							message: MacroExpansionWarningMessage("You should document the `\(parameter.firstName.text)` parameter to help the model understand its usage."),
+							message: MacroExpansionWarningMessage("You should document the `\(parameter.firstName.text)` parameter to help the model understand its usage.")
 						))
 					}
 				}
@@ -40,7 +40,7 @@ public struct ToolMacro: ExtensionMacro {
 					extendedType: type,
 					inheritanceClause: InheritanceClauseSyntax { InheritedTypeSyntax(
 						type: IdentifierTypeSyntax(name: "Toolable")
-					) },
+					) }
 				) {
 					try MemberBlockItemListSyntax {
 						try addTypes(reading: functionDecl)

@@ -17,6 +17,7 @@ let package = Package(
 		.library(name: "ResponsesAPI", targets: ["ResponsesAPI"]),
 	],
 	dependencies: [
+		.package(url: "https://github.com/Recouse/EventSource.git", from: "0.0.0"),
 		.package(url: "https://github.com/SwiftyLab/MetaCodable.git", from: "1.0.0"),
 		.package(url: "https://github.com/swiftlang/swift-docc-plugin", from: "1.1.0"),
 		.package(url: "https://github.com/pointfreeco/swift-macro-testing", from: "0.6.0"),
@@ -27,6 +28,7 @@ let package = Package(
 			name: "ResponsesAPI",
 			dependencies: [
 				"Macros",
+				.product(name: "EventSource", package: "EventSource"),
 				.product(name: "MetaCodable", package: "MetaCodable"),
 				.product(name: "HelperCoders", package: "MetaCodable"),
 			],

@@ -22,6 +22,7 @@ jobs:
                 export SWIFTLY_BIN_DIR=${{ github.workspace }}/.swiftly/bin
                 export SWIFTLY_HOME_DIR=${{ github.workspace }}/.swiftly/share
 
+                echo "TOOLCHAINS=swift" >> $GITHUB_ENV
                 echo "$SWIFTLY_BIN_DIR" >> $GITHUB_PATH
                 echo "SWIFTLY_BIN_DIR=$SWIFTLY_BIN_DIR" >> $GITHUB_ENV
                 echo "SWIFTLY_HOME_DIR=$SWIFTLY_HOME_DIR" >> $GITHUB_ENV
@@ -56,8 +57,6 @@ jobs:
                   fi
                   rm "${HOME}/.swiftly-postinstall-cmds.sh"
                 fi
-
-                swiftly list
 
             - name: Swift version
               run: swift --version

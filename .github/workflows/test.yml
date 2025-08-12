@@ -22,19 +22,19 @@ jobs:
                 export SWIFTLY_HOME_DIR=${{ github.workspace }}/.swiftly/share
 
                 echo "$SWIFTLY_BIN_DIR" >> $GITHUB_PATH
-                echo "SWIFTLY_HOME_DIR=$SWIFTLY_HOME_DIR" >> $GITHUB_ENV
                 echo "SWIFTLY_BIN_DIR=$SWIFTLY_BIN_DIR" >> $GITHUB_ENV
+                echo "SWIFTLY_HOME_DIR=$SWIFTLY_HOME_DIR" >> $GITHUB_ENV
 
                 export PATH=$SWIFTLY_BIN_DIR:$PATH
 
-                mkdir -p $SWIFTLY_HOME_DIR
                 mkdir -p $SWIFTLY_BIN_DIR
+                mkdir -p $SWIFTLY_HOME_DIR
 
-                if ${{ inputs.os == 'ubuntu-latest' }} ; then
-                  curl -O https://download.swift.org/swiftly/linux/swiftly-${{ inputs.arch }}.tar.gz
-                  file swiftly-${{ inputs.arch }}.tar.gz
-                  tar -xzf swiftly-${{ inputs.arch }}.tar.gz -C $SWIFTLY_BIN_DIR
-                  rm swiftly-${{ inputs.arch }}.tar.gz
+                if ${{ matrix.os == 'ubuntu-latest' }} ; then
+                  curl -O https://download.swift.org/swiftly/linux/swiftly-$(uname -m).tar.gz
+                  file swiftly-$(uname -m).tar.gz
+                  tar -xzf swiftly-$(uname -m).tar.gz -C $SWIFTLY_BIN_DIR
+                  rm swiftly-$(uname -m).tar.gz
                 else
                   curl -O https://download.swift.org/swiftly/darwin/swiftly.pkg
                   installer -pkg swiftly.pkg -target CurrentUserHomeDirectory
@@ -42,7 +42,7 @@ jobs:
                   rm swiftly.pkg
                 fi
 
-                swiftly init -no-modify-profile --quiet-shell-followup --assume-yes --skip-install --verbose
+                swiftly init --no-modify-profile --quiet-shell-followup --assume-yes --skip-install --verbose
                 echo "swiftly version: $(swiftly --version)" >&2
 
                 swiftly install --use ${{ matrix.swift }}

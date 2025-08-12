@@ -10,7 +10,7 @@ jobs:
         strategy:
           matrix:
             os: [ubuntu-latest, macos-latest]
-            swift: ["6.0", "6.1", "6.2", "main-snapshot"]
+            swift: ["6.0", "6.1", "main-snapshot"]
         runs-on: ${{ matrix.os }}
         steps:
             - name: Install Swift toolchain

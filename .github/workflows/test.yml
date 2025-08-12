@@ -30,7 +30,7 @@ jobs:
                 mkdir -p $SWIFTLY_HOME_DIR
                 mkdir -p $SWIFTLY_BIN_DIR
 
-                if ${{ inputs.os == 'Linux' }} ; then
+                if ${{ inputs.os == 'ubuntu-latest' }} ; then
                   curl -O https://download.swift.org/swiftly/linux/swiftly-${{ inputs.arch }}.tar.gz
                   file swiftly-${{ inputs.arch }}.tar.gz
                   tar -xzf swiftly-${{ inputs.arch }}.tar.gz -C $SWIFTLY_BIN_DIR

@@ -1,7 +1,7 @@
 import SwiftSyntaxMacros
 import SwiftCompilerPlugin
 
-@main struct Macros: CompilerPlugin {
+@main struct Plugin: CompilerPlugin {
 	let providingMacros: [Macro.Type] = [
 		ToolMacro.self,
 		SchemableMacro.self,

@@ -69,7 +69,7 @@ jobs:
                 key: "swiftpm-tests-build-${{ runner.os }}-${{ matrix.swift }}-${{ github.event.pull_request.base.sha || github.event.after }}"
 
             - name: Build
-              run: swift build --build-tests --enable-code-coverage
+              run: swift build --build-tests
 
             - name: Cache .build
               if: steps.restore-build.outputs.cache-hit != 'true'
@@ -79,9 +79,4 @@ jobs:
                 key: "swiftpm-tests-build-${{ runner.os }}-${{ matrix.swift }}-${{ github.event.pull_request.base.sha || github.event.after }}"
 
             - name: Run tests
-              run: swift test --skip-build --enable-code-coverage --parallel
-
-            - name: Test coverage
-              uses: maxep/spm-lcov-action@0.3.1
-              with:
-                  output-file: ./coverage/lcov.info
+              run: swift test --skip-build --parallel

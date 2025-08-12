@@ -12,4 +12,4 @@ public macro NumberSchema(
 	exclusiveMinimum: Int? = nil,
 	maximum: Int? = nil,
 	exclusiveMaximum: Int? = nil,
-) = #externalMacro(module: "SchemableMacros", type: "NumberSchemaMacro")
+) = #externalMacro(module: "Macros", type: "NumberSchemaMacro")

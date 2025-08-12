@@ -18,32 +18,32 @@ struct StructSchemaGenerator {
 		declModifier = structDecl.modifiers.first
 	}
 
-	func makeSchema() -> DeclSyntax {
+	func makeSchema() throws -> VariableDeclSyntax {
 		let members = members
 			.compactMap { $0.decl.as(VariableDeclSyntax.self) }
 			.flatMap { variableDecl in variableDecl.bindings.map { (variableDecl, $0) } }
 			.filter { $0.1.isStored }
 			.compactMap { StructMember(variableDecl: $0, patternBinding: $1, using: context) }
 
-		let properties = DictionaryElementListSyntax(members.compactMap { member -> DictionaryElementSyntax? in
-			guard let schema = member.makeSchema(using: context) else { return nil }
+		let properties = DictionaryExprSyntax {
+			DictionaryElementListSyntax(members.enumerated().compactMap { i, member -> DictionaryElementSyntax? in
+				guard let schema = member.makeSchema(using: context) else { return nil }
 
-			return DictionaryElementSyntax(
-				leadingTrivia: .newline.merging(.tabs(3)),
-				key: ExprSyntax(literal: member.identifier.text),
-				value: ExprSyntax(schema),
-				trailingComma: .commaToken(),
-			)
-		})
-
-		let variableDecl: DeclSyntax = """
-		\(declModifier)static var schema: JSONSchema {
-				.object(properties: [\(raw: properties)
-				], description: \(literal: docString))
+				return DictionaryElementSyntax(
+					leadingTrivia: .newline.merging(.tabs(2)),
+					key: ExprSyntax(literal: member.identifier.text),
+					value: ExprSyntax(schema),
+					trailingComma: .commaToken(),
+					trailingTrivia: i == members.count - 1 ? .newline.merging(.tab) : nil
+				)
+			})
 		}
-		"""
 
-		return variableDecl
+		return try VariableDeclSyntax("""
+		\(declModifier)static var schema: JSONSchema {
+			.object(properties: \(raw: properties), description: \(literal: docString))
+		}
+		""")
 	}
 }
 

@@ -6,4 +6,4 @@
 public macro ArraySchema(
 	minItems: Int? = nil,
 	maxItems: Int? = nil
-) = #externalMacro(module: "SchemableMacros", type: "ArraySchemaMacro")
+) = #externalMacro(module: "Macros", type: "ArraySchemaMacro")

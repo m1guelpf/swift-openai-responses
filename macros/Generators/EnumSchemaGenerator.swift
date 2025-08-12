@@ -19,7 +19,7 @@ struct EnumSchemaGenerator {
 		declModifier = enumDecl.modifiers.first
 	}
 
-	func makeSchema() -> DeclSyntax {
+	func makeSchema() throws -> VariableDeclSyntax {
 		let schemableCases = members
 			.compactMap { $0.decl.as(EnumCaseDeclSyntax.self) }
 			.flatMap { caseDecl in caseDecl.elements.map { (caseDecl, $0) } }
@@ -31,21 +31,21 @@ struct EnumSchemaGenerator {
 		guard !casesWithAssociatedValues.isEmpty else {
 			let expr = buildSimpleEnum(withCases: casesWithoutAssociatedValues)
 
-			return """
+			return try VariableDeclSyntax("""
 			\(declModifier)static var schema: JSONSchema {
-					\(raw: expr)
+				\(raw: expr)
 			}
-			"""
+			""")
 		}
 
 		var cases = casesWithAssociatedValues.map { $0.makeSchema(using: context) }
 		if !casesWithoutAssociatedValues.isEmpty { cases = [buildSimpleEnum(withCases: casesWithoutAssociatedValues, includeComment: false)] + cases }
 
-		return """
+		return try VariableDeclSyntax("""
 		\(declModifier)static var schema: JSONSchema {
-				.anyOf(\(raw: ArrayElementListSyntax(expressions: cases)), description: \(literal: docString))
+			.anyOf(\(raw: ArrayElementListSyntax(expressions: cases)), description: \(literal: docString))
 		}
-		"""
+		""")
 	}
 
 	func buildSimpleEnum(withCases cases: [EnumCase], includeComment: Bool = true) -> ExprSyntax {

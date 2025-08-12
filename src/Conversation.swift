@@ -293,6 +293,8 @@ private extension Conversation {
 private extension Conversation {
 	/// Handles an event from the conversation stream.
 	func handleEvent(_ event: Event) throws {
+		if config.debug == true { dump(event) }
+
 		switch event {
 			case let .responseCreated(response):
 				entries.append(.response(response))
@@ -733,6 +735,11 @@ public extension Conversation {
 		/// The truncation strategy to use for the model response.
 		public var truncation: Truncation?
 
+		/// Enables debug mode for the conversation.
+		///
+		/// When enabled, the conversation will log additional information to the console, such as the event stream received from the API.
+		public var debug: Bool?
+
 		/// A list of tools the model can call while generating a response, including automatically executed functions.
 		var toolsWithFunctions: [Tool] {
 			var tools = [Tool]()
@@ -893,6 +900,14 @@ public extension Conversation {
 	var truncation: Truncation? {
 		get { config.truncation }
 		set { config.truncation = newValue }
+	}
+
+	/// Enables debug mode for the conversation.
+	///
+	/// When enabled, the conversation will log additional information to the console, such as the event stream received from the API.
+	var debug: Bool? {
+		get { config.debug }
+		set { config.debug = newValue }
 	}
 
 	/// Updates the conversation configuration.

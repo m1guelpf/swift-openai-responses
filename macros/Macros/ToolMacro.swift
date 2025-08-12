@@ -35,7 +35,7 @@ public struct ToolMacro: ExtensionMacro {
 					try MemberBlockItemListSyntax {
 						try addTypes(reading: functionDecl)
 						try addProperties(reading: structDecl, and: functionDocString)
-						try addArguments(reading: functionDecl, and: functionDocString)
+						try addArguments(reading: functionDecl, and: functionDocString, forwarding: context)
 						try addFunction(reading: functionDecl, and: functionDocString)
 					}
 				},
@@ -91,7 +91,7 @@ public struct ToolMacro: ExtensionMacro {
 
 		return [
 			TypeAliasDeclSyntax(name: TokenSyntax(stringLiteral: "Error"), initializer: TypeInitializerClauseSyntax(value: errorType)),
-			TypeAliasDeclSyntax(name: TokenSyntax(stringLiteral: "Output"), initializer: TypeInitializerClauseSyntax(value: returnType ?? "Void"), trailingTrivia: .newlines(2)),
+			TypeAliasDeclSyntax(name: TokenSyntax(stringLiteral: "Output"), initializer: TypeInitializerClauseSyntax(value: returnType ?? "NullableVoid"), trailingTrivia: .newlines(2)),
 		]
 	}
 
@@ -115,7 +115,8 @@ public struct ToolMacro: ExtensionMacro {
 
 	private static func addArguments(
 		reading functionDecl: FunctionDeclSyntax,
-		and functionDocString: DocString?
+		and functionDocString: DocString?,
+		forwarding context: some MacroExpansionContext
 	) throws -> StructDeclSyntax {
 		var structDecl = try StructDeclSyntax(name: TokenSyntax(stringLiteral: "Arguments")) {
 			try functionDecl.signature.parameterClause.parameters.map { parameter in
@@ -133,10 +134,13 @@ public struct ToolMacro: ExtensionMacro {
 			}
 		}
 
+		let schemaDecl = try StructSchemaGenerator(fromStruct: structDecl, using: context).makeSchema()
+
 		structDecl.trailingTrivia = .newlines(2)
-		structDecl.attributes.append(.attribute(AttributeSyntax("@Schemable")))
+		structDecl.memberBlock.members.append(MemberBlockItemSyntax(decl: schemaDecl.with(\.leadingTrivia, .newlines(2))))
 		structDecl.inheritanceClause = InheritanceClauseSyntax {
 			InheritedTypeSyntax(type: IdentifierTypeSyntax(name: "Decodable"))
+			InheritedTypeSyntax(type: IdentifierTypeSyntax(name: "Schemable"))
 		}
 
 		return structDecl
@@ -155,12 +159,16 @@ public struct ToolMacro: ExtensionMacro {
 			}
 		})
 
-		return try FunctionDeclSyntax(
-			"""
-			func call(parameters: Arguments) async throws -> Output {
-				try await self.call(\(arguments))
-			}
-			"""
-		)
+		var functionImpl = try FunctionDeclSyntax("""
+		func call(parameters: Arguments) async throws -> Output {
+			try await self.call(\(arguments))
+		}
+		""")
+
+		if functionDecl.signature.returnClause == nil {
+			functionImpl.body!.statements.append(CodeBlockItemSyntax("return NullableVoid()"))
+		}
+
+		return functionImpl
 	}
 }

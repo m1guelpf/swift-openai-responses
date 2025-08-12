@@ -1,5 +1,5 @@
+import Macros
 import Testing
-import ToolMacros
 import SwiftSyntax
 import MacroTesting
 
@@ -40,9 +40,15 @@ struct ToolMacroTests {
 					"Get the weather for a location."
 				}
 
-				@Schemable struct Arguments: Decodable {
+				struct Arguments: Decodable, Schemable {
 					/// The location to get the weather for.
 					let location: String
+
+					static var schema: JSONSchema {
+						.object(properties: [
+							"location": .string(description: "The location to get the weather for."),
+						], description: nil)
+					}
 				}
 
 				func call(parameters: Arguments) async throws -> Output {
@@ -90,9 +96,15 @@ struct ToolMacroTests {
 					"Get the weather for a location."
 				}
 
-				@Schemable struct Arguments: Decodable {
+				struct Arguments: Decodable, Schemable {
 					/// The location to get the weather for.
 					let location: String
+
+					static var schema: JSONSchema {
+						.object(properties: [
+							"location": .string(description: "The location to get the weather for."),
+						], description: nil)
+					}
 				}
 
 				func call(parameters: Arguments) async throws -> Output {
@@ -138,9 +150,15 @@ struct ToolMacroTests {
 					"Get the weather for a location."
 				}
 
-				@Schemable struct Arguments: Decodable {
+				struct Arguments: Decodable, Schemable {
 					/// The location to get the weather for.
 					let location: String
+
+					static var schema: JSONSchema {
+						.object(properties: [
+							"location": .string(description: "The location to get the weather for."),
+						], description: nil)
+					}
 				}
 
 				func call(parameters: Arguments) async throws -> Output {
@@ -213,18 +231,23 @@ struct ToolMacroTests {
 
 			extension GetWeather: Toolable {
 			    typealias Error = Swift.Error
-			    typealias Output = Void
+			    typealias Output = NullableVoid
 
 			    var name: String {
 			        "GetWeather"
 			    }
 
-			    @Schemable struct Arguments: Decodable {
+			    struct Arguments: Decodable, Schemable {
 			        let <#Any arguments your tool call requires#>:
+
+			        static var schema: JSONSchema {
+			        	.object(properties: [:], description: nil)
+			        }
 			    }
 
 			    func call(parameters: Arguments) async throws -> Output {
 			    	try await self.call(<#Any arguments your tool call requires#>: parameters.<#Any arguments your tool call requires#>)
+			    	return NullableVoid()
 			    }
 			}
 			"""
@@ -356,8 +379,14 @@ struct ToolMacroTests {
 					"GetWeather"
 				}
 
-				@Schemable struct Arguments: Decodable {
+				struct Arguments: Decodable, Schemable {
 					let location: String
+
+					static var schema: JSONSchema {
+						.object(properties: [
+							"location": .string(description: nil),
+						], description: nil)
+					}
 				}
 
 				func call(parameters: Arguments) async throws -> Output {
@@ -405,8 +434,14 @@ struct ToolMacroTests {
 					"GetWeather"
 				}
 
-				@Schemable struct Arguments: Decodable {
+				struct Arguments: Decodable, Schemable {
 					let location: String
+
+					static var schema: JSONSchema {
+						.object(properties: [
+							"location": .string(description: nil),
+						], description: nil)
+					}
 				}
 
 				func call(parameters: Arguments) async throws -> Output {
@@ -458,8 +493,14 @@ struct ToolMacroTests {
 				typealias Error = Never
 				typealias Output = String
 
-				@Schemable struct Arguments: Decodable {
+				struct Arguments: Decodable, Schemable {
 					let location: String
+
+					static var schema: JSONSchema {
+						.object(properties: [
+							"location": .string(description: nil),
+						], description: nil)
+					}
 				}
 
 				func call(parameters: Arguments) async throws -> Output {

@@ -19,23 +19,26 @@ public struct SchemableMacro: ExtensionMacro {
 		conformingTo _: [TypeSyntax],
 		in context: some MacroExpansionContext
 	) throws -> [ExtensionDeclSyntax] {
-		let implementation: DeclSyntax
+		let implementation: VariableDeclSyntax
 		if let structDecl = declaration.as(StructDeclSyntax.self) {
 			let generator = StructSchemaGenerator(fromStruct: structDecl, using: context)
 
-			implementation = generator.makeSchema()
+			implementation = try generator.makeSchema()
 		} else if let enumDecl = declaration.as(EnumDeclSyntax.self) {
 			let generator = EnumSchemaGenerator(fromEnum: enumDecl, using: context)
 
-			implementation = generator.makeSchema()
+			implementation = try generator.makeSchema()
 		} else {
 			throw SchemableError.unsupportedDeclaration
 		}
 
-		return try [ExtensionDeclSyntax("""
-		\(raw: declaration.accessLabel.map { "\($0) " } ?? "")extension \(type.trimmed): Schemable {
-			\(raw: implementation)
-		}
-		""")]
+		return [
+			ExtensionDeclSyntax(
+				extendedType: type,
+				inheritanceClause: InheritanceClauseSyntax { InheritedTypeSyntax(
+					type: IdentifierTypeSyntax(name: "Schemable")
+				) },
+			) { MemberBlockItemListSyntax { implementation } },
+		]
 	}
 }

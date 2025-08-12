@@ -721,6 +721,30 @@ public enum Item: Equatable, Hashable, Sendable {
 			}
 		}
 
+		/// Reasoning text content.
+		@Codable @CodedAt("type") public enum Content: Equatable, Hashable, Sendable {
+			/// Reasoning text output from the model.
+			@CodedAs("reasoning_text")
+			case text(_ text: String)
+
+			var text: String {
+				get {
+					switch self {
+						case let .text(text): text
+					}
+				}
+				set {
+					switch self {
+						case .text: self = .text(newValue)
+					}
+				}
+			}
+
+			init(_ text: String) {
+				self = .text(text)
+			}
+		}
+
 		public struct SummaryDelta: Equatable, Hashable, Codable, Sendable {
 			public var text: String
 		}
@@ -744,16 +768,20 @@ public enum Item: Equatable, Hashable, Sendable {
 		/// The encrypted content of the reasoning item.
 		public var encryptedContent: String?
 
+		/// Reasoning text content.
+		public var content: [Content]?
+
 		/// Creates a new reasoning item.
 		///
 		/// - Parameter id: The unique identifier of the reasoning content.
 		/// - Parameter summary: Reasoning text contents.
 		/// - Parameter status: The status of the item. Populated when items are returned via API.
 		/// - Parameter encryptedContent: The encrypted content of the reasoning item.
-		public init(id: String, summary: [Summary] = [], status: Status? = nil, encryptedContent: String? = nil) {
+		public init(id: String, summary: [Summary] = [], content: [Content]? = nil, status: Status? = nil, encryptedContent: String? = nil) {
 			self.id = id
 			self.status = status
 			self.summary = summary
+			self.content = content
 			self.encryptedContent = encryptedContent
 		}
 	}

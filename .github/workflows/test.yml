@@ -35,7 +35,8 @@ jobs:
                   file swiftly-$(uname -m).tar.gz
                   tar -xzf swiftly-$(uname -m).tar.gz -C $SWIFTLY_BIN_DIR
                   rm swiftly-$(uname -m).tar.gz
-                  apt-get update && apt-get -y install gnupg2 libpython3-dev libz3-dev python3-lldb-13
+                  sudo apt-get update
+                  sudo apt-get -y install gnupg2 libpython3-dev libz3-dev python3-lldb-13
                 else
                   curl -O https://download.swift.org/swiftly/darwin/swiftly.pkg
                   installer -pkg swiftly.pkg -target CurrentUserHomeDirectory

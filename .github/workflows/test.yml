@@ -1,4 +1,4 @@
-name: Test
+name: Tests
 
 on:
     push:
@@ -58,9 +58,6 @@ jobs:
                   rm "${HOME}/.swiftly-postinstall-cmds.sh"
                 fi
 
-            - name: Swift version
-              run: swift --version
-
             - uses: actions/checkout@v4
 
             - name: Restore .build
@@ -72,7 +69,7 @@ jobs:
                 key: "swiftpm-tests-build-${{ runner.os }}-${{ matrix.swift }}-${{ github.event.pull_request.base.sha || github.event.after }}"
 
             - name: Build
-              run: swift build --build-tests
+              run: swiftly run swift build --build-tests +${{ matrix.swift }}
 
             - name: Cache .build
               if: steps.restore-build.outputs.cache-hit != 'true'
@@ -82,4 +79,4 @@ jobs:
                 key: "swiftpm-tests-build-${{ runner.os }}-${{ matrix.swift }}-${{ github.event.pull_request.base.sha || github.event.after }}"
 
             - name: Run tests
-              run: swift test --skip-build --parallel
+              run: swiftly run swift test --skip-build --parallel +${{ matrix.swift }}

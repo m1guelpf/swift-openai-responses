@@ -21,8 +21,30 @@ public struct ToolMacro: ExtensionMacro {
 
 			if functionDocString.isMissing {
 				context.diagnose(Diagnostic(node: functionDecl, message: MacroExpansionWarningMessage(
-					"It's recommended to add documentation to the `call` function of your tool to help the model understand its purpose and usage."
+					"Make sure to document the `call` function of your tool to help the model understand its purpose and usage."
+				), fixIt: FixIt(
+					message: MacroExpansionFixItMessage("Add documentation for the `call` function."),
+					changes: [FixIt.Change.replaceLeadingTrivia(
+						token: functionDecl.funcKeyword,
+						newTrivia: .newline.merging(.docLineComment("/// <#Describe the purpose of your tool to help the model understand when to use it#>")).merging(.newline)
+					)]
 				)))
+			} else {
+				for parameter in functionDecl.signature.parameterClause.parameters {
+					if parameter.firstName.text != "_", !parameter.firstName.text.isPlaceholder, functionDocString?.for(properties: parameter.firstName.text, parameter.secondName?.text) == nil {
+						context.diagnose(Diagnostic(
+							node: parameter,
+							message: MacroExpansionWarningMessage("You should document the `\(parameter.firstName.text)` parameter to help the model understand its usage."),
+							fixIt: FixIt(
+								message: MacroExpansionFixItMessage("Add documentation for `\(parameter.firstName.text)`."),
+								changes: [FixIt.Change.replaceLeadingTrivia(
+									token: functionDecl.funcKeyword,
+									newTrivia: .newline.merging(functionDocString!.withComment(forProperty: parameter.firstName.text, "<#Describe the purpose of this parameter to help the model understand how to generate it#>").trivia).merging(.newline)
+								)]
+							)
+						))
+					}
+				}
 			}
 
 			return try [

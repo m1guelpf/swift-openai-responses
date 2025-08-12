@@ -1,3 +1,5 @@
+import SwiftSyntax
+
 nonisolated(unsafe) let PARAMETERS_HEADER_REGEX = /(?m)^\s*-\s*Parameters:\s*$/
 nonisolated(unsafe) let PARAMETER_REGEX = /- Parameter (?<parameter>\w+): ?(?<comment>.*)/
 nonisolated(unsafe) let PARAMETERS_ITEM_REGEX = /(?m)^\s*-\s*(?<parameter>\w+)\s*:\s*(?<comment>.*)$/
@@ -5,6 +7,24 @@ nonisolated(unsafe) let PARAMETERS_ITEM_REGEX = /(?m)^\s*-\s*(?<parameter>\w+)\s
 struct DocString {
 	let docString: String
 	let properties: [String: String]
+
+	var fullDocString: String {
+		var docString = self.docString.trimmingCharacters(in: .whitespacesAndNewlines)
+
+		for (key, value) in properties {
+			docString.append("\n- Parameter \(key): \(value)")
+		}
+
+		return docString
+	}
+
+	var trivia: Trivia {
+		fullDocString.split(separator: "\n").reduce(into: Trivia()) { trivia, line in
+			if !trivia.isEmpty { trivia = trivia.appending(.newline) }
+
+			trivia = trivia.merging(.docLineComment("/// \(line)"))
+		}
+	}
 
 	static func parse(_ docString: String?) -> DocString? {
 		guard let docString, !docString.isEmpty else { return nil }
@@ -34,6 +54,13 @@ struct DocString {
 		}
 
 		return nil
+	}
+
+	func withComment(forProperty property: String, _ comment: String) -> DocString {
+		var properties = self.properties
+		properties[property] = comment
+
+		return DocString(docString: docString, properties: properties)
 	}
 
 	private static func parseParameters(_ docString: inout String) -> [String: String] {

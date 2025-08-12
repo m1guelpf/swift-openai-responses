@@ -8,6 +8,7 @@ on:
 jobs:
     build:
         strategy:
+          fail-fast: false
           matrix:
             os: [ubuntu-latest, macos-latest]
             swift: ["6.0", "6.1", "main-snapshot"]

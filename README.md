@@ -1,9 +1,9 @@
 # OpenAI Responses API
 > Hand-crafted Swift SDK for the [OpenAI Responses API](https://platform.openai.com/docs/api-reference/responses).
 
-[![CI](https://github.com/m1guelpf/swift-openai-responses/actions/workflows/test.yml/badge.svg)](https://github.com/m1guelpf/swift-openai-responses/actions/workflows/test.yml)
-[![Swift Platforms](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fm1guelpf%2Fswift-openai-responses%2Fbadge%3Ftype%3Dplatforms&color=brightgreen)](https://swiftpackageindex.com/m1guelpf/swift-openai-responses)
 [![Swift Version](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fm1guelpf%2Fswift-openai-responses%2Fbadge%3Ftype%3Dswift-versions&color=brightgreen)](https://swiftpackageindex.com/m1guelpf/swift-openai-responses)
+[![Swift Platforms](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fm1guelpf%2Fswift-openai-responses%2Fbadge%3Ftype%3Dplatforms&color=brightgreen)](https://swiftpackageindex.com/m1guelpf/swift-openai-responses)
+[![CI](https://github.com/m1guelpf/swift-openai-responses/actions/workflows/test.yml/badge.svg)](https://github.com/m1guelpf/swift-openai-responses/actions/workflows/test.yml)
 
 This package contains:
 - A fully typed client for the Responses API that _feels_ Swifty

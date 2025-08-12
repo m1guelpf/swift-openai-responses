@@ -1,4 +1,7 @@
 import Foundation
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
 
 extension URLSession.AsyncBytes {
 	func collect() async throws -> Data {

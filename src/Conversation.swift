@@ -293,7 +293,7 @@ private extension Conversation {
 private extension Conversation {
 	/// Handles an event from the conversation stream.
 	func handleEvent(_ event: Event) throws {
-		if config.debug == true { dump(event) }
+		if config.debug == true { print(event) }
 
 		switch event {
 			case let .responseCreated(response):

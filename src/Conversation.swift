@@ -1,5 +1,8 @@
 import Foundation
 import Observation
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
 
 /// A wrapper around the Responses API for managing a conversation.
 @MainActor @Observable public final class Conversation {

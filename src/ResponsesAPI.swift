@@ -1,4 +1,5 @@
 import Foundation
+import EventSource
 #if canImport(FoundationNetworking)
 import FoundationNetworking
 #endif
@@ -15,6 +16,7 @@ public final class ResponsesAPI: Sendable {
 
 	private let request: URLRequest
 
+	private let eventSource = EventSource(mode: .dataOnly)
 	private let encoder = tap(JSONEncoder()) { encoder in
 		encoder.dateEncodingStrategy = .iso8601
 	}
@@ -220,36 +222,19 @@ private extension ResponsesAPI {
 		throw Error.invalidResponse(res)
 	}
 
-	/// Sends an URLRequest and returns a stream of bytes.
-	///
-	/// - Throws: If the request fails to send or has a non-200 status code.
-	func stream(request: URLRequest) async throws -> URLSession.AsyncBytes {
-		let (data, res) = try await URLSession.shared.bytes(for: request)
-
-		guard let res = res as? HTTPURLResponse else { throw Error.invalidResponse(res) }
-		guard res.statusCode != 200 else { return data }
-
-		if let response = try? decoder.decode(Response.ErrorResponse.self, from: await data.collect()) {
-			throw response.error
-		}
-
-		throw Error.invalidResponse(res)
-	}
-
 	func sseStream<T: Decodable & Sendable>(of _: T.Type, request: URLRequest) async throws -> AsyncThrowingStream<T, Swift.Error> {
-		let bytes = try await stream(request: request)
-
 		let (stream, continuation) = AsyncThrowingStream.makeStream(of: T.self)
 
 		let task = Task {
 			defer { continuation.finish() }
 
-			for try await line in bytes.lines {
-				guard let event = parseSSELine(line, as: T.self) else {
-					continue
-				}
+			let dataTask = eventSource.dataTask(for: request)
+			defer { dataTask.cancel(urlSession: URLSession.shared) }
 
-				continuation.yield(with: event)
+			for await event in dataTask.events() {
+				guard case let .event(event) = event, let data = event.data?.data(using: .utf8) else { continue }
+
+				continuation.yield(with: Result { try decoder.decode(T.self, from: data) })
 
 				try Task.checkCancellation()
 			}

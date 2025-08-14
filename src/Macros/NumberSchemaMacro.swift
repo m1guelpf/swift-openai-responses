@@ -11,5 +11,5 @@ public macro NumberSchema(
 	minimum: Int? = nil,
 	exclusiveMinimum: Int? = nil,
 	maximum: Int? = nil,
-	exclusiveMaximum: Int? = nil,
+	exclusiveMaximum: Int? = nil
 ) = #externalMacro(module: "Macros", type: "NumberSchemaMacro")

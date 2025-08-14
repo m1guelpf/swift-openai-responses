@@ -268,7 +268,7 @@ private extension Conversation {
 		let functions = await functions
 		guard let lastResponse = await lastResponse, !functions.isEmpty else { return }
 
-		let results = try await withThrowingTaskGroup(of: Item.FunctionCallOutput.self) { taskGroup in
+		let results = try await withThrowingTaskGroup(of: Item.FunctionCallOutput?.self) { taskGroup in
 			lastResponse.output.compactMap { item in
 				if case let .functionCall(fnCall) = item { return fnCall }
 				return nil
@@ -279,7 +279,7 @@ private extension Conversation {
 			}
 
 			var results = [Item.FunctionCallOutput]()
-			while let fnCallOutput = try await taskGroup.next() {
+			while let fnCallOutput = try await taskGroup.next(), let fnCallOutput {
 				results.append(fnCallOutput)
 			}
 			return results

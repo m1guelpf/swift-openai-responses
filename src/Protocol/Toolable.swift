@@ -43,11 +43,12 @@ package extension Toolable {
 		return Tool.Function(name: name, description: description, parameters: Arguments.schema, strict: strict)
 	}
 
-	func respond(to functionCall: Item.FunctionCall) async throws -> Item.FunctionCallOutput {
+	func respond(to functionCall: Item.FunctionCall) async throws -> Item.FunctionCallOutput? {
 		let parameters = try decoder.decode(Arguments.self, from: Data(functionCall.arguments.utf8))
 
 		let output = try await call(parameters: parameters)
 
+		if output is NullableVoid { return nil }
 		return try Item.FunctionCallOutput(
 			callId: functionCall.callId,
 			output: encoder.encodeToString(output)

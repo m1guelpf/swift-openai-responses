@@ -4,13 +4,11 @@ import SwiftSyntaxMacros
 struct StructSchemaGenerator {
 	let name: TokenSyntax
 	let docString: String?
-	let context: MacroExpansionContext
 	let attributes: AttributeListSyntax
 	let declModifier: DeclModifierSyntax?
 	let members: MemberBlockItemListSyntax
 
-	init(fromStruct structDecl: StructDeclSyntax, using context: some MacroExpansionContext) {
-		self.context = context
+	init(fromStruct structDecl: StructDeclSyntax) {
 		name = structDecl.name.trimmed
 		docString = structDecl.docString
 		attributes = structDecl.attributes
@@ -19,29 +17,27 @@ struct StructSchemaGenerator {
 	}
 
 	func makeSchema() throws -> VariableDeclSyntax {
-		let members = members
+		let members = try members
 			.compactMap { $0.decl.as(VariableDeclSyntax.self) }
 			.flatMap { variableDecl in variableDecl.bindings.map { (variableDecl, $0) } }
 			.filter { $0.1.isStored }
-			.compactMap { StructMember(variableDecl: $0, patternBinding: $1, using: context) }
+			.compactMap { try StructMember(variableDecl: $0, patternBinding: $1) }
 
-		let properties = DictionaryExprSyntax {
-			DictionaryElementListSyntax(members.enumerated().compactMap { i, member -> DictionaryElementSyntax? in
-				guard let schema = member.makeSchema(using: context) else { return nil }
+		let properties = try DictionaryElementListSyntax(members.enumerated().compactMap { i, member -> DictionaryElementSyntax? in
+			guard let schema = try member.makeSchema() else { return nil }
 
-				return DictionaryElementSyntax(
-					leadingTrivia: .newline.merging(.tabs(2)),
-					key: ExprSyntax(literal: member.identifier.text),
-					value: ExprSyntax(schema),
-					trailingComma: .commaToken(),
-					trailingTrivia: i == members.count - 1 ? .newline.merging(.tab) : nil
-				)
-			})
-		}
+			return DictionaryElementSyntax(
+				leadingTrivia: .newline.merging(.tabs(2)),
+				key: ExprSyntax(literal: member.identifier.text),
+				value: ExprSyntax(schema),
+				trailingComma: .commaToken(),
+				trailingTrivia: i == members.count - 1 ? .newline.merging(.tab) : nil
+			)
+		})
 
 		return try VariableDeclSyntax("""
 		\(declModifier)static var schema: JSONSchema {
-			.object(properties: \(raw: properties), description: \(literal: docString))
+			.object(properties: \(raw: DictionaryExprSyntax { properties }), description: \(literal: docString))
 		}
 		""")
 	}
@@ -65,14 +61,10 @@ extension StructSchemaGenerator {
 			self.declaration = declaration
 		}
 
-		init?(variableDecl: VariableDeclSyntax, patternBinding: PatternBindingSyntax, using context: some MacroExpansionContext) {
+		init?(variableDecl: VariableDeclSyntax, patternBinding: PatternBindingSyntax) throws {
 			guard let identifier = patternBinding.pattern.as(IdentifierPatternSyntax.self)?.identifier else { return nil }
 			guard let type = patternBinding.typeAnnotation?.type else {
-				context.diagnose(.init(
-					node: variableDecl,
-					message: MacroExpansionErrorMessage("You must provide a type for the property '\(identifier.text)'.")
-				))
-				return nil
+				throw ReportableError(node: variableDecl, errorMessage: "You must provide a type for the property '\(identifier.text)'.")
 			}
 
 			self.type = type
@@ -83,10 +75,10 @@ extension StructSchemaGenerator {
 			defaultValue = patternBinding.initializer?.value
 		}
 
-		func makeSchema(using context: some MacroExpansionContext) -> ExprSyntax? {
+		func makeSchema() throws -> ExprSyntax? {
 			if defaultValue != nil {
 				let type = StructMember(declaration: declaration, type: type, identifier: identifier)
-				guard let schema = type.makeSchema(using: context) else { return nil }
+				guard let schema = try type.makeSchema() else { return nil }
 				return ".anyOf([\(raw: schema), .null], description: \(literal: docString))"
 			}
 
@@ -110,21 +102,17 @@ extension StructSchemaGenerator {
 							return ".number(\(options))"
 						case let .array(type):
 							let type = StructMember(declaration: declaration, type: type, identifier: identifier, attributes: attributes)
-							guard let schema = type.makeSchema(using: context) else { return nil }
+							guard let schema = try type.makeSchema() else { return nil }
 
 							var options = attributes.arguments(for: "ArraySchema") ?? LabeledExprListSyntax()
 							options.append(LabeledExprSyntax(label: "description", expression: ExprSyntax(literal: docString)))
 							return ".array(of: \(raw: schema), \(raw: options))"
 						case let .optional(type):
 							let type = StructMember(declaration: declaration, type: type, identifier: identifier, attributes: attributes)
-							guard let schema = type.makeSchema(using: context) else { return nil }
+							guard let schema = try type.makeSchema() else { return nil }
 							return ".anyOf([\(raw: schema), .null], description: \(literal: docString))"
 						case .dictionary:
-							context.diagnose(.init(
-								node: declaration,
-								message: MacroExpansionErrorMessage("Dictionaries are not supported when using @Schemable. Use a custom struct instead.")
-							))
-							return nil
+							throw ReportableError(node: declaration, errorMessage: "Dictionaries are not supported when using @Schema. Use a custom struct instead.")
 					}
 			}
 		}

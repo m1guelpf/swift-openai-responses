@@ -4,9 +4,11 @@ import SwiftSyntaxMacros
 
 struct ReportableError: Error {
 	private let fixIts: [FixIt]
+	private let node: SyntaxProtocol?
 	private let message: MacroExpansionErrorMessage
 
-	init(errorMessage message: String, fixIts: [FixIt] = []) {
+	init(node: SyntaxProtocol? = nil, errorMessage message: String, fixIts: [FixIt] = []) {
+		self.node = node
 		self.fixIts = fixIts
 		self.message = MacroExpansionErrorMessage(message)
 	}
@@ -15,7 +17,8 @@ struct ReportableError: Error {
 		do {
 			return try body()
 		} catch let error as ReportableError {
-			context.diagnose(Diagnostic(node: node, message: error.message, fixIts: error.fixIts))
+			let errorNode = error.node ?? node
+			context.diagnose(Diagnostic(node: errorNode, message: error.message, fixIts: error.fixIts))
 			return withDefault()
 		}
 	}

@@ -5,13 +5,11 @@ import SwiftSyntaxMacros
 struct EnumSchemaGenerator {
 	let name: TokenSyntax
 	let docString: String?
-	let context: MacroExpansionContext
 	let attributes: AttributeListSyntax
 	let declModifier: DeclModifierSyntax?
 	let members: MemberBlockItemListSyntax
 
-	init(fromEnum enumDecl: EnumDeclSyntax, using context: some MacroExpansionContext) {
-		self.context = context
+	init(fromEnum enumDecl: EnumDeclSyntax) {
 		name = enumDecl.name.trimmed
 		docString = enumDecl.docString
 		attributes = enumDecl.attributes
@@ -29,7 +27,7 @@ struct EnumSchemaGenerator {
 		let casesWithAssociatedValues = schemableCases.filter { $0.associatedValues != nil }
 
 		guard !casesWithAssociatedValues.isEmpty else {
-			let expr = buildSimpleEnum(withCases: casesWithoutAssociatedValues)
+			let expr = try buildSimpleEnum(withCases: casesWithoutAssociatedValues)
 
 			return try VariableDeclSyntax("""
 			\(declModifier)static var schema: JSONSchema {
@@ -38,8 +36,8 @@ struct EnumSchemaGenerator {
 			""")
 		}
 
-		var cases = casesWithAssociatedValues.map { $0.makeSchema(using: context) }
-		if !casesWithoutAssociatedValues.isEmpty { cases = [buildSimpleEnum(withCases: casesWithoutAssociatedValues, includeComment: false)] + cases }
+		var cases = try casesWithAssociatedValues.map { try $0.makeSchema() }
+		if !casesWithoutAssociatedValues.isEmpty { cases = try [buildSimpleEnum(withCases: casesWithoutAssociatedValues, includeComment: false)] + cases }
 
 		return try VariableDeclSyntax("""
 		\(declModifier)static var schema: JSONSchema {
@@ -48,7 +46,7 @@ struct EnumSchemaGenerator {
 		""")
 	}
 
-	func buildSimpleEnum(withCases cases: [EnumCase], includeComment: Bool = true) -> ExprSyntax {
+	func buildSimpleEnum(withCases cases: [EnumCase], includeComment: Bool = true) throws -> ExprSyntax {
 		var docString = includeComment ? self.docString : nil
 		let caseComments = cases
 			.filter { $0.docString != nil }
@@ -60,7 +58,7 @@ struct EnumSchemaGenerator {
 			docString! += caseComments
 		}
 
-		return ".enum(cases: [\(raw: ArrayElementListSyntax(expressions: cases.map { $0.makeSchema(using: context) }))], description: \(literal: docString))"
+		return try ".enum(cases: [\(raw: ArrayElementListSyntax(expressions: cases.map { try $0.makeSchema() }))], description: \(literal: docString))"
 	}
 }
 
@@ -78,7 +76,7 @@ extension EnumSchemaGenerator {
 			associatedValues = caseElement.parameterClause?.parameters
 		}
 
-		func makeSchema(using context: some MacroExpansionContext) -> ExprSyntax {
+		func makeSchema() throws -> ExprSyntax {
 			guard let associatedValues else { return "\(literal: identifier.text)" }
 			var docString = self.docString
 			var propertyDocStrings: [String: String] = [:]
@@ -94,7 +92,7 @@ extension EnumSchemaGenerator {
 				docString = docString!.trimmingCharacters(in: .whitespacesAndNewlines)
 			}
 
-			let properties = DictionaryElementListSyntax(
+			let properties = try DictionaryElementListSyntax(
 				associatedValues.enumerated()
 					.compactMap { i, property -> DictionaryElementSyntax? in
 						let key = property.firstName?.text ?? "_\(i)"
@@ -106,7 +104,7 @@ extension EnumSchemaGenerator {
 							docString: propertyDocStrings[key]
 						)
 
-						guard let schema = parameter.makeSchema(using: context) else { return nil }
+						guard let schema = try parameter.makeSchema() else { return nil }
 						return DictionaryElementSyntax(
 							key: ExprSyntax(literal: key),
 							value: schema

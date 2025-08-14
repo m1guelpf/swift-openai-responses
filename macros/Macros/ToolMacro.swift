@@ -36,18 +36,11 @@ public struct ToolMacro: ExtensionMacro {
 			}
 
 			return try [
-				ExtensionDeclSyntax(
-					extendedType: type,
-					inheritanceClause: InheritanceClauseSyntax { InheritedTypeSyntax(
-						type: IdentifierTypeSyntax(name: "Toolable")
-					) }
-				) {
-					try MemberBlockItemListSyntax {
-						try addTypes(reading: functionDecl)
-						try addProperties(reading: structDecl, and: functionDocString)
-						try addArguments(reading: functionDecl, and: functionDocString, forwarding: context)
-						try addFunction(reading: functionDecl, and: functionDocString)
-					}
+				ExtensionDeclSyntax(extending: type, inheritsTypes: ["Toolable"]) {
+					try addTypes(reading: functionDecl)
+					try addProperties(reading: structDecl, and: functionDocString)
+					try addArguments(reading: functionDecl, and: functionDocString, forwarding: context)
+					try addFunction(reading: functionDecl, and: functionDocString)
 				},
 			]
 		} withDefault: { [] }
@@ -128,7 +121,7 @@ public struct ToolMacro: ExtensionMacro {
 	private static func addArguments(
 		reading functionDecl: FunctionDeclSyntax,
 		and functionDocString: DocString?,
-		forwarding context: some MacroExpansionContext
+		forwarding _: some MacroExpansionContext
 	) throws -> StructDeclSyntax {
 		var structDecl = try StructDeclSyntax(name: TokenSyntax(stringLiteral: "Arguments")) {
 			try functionDecl.signature.parameterClause.parameters.enumerated().map { i, parameter in
@@ -146,7 +139,7 @@ public struct ToolMacro: ExtensionMacro {
 			}
 		}
 
-		let schemaDecl = try StructSchemaGenerator(fromStruct: structDecl, using: context).makeSchema()
+		let schemaDecl = try StructSchemaGenerator(fromStruct: structDecl).makeSchema()
 
 		structDecl.trailingTrivia = .newlines(2)
 		structDecl.memberBlock.members.append(MemberBlockItemSyntax(decl: schemaDecl.with(\.leadingTrivia, .newlines(2))))

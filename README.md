@@ -7,7 +7,7 @@
 
 This package contains:
 - A fully typed client for the Responses API that _feels_ Swifty
-- `Schemable` and `Tool` macros, providing elegant ways to define tools and structured responses.
+- `Schema` and `Tool` macros, providing elegant ways to define tools and structured responses.
 - A `Conversation` class, handling everything you need for multi-turn streaming conversations in your views.
 
 

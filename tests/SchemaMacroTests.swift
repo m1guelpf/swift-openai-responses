@@ -3,14 +3,14 @@ import Testing
 import SwiftSyntax
 import MacroTesting
 
-@Suite(.macros([SchemableMacro.self, ArraySchemaMacro.self, StringSchemaMacro.self, NumberSchemaMacro.self], record: .missing))
-struct SchemableMacroTests {
+@Suite(.macros([SchemaMacro.self, ArraySchemaMacro.self, StringSchemaMacro.self, NumberSchemaMacro.self], record: .missing))
+struct SchemaMacroTests {
 	@Test("Properly generates schema for a struct with primitives")
 	func structSchemaWithPrimitives() {
 		assertMacro {
 			"""
 			/// Represents a user in the system.
-			@Schemable
+			@Schema
 			struct User {
 				/// Unique identifier for the user.
 				let id: Int
@@ -56,7 +56,7 @@ struct SchemableMacroTests {
 	func structSchemaWithDefault() async throws {
 		assertMacro {
 			"""
-			@Schemable
+			@Schema
 			struct UserPermissions {
 				/// Whether the user is an admin.
 				let isAdmin: Bool = false
@@ -87,14 +87,14 @@ struct SchemableMacroTests {
 	func structContainingStruct() {
 		assertMacro {
 			"""
-			@Schemable
+			@Schema
 			struct Address {
 				let street: String
 				let city: String
 				let zipCode: Int
 			}
 
-			@Schemable
+			@Schema
 			struct UserProfile {
 				let name: String
 				let age: Int
@@ -143,7 +143,7 @@ struct SchemableMacroTests {
 	func structWithComputedProperty() {
 		assertMacro {
 			"""
-			@Schemable
+			@Schema
 			struct User {
 				let id: Int
 				let username: String
@@ -182,7 +182,7 @@ struct SchemableMacroTests {
 	func structCustomStringSchema() {
 		assertMacro {
 			"""
-			@Schemable
+			@Schema
 			struct Server {
 				/// The hostname of the server.
 				@StringSchema(pattern: "^[a-zA-Z0-9_]+$", format: .hostname)
@@ -211,7 +211,7 @@ struct SchemableMacroTests {
 	func structCustomArraySchema() {
 		assertMacro {
 			"""
-			@Schemable
+			@Schema
 			struct Post {
 				/// A list of tags associated with the post.
 				@ArraySchema(minItems: 1, maxItems: 10)
@@ -240,7 +240,7 @@ struct SchemableMacroTests {
 	func structCustomNumberSchema() {
 		assertMacro {
 			"""
-			@Schemable
+			@Schema
 			struct Product {
 				@NumberSchema(maximum: 100)
 				let id: Int
@@ -273,7 +273,7 @@ struct SchemableMacroTests {
 	func structWithNestedAttributes() {
 		assertMacro {
 			"""
-			@Schemable
+			@Schema
 			struct User {
 				/// A collection of IDs of posts the user has liked.
 				@NumberSchema(multipleOf: 2, minimum: 2)
@@ -319,7 +319,7 @@ struct SchemableMacroTests {
 	func structDefaultsToSchema() {
 		assertMacro {
 			"""
-			@Schemable
+			@Schema
 			struct Cmd {
 				let command: String
 				let arguments: Arguments
@@ -349,7 +349,7 @@ struct SchemableMacroTests {
 		assertMacro {
 			"""
 			/// A user role in the system.
-			@Schemable
+			@Schema
 			enum UserRole {
 				case admin
 				case user
@@ -379,7 +379,7 @@ struct SchemableMacroTests {
 		assertMacro {
 			"""
 			/// A user role in the system.
-			@Schemable
+			@Schema
 			enum UserRole {
 				/// Admin user with full permissions.
 				case admin
@@ -413,7 +413,7 @@ struct SchemableMacroTests {
 		assertMacro {
 			"""
 			/// A model in the API.
-			@Schemable
+			@Schema
 			enum Model {
 				case gpt4o
 				case gpt5
@@ -446,14 +446,14 @@ struct SchemableMacroTests {
 	func structWithoutConcreteTypeError() {
 		assertMacro {
 			"""
-			@Schemable
+			@Schema
 			struct User {
 				let id = UUID()
 			}
 			"""
 		} diagnostics: {
 			"""
-			@Schemable
+			@Schema
 			struct User {
 				let id = UUID()
 			 ┬──────────────
@@ -467,7 +467,7 @@ struct SchemableMacroTests {
 	func structWithDictionaryError() {
 		assertMacro {
 			"""
-			@Schemable
+			@Schema
 			struct User {
 				let id: Int
 				let attributes: [String: String]
@@ -475,12 +475,12 @@ struct SchemableMacroTests {
 			"""
 		} diagnostics: {
 			"""
-			@Schemable
+			@Schema
 			struct User {
 				let id: Int
 				let attributes: [String: String]
 			 ┬───────────────────────────────
-			 ╰─ 🛑 Dictionaries are not supported when using @Schemable. Use a custom struct instead.
+			 ╰─ 🛑 Dictionaries are not supported when using @Schema. Use a custom struct instead.
 			}
 			"""
 		}
@@ -490,14 +490,13 @@ struct SchemableMacroTests {
 	func classError() {
 		assertMacro {
 			"""
-			@Schemable
+			@Schema
 			class User {}
 			"""
 		} diagnostics: {
 			"""
-			@Schemable
-			┬─────────
-			╰─ 🛑 The @Schemable macro can only be applied to structs or enums.
+			@Schema
+			╰─ 🛑 The @Schema macro can only be applied to structs or enums.
 			class User {}
 			"""
 		}

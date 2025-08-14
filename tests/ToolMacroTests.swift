@@ -51,7 +51,7 @@ struct ToolMacroTests {
 					}
 				}
 
-				func call(parameters: Arguments) async throws -> Output {
+				func call(parameters: Arguments) async throws(Error) -> Output {
 					try await self.call(location: parameters.location)
 				}
 			}
@@ -107,7 +107,7 @@ struct ToolMacroTests {
 					}
 				}
 
-				func call(parameters: Arguments) async throws -> Output {
+				func call(parameters: Arguments) async throws(Error) -> Output {
 					try await self.call(location: parameters.location)
 				}
 			}
@@ -161,7 +161,7 @@ struct ToolMacroTests {
 					}
 				}
 
-				func call(parameters: Arguments) async throws -> Output {
+				func call(parameters: Arguments) async throws(Error) -> Output {
 					try await self.call(location: parameters.location)
 				}
 			}
@@ -357,7 +357,7 @@ struct ToolMacroTests {
 					}
 				}
 
-				func call(parameters: Arguments) async throws -> Output {
+				func call(parameters: Arguments) async throws(Error) -> Output {
 					try await self.call(location: parameters.location)
 				}
 			}
@@ -412,7 +412,7 @@ struct ToolMacroTests {
 					}
 				}
 
-				func call(parameters: Arguments) async throws -> Output {
+				func call(parameters: Arguments) async throws(Error) -> Output {
 					try await self.call(location: parameters.location)
 				}
 			}
@@ -474,7 +474,7 @@ struct ToolMacroTests {
 					}
 				}
 
-				func call(parameters: Arguments) async throws -> Output {
+				func call(parameters: Arguments) async throws(Error) -> Output {
 					try await self.call(location: parameters.location)
 				}
 			}
@@ -536,7 +536,7 @@ struct ToolMacroTests {
 					}
 				}
 
-				func call(parameters: Arguments) async throws -> Output {
+				func call(parameters: Arguments) async throws(Error) -> Output {
 					try await self.call(location: parameters.location)
 				}
 			}

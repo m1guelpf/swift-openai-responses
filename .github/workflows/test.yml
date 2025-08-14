@@ -12,6 +12,9 @@ jobs:
           matrix:
             os: [ubuntu-latest, macos-latest]
             swift: ["6.0", "6.1", "main-snapshot"]
+            exclude:
+              - os: macos-latest
+                swift: "6.0" # Swift 6.0 on mac runs into a compiler error on CI when building MetaCodable, but somehow runs fine on the Swift Package Index build process?
         runs-on: ${{ matrix.os }}
         steps:
             - name: Install Swift toolchain

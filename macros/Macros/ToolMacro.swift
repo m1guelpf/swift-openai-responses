@@ -171,7 +171,7 @@ public struct ToolMacro: ExtensionMacro {
 		})
 
 		var functionImpl = try FunctionDeclSyntax("""
-		func call(parameters: Arguments) async throws -> Output {
+		func call(parameters: Arguments) async throws(Error) -> Output {
 			try await self.call(\(arguments))
 		}
 		""")

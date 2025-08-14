@@ -2,7 +2,7 @@ import SwiftSyntax
 import SwiftSyntaxBuilder
 
 extension ExtensionDeclSyntax {
-	init(extending extendedType: TypeSyntaxProtocol, inheritsTypes inheritedTypes: [TokenSyntax] = [], @MemberBlockItemListBuilder _ itemsBuilder: () throws -> MemberBlockItemListSyntax) throws {
+	init(extending extendedType: TypeSyntaxProtocol, inheritsTypes inheritedTypes: [TokenSyntax] = [], @MemberBlockItemListBuilder _ itemsBuilder: () throws -> MemberBlockItemListSyntax) rethrows {
 		try self.init(
 			extendedType: extendedType,
 			inheritanceClause: InheritanceClauseSyntax {

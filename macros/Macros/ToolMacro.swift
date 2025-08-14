@@ -43,7 +43,7 @@ public struct ToolMacro: ExtensionMacro {
 					try addFunction(reading: functionDecl, and: functionDocString)
 				},
 			]
-		} withDefault: { [] }
+		} withDefault: { [ExtensionDeclSyntax(extending: type, inheritsTypes: ["Toolable"]) {}] }
 	}
 
 	private static func getFunctionDeclaration(from structDecl: StructDeclSyntax) throws -> FunctionDeclSyntax {

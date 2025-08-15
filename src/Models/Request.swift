@@ -213,7 +213,7 @@ import MetaCodable
 		topLogprobs: UInt? = nil,
 		topP: Double? = nil,
 		truncation: Truncation? = nil,
-		verbosity: Verbosity? = nil,
+		verbosity: Verbosity? = nil
 	) {
 		self.text = text
 		self.topP = topP

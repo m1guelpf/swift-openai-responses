@@ -233,7 +233,7 @@ import FoundationNetworking
 			tools: config.toolsWithFunctions,
 			topLogprobs: config.topLogprobs,
 			topP: config.topP,
-			truncation: config.truncation,
+			truncation: config.truncation
 		)
 
 		await MainActor.run { self.entries.append(.request(request)) }

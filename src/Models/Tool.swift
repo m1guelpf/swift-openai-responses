@@ -300,6 +300,17 @@ import MetaCodable
 	}
 
 	@Codable @CodingKeys(.snake_case) public struct MCP: Equatable, Hashable, Sendable {
+		public enum Connector: String, Equatable, Hashable, Codable, Sendable {
+			case gmail = "connector_gmail"
+			case dropbox = "connector_dropbox"
+			case sharepoint = "connector_sharepoint"
+			case googleDrive = "connector_googledrive"
+			case outlookEmail = "connector_outlookemail"
+			case googleCalendar = "connector_googlecalendar"
+			case microsoftTeams = "connector_microsoftteams"
+			case outlookCalendar = "connector_outlookcalendar"
+		}
+
 		public enum RequireApproval: Equatable, Hashable, Sendable {
 			/// Approval policies for MCP tools.
 			public enum Approval: String, CaseIterable, Equatable, Hashable, Codable, Sendable {
@@ -321,7 +332,17 @@ import MetaCodable
 		@CodedAt("server_label") public var label: String
 
 		/// The URL for the MCP server.
-		@CodedAt("server_url") public var url: URL
+		@CodedAt("server_url") public var url: URL?
+
+		/// Identifier for service connectors, like those available in ChatGPT.
+		///
+		/// Learn more about service connectors [here](https://platform.openai.com/docs/guides/tools-remote-mcp#connectors).
+		@CodedAt("connector_id") public var connector: Connector?
+
+		/// An OAuth access token that can be used with a remote MCP server, either with a custom MCP server URL or a service connector.
+		///
+		/// Your application must handle the OAuth authorization flow and provide the token here.
+		public var authorization: String?
 
 		/// List of allowed tool names.
 		public var allowedTools: [String]?
@@ -337,12 +358,41 @@ import MetaCodable
 		/// Optional description of the MCP server, used to provide more context.
 		@CodedAt("server_description") public var description: String?
 
-		public init(label: String, url: URL, allowedTools: [String]? = nil, headers: [String: String]? = nil, requireApproval: RequireApproval? = nil, description: String? = nil) {
+		/// Create a new `MCP` instance for a remote MCP server.
+		///
+		/// - Parameter label: A label for this MCP server, used to identify it in tool calls.
+		/// - Parameter url: The URL for the MCP server.
+		/// - Parameter authorization: An OAuth access token that can be used with a remote MCP server.
+		/// - Parameter allowedTools: List of allowed tool names.
+		/// - Parameter headers: Optional HTTP headers to send to the MCP server.
+		/// - Parameter requireApproval: Specify which of the MCP server's tools require approval.
+		/// - Parameter description: Optional description of the MCP server, used to provide more context.
+		public init(label: String, url: URL, authorization: String? = nil, allowedTools: [String]? = nil, headers: [String: String]? = nil, requireApproval: RequireApproval? = nil, description: String? = nil) {
 			self.url = url
 			self.label = label
 			self.headers = headers
 			self.description = description
 			self.allowedTools = allowedTools
+			self.authorization = authorization
+			self.requireApproval = requireApproval
+		}
+
+		/// Create a new `MCP` instance for a service connector.
+		///
+		/// - Parameter label: A label for this MCP server, used to identify it in tool calls.
+		/// - Parameter connector: Identifier for service connectors, like those available in ChatGPT.
+		/// - Parameter authorization: An OAuth access token that can be used with the connector.
+		/// - Parameter allowedTools: List of allowed tool names.
+		/// - Parameter headers: Optional HTTP headers to send to the MCP server.
+		/// - Parameter requireApproval: Specify which of the MCP server's tools require approval.
+		/// - Parameter description: Optional description of the MCP server, used to provide more context.
+		public init(label: String, connector: Connector, authorization: String, allowedTools: [String]? = nil, headers: [String: String]? = nil, requireApproval: RequireApproval? = nil, description: String? = nil) {
+			self.label = label
+			self.headers = headers
+			self.connector = connector
+			self.description = description
+			self.allowedTools = allowedTools
+			self.authorization = authorization
 			self.requireApproval = requireApproval
 		}
 	}
@@ -637,12 +687,27 @@ public extension Tool {
 	/// Learn more about [MCP](https://platform.openai.com/docs/guides/tools-remote-mcp).
 	/// - Parameter label: A label for this MCP server, used to identify it in tool calls.
 	/// - Parameter url: The URL for the MCP server.
+	/// - Parameter authorization: An OAuth access token that can be used with a remote MCP server.
 	/// - Parameter allowedTools: List of allowed tool names.
 	/// - Parameter headers: Optional HTTP headers to send to the MCP server.
 	/// - Parameter requireApproval: Specify which of the MCP server's tools require approval.
 	/// - Parameter description: Optional description of the MCP server, used to provide more context.
-	static func mcp(label: String, url: URL, allowedTools: [String]? = nil, headers: [String: String]? = nil, requireApproval: MCP.RequireApproval? = nil, description: String? = nil) -> Self {
-		.mcp(MCP(label: label, url: url, allowedTools: allowedTools, headers: headers, requireApproval: requireApproval, description: description))
+	static func mcp(label: String, url: URL, authorization: String? = nil, allowedTools: [String]? = nil, headers: [String: String]? = nil, requireApproval: MCP.RequireApproval? = nil, description: String? = nil) -> Self {
+		.mcp(MCP(label: label, url: url, authorization: authorization, allowedTools: allowedTools, headers: headers, requireApproval: requireApproval, description: description))
+	}
+
+	// Give the model access to additional tools using MCP-powered connectors.
+	///
+	/// Learn more about [MCP](https://platform.openai.com/docs/guides/tools-remote-mcp).
+	/// - Parameter label: A label for this MCP server, used to identify it in tool calls.
+	/// - Parameter connector: Identifier for service connectors, like those available in ChatGPT.
+	/// - Parameter authorization: An OAuth access token that can be used with the connector.
+	/// - Parameter allowedTools: List of allowed tool names.
+	/// - Parameter headers: Optional HTTP headers to send to the MCP server.
+	/// - Parameter requireApproval: Specify which of the MCP server's tools require approval.
+	/// - Parameter description: Optional description of the MCP server, used to provide more context.
+	static func mcp(label: String, connector: MCP.Connector, authorization: String, allowedTools: [String]? = nil, headers: [String: String]? = nil, requireApproval: MCP.RequireApproval? = nil, description: String? = nil) -> Self {
+		.mcp(MCP(label: label, connector: connector, authorization: authorization, allowedTools: allowedTools, headers: headers, requireApproval: requireApproval, description: description))
 	}
 
 	/// A tool that runs Python code to help generate a response to a prompt.

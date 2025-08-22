@@ -117,6 +117,12 @@ import HelperCoders
 	/// Whether to run the model response in the background. [Learn more](https://platform.openai.com/docs/guides/background-responses).
 	public var background: Bool?
 
+	/// The conversation that this response belongs to.
+	///
+	/// Input items and output items from this response are automatically added to this conversation.
+	@CodedBy(ConversationIDCoder())
+	public var conversation: String?
+
 	/// When this Response was created.
 	@CodedBy(Since1970DateCoder())
 	public var createdAt: Date
@@ -368,5 +374,19 @@ extension Response {
 				case let .error(error): return .failure(error)
 			}
 		}
+	}
+}
+
+struct ConversationIDCoder: HelperCoder {
+	typealias Coded = String
+
+	private enum CodingKeys: String, CodingKey {
+		case id
+	}
+
+	func decode(from decoder: any Decoder) throws -> String {
+		let container = try decoder.container(keyedBy: CodingKeys.self)
+
+		return try container.decode(String.self, forKey: .id)
 	}
 }

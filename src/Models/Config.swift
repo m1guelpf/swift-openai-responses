@@ -141,6 +141,14 @@ public enum Verbosity: String, Equatable, Hashable, Codable, Sendable {
 	case low, medium, high
 }
 
+public enum Order: String, Equatable, Hashable, Codable, Sendable {
+	/// Return the input items in ascending order.
+	case asc
+
+	/// Return the input items in descending order.
+	case desc
+}
+
 public extension TextConfig.Format {
 	/// JSON Schema response format. Used to generate structured JSON responses. Learn more about [Structured Outputs](https://platform.openai.com/docs/guides/structured-outputs).
 	/// - Parameter schemable: A type conforming to `Schemable`, which provides the schema for the response format.

@@ -6,7 +6,7 @@ import MetaCodable
 	/// A list of items used to generate a model response.
 	@Codable @CodingKeys(.snake_case) public struct ItemList: Equatable, Hashable, Sendable {
 		/// A list of items used to generate this response.
-		public var data: [Item.Input]
+		public var data: [Item]
 
 		/// The ID of the first item in the list.
 		public var firstId: String

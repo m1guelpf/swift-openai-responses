@@ -49,6 +49,13 @@ import MetaCodable
 	/// - [Learn more](https://platform.openai.com/docs/guides/background)
 	public var background: Bool?
 
+	/// The unique ID of the conversation that this response belongs to.
+	///
+	/// Items from this conversation are prepended to `input_items` for this response request.
+	///
+	/// Input items and output items from this response are automatically added to this conversation after this response completes.
+	public var conversation: String?
+
 	/// Model ID used to generate the response.
 	///
 	/// OpenAI offers a wide range of models with different capabilities, performance characteristics, and price points. Refer to the [model guide](https://platform.openai.com/docs/models) to browse and compare available models.
@@ -84,6 +91,8 @@ import MetaCodable
 	public var parallelToolCalls: Bool?
 
 	/// The unique ID of the previous response to the model. Use this to create multi-turn conversations.
+	///
+	/// Cannot be used in conjunction with `conversation`.
 	///
 	/// Learn more about [conversation state](https://platform.openai.com/docs/guides/conversation-state).
 	public var previousResponseId: String?
@@ -164,6 +173,7 @@ import MetaCodable
 	/// - Parameter model: Model ID used to generate the response.
 	/// - Parameter input: Text, image, or file inputs to the model, used to generate a response.
 	/// - Parameter background: Whether to run the model response in the background.
+	/// - Parameter conversation: The unique ID of the conversation that this response belongs to.
 	/// - Parameter include: Specify additional output data to include in the model response.
 	/// - Parameter instructions: Inserts a system (or developer) message as the first item in the model's context.
 	/// - Parameter maxOutputTokens: An upper bound for the number of tokens that can be generated for a response, including visible output tokens and reasoning tokens.
@@ -191,6 +201,7 @@ import MetaCodable
 		model: Model,
 		input: Input,
 		background: Bool? = nil,
+		conversation: String? = nil,
 		include: [Include]? = nil,
 		instructions: String? = nil,
 		maxOutputTokens: UInt? = nil,
@@ -235,6 +246,7 @@ import MetaCodable
 		self.temperature = temperature
 		self.instructions = instructions
 		self.maxToolCalls = maxToolCalls
+		self.conversation = conversation
 		self.streamOptions = streamOptions
 		self.promptCacheKey = promptCacheKey
 		self.maxOutputTokens = maxOutputTokens

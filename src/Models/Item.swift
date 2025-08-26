@@ -436,9 +436,15 @@ import MetaCodable
 		}
 
 		@Codable @CodedAt("type") public enum Action: Equatable, Hashable, Sendable {
+			@Codable @CodedAt("type") public enum Source: Equatable, Hashable, Sendable {
+				/// - Parameter url: The URL of the source.
+				case url(url: URL)
+			}
+
 			/// Performs a web search query.
 			/// - Parameter query: The search query.
-			case search(query: String)
+			/// - Parameter sources: The sources used in the search.
+			case search(query: String, sources: [Source]?)
 
 			/// Opens a specific URL from search results.
 			/// - Parameter url: The URL opened by the model.

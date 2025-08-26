@@ -245,6 +245,24 @@ import MetaCodable
 			case medium
 		}
 
+		@Codable @CodingKeys(.snake_case) public struct Filters: Equatable, Hashable, Sendable {
+			/// Allowed domains for the search.
+			///
+			/// Subdomains of the provided domains are allowed as well.
+			public var allowedDomains: [String]
+
+			/// Create a new `Filters` instance.
+			///
+			/// - Parameter allowedDomains: Allowed domains for the search.
+			public init(allowedDomains: [String]) {
+				self.allowedDomains = allowedDomains
+			}
+
+			public static func allowedDomains(_ domains: [String]) -> Filters {
+				return Filters(allowedDomains: domains)
+			}
+		}
+
 		/// Approximate location parameters for the search.
 		public struct UserLocation: Equatable, Hashable, Codable, Sendable {
 			/// The type of location approximation
@@ -289,11 +307,18 @@ import MetaCodable
 		/// Approximate location parameters for the search.
 		public var userLocation: UserLocation?
 
+		/// A filter defining allowed domains for the search.
+		///
+		/// If not provided, all domains are allowed.
+		public var filters: Filters?
+
 		/// Create a new `WebSearch` instance.
 		///
 		/// - Parameter searchContextSize: High level guidance for the amount of context window space to use for the search.
 		/// - Parameter userLocation: Approximate location parameters for the search.
-		public init(searchContextSize: ContextSize = .medium, userLocation: UserLocation? = nil) {
+		/// - Parameter filters: A filter defining allowed domains for the search.
+		public init(searchContextSize: ContextSize = .medium, userLocation: UserLocation? = nil, filters: Filters? = nil) {
+			self.filters = filters
 			self.userLocation = userLocation
 			self.searchContextSize = searchContextSize
 		}
@@ -589,7 +614,7 @@ import MetaCodable
 	/// This tool searches the web for relevant results to use in a response.
 	///
 	/// Learn more about the [web search tool](https://platform.openai.com/docs/guides/tools-web-search?api-mode=responses).
-	@CodedAs("web_search_preview")
+	@CodedAs("web_search")
 	case webSearch(WebSearch)
 
 	/// Give the model access to additional tools via remote Model Context Protocol (MCP) servers.
@@ -678,8 +703,9 @@ public extension Tool {
 	/// Learn more about the [web search tool](https://platform.openai.com/docs/guides/tools-web-search?api-mode=responses).
 	/// - Parameter contextSize: High level guidance for the amount of context window space to use for the search.
 	/// - Parameter userLocation: Approximate location parameters for the search.
-	static func webSearch(contextSize: WebSearch.ContextSize = .medium, userLocation: WebSearch.UserLocation? = nil) -> Self {
-		.webSearch(WebSearch(searchContextSize: contextSize, userLocation: userLocation))
+	/// - Parameter filters: A filter defining allowed domains for the search.
+	static func webSearch(contextSize: WebSearch.ContextSize = .medium, userLocation: WebSearch.UserLocation? = nil, filters: WebSearch.Filters? = nil) -> Self {
+		.webSearch(WebSearch(searchContextSize: contextSize, userLocation: userLocation, filters: filters))
 	}
 
 	// Give the model access to additional tools via remote Model Context Protocol (MCP) servers.

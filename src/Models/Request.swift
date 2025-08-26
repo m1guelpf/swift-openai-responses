@@ -20,6 +20,9 @@ import MetaCodable
 		/// Include logprobs with assistant messages.
 		case outputLogprobs = "message.output_text.logprobs"
 
+		/// Include the sources of the web search tool call.
+		case webSearchSources = "web_search_call.action.sources"
+
 		/// Includes an encrypted version of reasoning tokens in reasoning item outputs.
 		///
 		/// This enables reasoning items to be used in multi-turn conversations when using the Responses API statelessly (like when the store parameter is set to false, or when an organization is enrolled in the zero data retention program).

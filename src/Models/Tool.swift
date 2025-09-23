@@ -881,7 +881,7 @@ extension Tool.Choice: Codable {
 			case "mcp":
 				let server = try container.decode(String.self, forKey: .serverLabel)
 				let tool = try container.decodeIfPresent(String.self, forKey: .name)
-				self = .mcp(server: server, tool: tool)
+				self = .mcp(server: server, name: tool)
 			case "custom":
 				let name = try container.decode(String.self, forKey: .name)
 				self = .custom(name: name)

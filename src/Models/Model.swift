@@ -15,6 +15,7 @@ public enum Model: Equatable, Hashable, Sendable {
 	case gpt5
 	case gpt5Mini
 	case gpt5Nano
+	case gpt5Codex
 	case gpt4_5Preview
 	case gpt4o
 	case chatGPT4o
@@ -45,6 +46,7 @@ public enum Model: Equatable, Hashable, Sendable {
 			case .gpt4_1: "gpt-4.1"
 			case .codexMini: "codex-mini"
 			case let .other(value): value
+			case .gpt5Codex: "gpt-5-codex"
 			case .gpt4oMini: "gpt-4o-mini"
 			case .gpt4Turbo: "gpt-4o-turbo"
 			case .gpt4_1Nano: "gpt-4.1-nano"
@@ -75,6 +77,7 @@ public enum Model: Equatable, Hashable, Sendable {
 			case "gpt-5-mini": self = .gpt5Mini
 			case "gpt-5-nano": self = .gpt5Nano
 			case "codex-mini": self = .codexMini
+			case "gpt-5-codex": self = .gpt5Codex
 			case "gpt-4o-mini": self = .gpt4oMini
 			case "gpt-4o-turbo": self = .gpt4Turbo
 			case "gpt-4.1-nano": self = .gpt4_1Nano

@@ -297,7 +297,7 @@ public extension Input.ListItem {
 	/// - Parameter status: The status of the item. Populated when items are returned via API.
 	/// - Parameter callId: The ID of the computer tool call that produced the output.
 	/// - Parameter output: A JSON string of the output of the function tool call.
-	static func functionCallOutput(id: String? = nil, status: Item.FunctionCall.Status? = nil, callId: String, output: String) -> Self {
+	static func functionCallOutput(id: String? = nil, status: Item.FunctionCall.Status? = nil, callId: String, output: Input.Content) -> Self {
 		.item(Item.Input.functionCallOutput(Item.FunctionCallOutput(id: id, status: status, callId: callId, output: output)))
 	}
 

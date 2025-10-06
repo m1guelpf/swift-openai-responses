@@ -49,9 +49,22 @@ package extension Toolable {
 		let output = try await call(parameters: parameters)
 
 		if output is NullableVoid { return nil }
+
+		if output is String {
+			return Item.FunctionCallOutput(callId: functionCall.callId, output: .text(output as! String))
+		}
+
+		if output is Input.Content {
+			return Item.FunctionCallOutput(callId: functionCall.callId, output: output as! ModelInput.Content)
+		}
+
+		if output is Input.Content.ContentItem {
+			return Item.FunctionCallOutput(callId: functionCall.callId, output: .list([output as! ModelInput.Content.ContentItem]))
+		}
+
 		return try Item.FunctionCallOutput(
 			callId: functionCall.callId,
-			output: encoder.encodeToString(output)
+			output: .text(encoder.encodeToString(output))
 		)
 	}
 }

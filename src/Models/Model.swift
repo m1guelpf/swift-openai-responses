@@ -96,11 +96,13 @@ public enum Model: Equatable, Hashable, Sendable {
 public extension Model {
 	enum Image: Equatable, Hashable, Sendable {
 		case gptImage
+		case gptImageMini
 		case other(String)
 
 		public var rawValue: String {
 			switch self {
 				case .gptImage: "gpt-image-1"
+				case .gptImageMini: "gpt-image-1-mini"
 				case let .other(value): value
 			}
 		}
@@ -109,6 +111,7 @@ public extension Model {
 		public init(_ model: String) {
 			switch model {
 				case "gpt-image-1": self = .gptImage
+				case "gpt-image-1-mini": self = .gptImageMini
 				default: self = .other(model)
 			}
 		}

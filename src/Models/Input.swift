@@ -50,6 +50,12 @@ import MetaCodable
 				case medium
 			}
 
+			/// The format of the audio data sent to the model.
+			public enum AudioFormat: String, CaseIterable, Equatable, Hashable, Codable, Sendable {
+				case mp3
+				case wav
+			}
+
 			/// A text input to the model.
 			@CodedAs("input_text") case text(_ text: String)
 
@@ -74,6 +80,11 @@ import MetaCodable
 				fileUrl: URL? = nil,
 				filename: String? = nil
 			)
+
+			/// An audio input to the model.
+			/// - Parameter data: Base64-encoded audio data.
+			/// - Parameter format: The format of the audio data.
+			@CodedAs("input_audio") case audio(data: String, format: AudioFormat)
 		}
 
 		/// A text input to the model, equivalent to a text input.

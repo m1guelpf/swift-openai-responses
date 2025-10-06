@@ -483,6 +483,8 @@ import MetaCodable
 		public var background: Background?
 
 		/// Control how much effort the model will exert to match the style and features, especially facial features, of input images.
+		///
+		/// Unsupported for `gptImageMini`.
 		public var inputFidelity: InputFidelity?
 
 		/// Optional mask for inpainting.

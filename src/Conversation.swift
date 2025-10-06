@@ -510,12 +510,30 @@ private extension Conversation {
 
 					item = .mcpToolCall(mcpToolCall)
 				}
-			case .mcpCallCompleted:
-				break // mcpToolCall does not have a status field we can track
-			case .mcpCallFailed:
-				break // mcpToolCall does not have a status field we can track
+			case let .mcpCallCompleted(itemId, outputIndex):
+				updateItem(index: outputIndex, id: itemId) { item in
+					guard case var .mcpToolCall(mcPToolCall) = item else { return }
+
+					mcPToolCall.status = .completed
+
+					item = .mcpToolCall(mcPToolCall)
+				}
+			case let .mcpCallFailed(itemId, outputIndex):
+				updateItem(index: outputIndex, id: itemId) { item in
+					guard case var .mcpToolCall(mcPToolCall) = item else { return }
+
+					mcPToolCall.status = .failed
+
+					item = .mcpToolCall(mcPToolCall)
+				}
 			case let .mcpCallInProgress(itemId, outputIndex):
-				break // mcpToolCall does not have a status field we can track
+				updateItem(index: outputIndex, id: itemId) { item in
+					guard case var .mcpToolCall(mcPToolCall) = item else { return }
+
+					mcPToolCall.status = .inProgress
+
+					item = .mcpToolCall(mcPToolCall)
+				}
 			case let .mcpListToolsCompleted(itemId, outputIndex):
 				break // mcpListTools does not have a status field we can track
 			case .mcpListToolsFailed:

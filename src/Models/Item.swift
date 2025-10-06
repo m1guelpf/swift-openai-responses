@@ -969,6 +969,12 @@ import MetaCodable
 	}
 
 	@Codable public struct MCPToolCall: Equatable, Hashable, Sendable {
+		/// The status of the tool call.
+		public enum Status: String, CaseIterable, Equatable, Hashable, Codable, Sendable {
+			case completed, incomplete, calling, failed
+			case inProgress = "in_progress"
+		}
+
 		/// The unique ID of the tool call.
 		public var id: String
 
@@ -987,6 +993,12 @@ import MetaCodable
 		/// The error from the tool call, if any.
 		public var error: String?
 
+		/// Unique identifier for the MCP tool call approval request.
+		public var approvalRequestId: String?
+
+		/// The status of the tool call.
+		public var status: Status?
+
 		/// Creates a new MCP tool call.
 		///
 		/// - Parameter id: The unique ID of the tool call.
@@ -995,13 +1007,24 @@ import MetaCodable
 		/// - Parameter arguments: A JSON string of the arguments passed to the tool.
 		/// - Parameter output: The output from the tool call.
 		/// - Parameter error: The error from the tool call, if any.
-		public init(id: String, server: String, name: String, arguments: String, output: String? = nil, error: String? = nil) {
+		public init(
+			id: String,
+			server: String,
+			name: String,
+			arguments: String,
+			output: String? = nil,
+			error: String? = nil,
+			approvalRequestId: String? = nil,
+			status: Status? = nil
+		) {
 			self.id = id
 			self.name = name
 			self.error = error
 			self.server = server
 			self.output = output
+			self.status = status
 			self.arguments = arguments
+			self.approvalRequestId = approvalRequestId
 		}
 	}
 

@@ -147,7 +147,7 @@ public enum Order: String, Equatable, Hashable, Codable, Sendable {
 }
 
 public enum CacheRetention: String, Equatable, Hashable, Codable, Sendable {
-	case `24h`
+	case oneDay = "24h"
 	case inMemory = "in_memory"
 }
 

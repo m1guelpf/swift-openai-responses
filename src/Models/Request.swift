@@ -110,7 +110,7 @@ import MetaCodable
 
 	/// The retention policy for the prompt cache.
 	///
-	/// Set to `24h` to enable extended prompt caching, which keeps cached prefixes active for longer, up to a maximum of 24 hours.
+	/// Set to `oneDay` to enable extended prompt caching, which keeps cached prefixes active for longer, up to a maximum of 24 hours.
 	public var promptCacheRetention: CacheRetention?
 
 	/// Configuration options for [reasoning models](https://platform.openai.com/docs/guides/reasoning).
@@ -219,6 +219,7 @@ import MetaCodable
 		previousResponseId: String? = nil,
 		prompt: Prompt? = nil,
 		promptCacheKey: String? = nil,
+		promptCacheRetention: CacheRetention? = nil,
 		reasoning: ReasoningConfig? = nil,
 		safetyIdentifier: String? = nil,
 		serviceTier: ServiceTier? = nil,
@@ -261,5 +262,6 @@ import MetaCodable
 		self.safetyIdentifier = safetyIdentifier
 		self.parallelToolCalls = parallelToolCalls
 		self.previousResponseId = previousResponseId
+		self.promptCacheRetention = promptCacheRetention
 	}
 }

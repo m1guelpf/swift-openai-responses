@@ -108,6 +108,11 @@ import MetaCodable
 	/// Replaces the `user` field. [Learn more](https://platform.openai.com/docs/guides/prompt-caching).
 	public var promptCacheKey: String?
 
+	/// The retention policy for the prompt cache.
+	///
+	/// Set to `24h` to enable extended prompt caching, which keeps cached prefixes active for longer, up to a maximum of 24 hours.
+	public var promptCacheRetention: CacheRetention?
+
 	/// Configuration options for [reasoning models](https://platform.openai.com/docs/guides/reasoning).
 	public var reasoning: ReasoningConfig?
 

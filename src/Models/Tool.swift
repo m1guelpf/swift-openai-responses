@@ -31,7 +31,9 @@ import MetaCodable
 		/// - Parameter mode: How the model should use the tools.
 		case some(tools: [Choice], mode: MultiToolMode)
 
+		case shell
 		case fileSearch
+		case applyPatch
 		case imageGeneration
 		case codeInterpreter
 		case webSearchPreview
@@ -642,6 +644,13 @@ import MetaCodable
 	@CodedAs("local_shell")
 	case localShell
 
+	/// A tool that allows the model to execute shell commands.
+	case shell
+
+	/// Allows the assistant to create, delete, or update files using unified diffs.
+	@CodedAs("apply_patch")
+	case applyPatch
+
 	/// A custom tool that processes input using a specified format.
 	///
 	/// Learn more about [custom tools](https://platform.openai.com/docs/guides/function-calling#custom-tools).
@@ -851,6 +860,12 @@ extension Tool.Choice: Codable {
 				try container.encode("mcp", forKey: .type)
 				try container.encode(server, forKey: .serverLabel)
 				if let name { try container.encode(name, forKey: .name) }
+			case .shell:
+				var container = encoder.container(keyedBy: CodingKeys.self)
+				try container.encode("shell", forKey: .type)
+			case .applyPatch:
+				var container = encoder.container(keyedBy: CodingKeys.self)
+				try container.encode("apply_patch", forKey: .type)
 		}
 	}
 
@@ -872,7 +887,9 @@ extension Tool.Choice: Codable {
 		let type = try container.decode(String.self, forKey: .type)
 
 		switch type {
+			case "shell": self = .shell
 			case "file_search": self = .fileSearch
+			case "apply_patch": self = .applyPatch
 			case "code_interpreter": self = .codeInterpreter
 			case "image_generation": self = .imageGeneration
 			case "web_search_preview": self = .webSearchPreview

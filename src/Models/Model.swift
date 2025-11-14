@@ -17,6 +17,11 @@ public enum Model: Equatable, Hashable, Sendable {
 	case gpt5Mini
 	case gpt5Nano
 	case gpt5Codex
+	case gpt5CodexMini
+	case gpt51
+	case gpt51Mini
+	case gpt51Codex
+	case gpt51CodexMini
 	case gpt4_5Preview
 	case gpt4o
 	case chatGPT4o
@@ -38,6 +43,10 @@ public enum Model: Equatable, Hashable, Sendable {
 			case .gpt5Pro: "gpt-5-pro"
 			case .gpt5Mini: "gpt-5-mini"
 			case .gpt5Nano: "gpt-5-nano"
+			case .gpt51: "gpt-5.1"
+			case .gpt51Mini: "gpt-5.1-mini"
+			case .gpt51Codex: "gpt-5.1-codex"
+			case .gpt51CodexMini: "gpt-5.1-codex-mini"
 			case .gpt4: "gpt-4"
 			case .o3Pro: "o3-pro"
 			case .o1Pro: "o1-pro"
@@ -49,6 +58,7 @@ public enum Model: Equatable, Hashable, Sendable {
 			case .codexMini: "codex-mini"
 			case let .other(value): value
 			case .gpt5Codex: "gpt-5-codex"
+			case .gpt5CodexMini: "gpt-5-codex-mini"
 			case .gpt4oMini: "gpt-4o-mini"
 			case .gpt4Turbo: "gpt-4o-turbo"
 			case .gpt4_1Nano: "gpt-4.1-nano"
@@ -72,6 +82,7 @@ public enum Model: Equatable, Hashable, Sendable {
 			case "gpt-4o": self = .gpt4o
 			case "o1-pro": self = .o1Pro
 			case "o3-pro": self = .o3Pro
+			case "gpt-5.1": self = .gpt51
 			case "o1-mini": self = .o1Mini
 			case "o3-mini": self = .o3Mini
 			case "o4-mini": self = .o4Mini
@@ -82,13 +93,17 @@ public enum Model: Equatable, Hashable, Sendable {
 			case "codex-mini": self = .codexMini
 			case "gpt-5-codex": self = .gpt5Codex
 			case "gpt-4o-mini": self = .gpt4oMini
+			case "gpt-5.1-mini": self = .gpt51Mini
 			case "gpt-4o-turbo": self = .gpt4Turbo
 			case "gpt-4.1-nano": self = .gpt4_1Nano
 			case "gpt-4.1-mini": self = .gpt4_1Mini
+			case "gpt-5.1-codex": self = .gpt51Codex
 			case "gpt-3.5-turbo": self = .gpt3_5Turbo
 			case "chatgpt-4o-latest": self = .chatGPT4o
 			case "gpt-4.5-preview": self = .gpt4_5Preview
+			case "gpt-5-codex-mini": self = .gpt5CodexMini
 			case "o3-deep-research": self = .o3DeepResearch
+			case "gpt-5.1-codex-mini": self = .gpt51CodexMini
 			case "computer-use-preview": self = .computerUsePreview
 			case "o4-mini-deep-research": self = .o4MiniDeepResearch
 			default: self = .other(model)

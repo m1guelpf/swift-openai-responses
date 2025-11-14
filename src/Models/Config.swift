@@ -8,10 +8,7 @@ import MetaCodable
 	///
 	/// Reducing reasoning effort can result in faster responses and fewer tokens used on reasoning in a response.
 	public enum Effort: String, CaseIterable, Equatable, Hashable, Codable, Sendable {
-		case low
-		case high
-		case medium
-		case minimal
+		case none, minimal, low, medium, high
 	}
 
 	/// A summary of the reasoning performed by the model.
@@ -147,6 +144,11 @@ public enum Order: String, Equatable, Hashable, Codable, Sendable {
 
 	/// Return the input items in descending order.
 	case desc
+}
+
+public enum CacheRetention: String, Equatable, Hashable, Codable, Sendable {
+	case `24h`
+	case inMemory = "in_memory"
 }
 
 public extension TextConfig.Format {

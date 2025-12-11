@@ -35,6 +35,9 @@ public enum Message: Equatable, Hashable, Sendable {
 	public struct Input: Equatable, Hashable, Codable, Sendable {
 		/// The role of the message input.
 		public var role: Role
+        
+        /// The unique ID of the output message.
+        public var id: String
 
 		/// The status of the message. Populated when the message is returned via API.
 		public var status: Status?
@@ -49,6 +52,7 @@ public enum Message: Equatable, Hashable, Sendable {
 
 		public init(role: Role = .user, content: ModelInput.Content, status: Status? = nil) {
 			self.role = role
+            self.id = UUID().uuidString
 			self.status = status
 			self.content = content
 		}
@@ -120,9 +124,9 @@ public enum Message: Equatable, Hashable, Sendable {
 	}
 
 	/// The unique ID of the message, if available.
-	public var id: String? {
+	public var id: String {
 		switch self {
-			case .input: nil
+            case let .input(input): input.id
 			case let .output(output): output.id
 		}
 	}
